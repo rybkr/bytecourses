@@ -6,6 +6,7 @@ let currentUser = null;
 const authView = document.getElementById('authView');
 const coursesView = document.getElementById('coursesView');
 const submitView = document.getElementById('submitView');
+const adminView = document.getElementById('adminView');
 const mainNav = document.getElementById('mainNav');
 const userInfo = document.getElementById('userInfo');
 
@@ -19,11 +20,14 @@ const authMessage = document.getElementById('authMessage');
 
 const viewCoursesBtn = document.getElementById('viewCoursesBtn');
 const submitCourseBtn = document.getElementById('submitCourseBtn');
+const adminBtn = document.getElementById('adminBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const coursesList = document.getElementById('coursesList');
 const courseForm = document.getElementById('courseForm');
 const statusFilter = document.getElementById('statusFilter');
 const formMessage = document.getElementById('formMessage');
+const usersList = document.getElementById('usersList');
+const pendingCoursesList = document.getElementById('pendingCoursesList');
 
 let isSignupMode = false;
 
@@ -102,6 +106,11 @@ submitCourseBtn.addEventListener('click', () => {
     showView('submit');
 });
 
+adminBtn.addEventListener('click', () => {
+    showView('admin');
+    loadAdminData();
+});
+
 statusFilter.addEventListener('change', loadCourses);
 
 courseForm.addEventListener('submit', async (e) => {
@@ -163,6 +172,10 @@ function showAuthenticatedUI() {
     
     if (currentUser) {
         userInfo.textContent = `Logged in as ${currentUser.email} (${currentUser.role})`;
+        
+        if (currentUser.role === 'admin') {
+            adminBtn.style.display = 'inline-block';
+        }
     }
 }
 
@@ -170,23 +183,30 @@ function showUnauthenticatedUI() {
     authView.classList.add('active');
     coursesView.classList.remove('active');
     submitView.classList.remove('active');
+    adminView.classList.remove('active');
     mainNav.style.display = 'none';
     userInfo.style.display = 'none';
+    adminBtn.style.display = 'none';
     authForm.reset();
 }
 
 function showView(view) {
     coursesView.classList.remove('active');
     submitView.classList.remove('active');
+    adminView.classList.remove('active');
     viewCoursesBtn.classList.remove('active');
     submitCourseBtn.classList.remove('active');
+    adminBtn.classList.remove('active');
     
     if (view === 'courses') {
         coursesView.classList.add('active');
         viewCoursesBtn.classList.add('active');
-    } else {
+    } else if (view === 'submit') {
         submitView.classList.add('active');
         submitCourseBtn.classList.add('active');
+    } else if (view === 'admin') {
+        adminView.classList.add('active');
+        adminBtn.classList.add('active');
     }
 }
 
@@ -200,6 +220,123 @@ async function loadCourses() {
         renderCourses(courses);
     } catch (error) {
         coursesList.innerHTML = '<p>Error loading courses</p>';
+    }
+}
+
+async function loadAdminData() {
+    await loadUsers();
+    await loadPendingCourses();
+}
+
+async function loadUsers() {
+    try {
+        const response = await fetch(`${API_BASE}/admin/users`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const users = await response.json();
+            renderUsers(users);
+        } else {
+            usersList.innerHTML = '<p>Error loading users</p>';
+        }
+    } catch (error) {
+        usersList.innerHTML = '<p>Error loading users</p>';
+    }
+}
+
+async function loadPendingCourses() {
+    try {
+        const response = await fetch(`${API_BASE}/admin/courses?status=pending`, {
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            const courses = await response.json();
+            renderPendingCourses(courses);
+        } else {
+            pendingCoursesList.innerHTML = '<p>Error loading pending courses</p>';
+        }
+    } catch (error) {
+        pendingCoursesList.innerHTML = '<p>Error loading pending courses</p>';
+    }
+}
+
+function renderUsers(users) {
+    if (!users || users.length === 0) {
+        usersList.innerHTML = '<p>No users found</p>';
+        return;
+    }
+    
+    usersList.innerHTML = users.map(user => `
+        <div class="user-card">
+            <div class="user-info">
+                <div class="user-email">${escapeHtml(user.email)}</div>
+                <div class="user-role">Role: ${user.role}</div>
+            </div>
+            <div>ID: ${user.id}</div>
+        </div>
+    `).join('');
+}
+
+function renderPendingCourses(courses) {
+    if (!courses || courses.length === 0) {
+        pendingCoursesList.innerHTML = '<p>No pending courses</p>';
+        return;
+    }
+    
+    pendingCoursesList.innerHTML = courses.map(course => `
+        <div class="pending-course-card">
+            <h4>${escapeHtml(course.title)}</h4>
+            <p>${escapeHtml(course.description)}</p>
+            <div>Instructor ID: ${course.instructor_id}</div>
+            <div class="course-actions">
+                <button class="approve-btn" onclick="approveCourse(${course.id})">Approve</button>
+                <button class="reject-btn" onclick="rejectCourse(${course.id})">Reject</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function approveCourse(id) {
+    try {
+        const response = await fetch(`${API_BASE}/admin/courses/approve?id=${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            loadPendingCourses();
+        } else {
+            alert('Failed to approve course');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
+    }
+}
+
+async function rejectCourse(id) {
+    try {
+        const response = await fetch(`${API_BASE}/admin/courses/reject?id=${id}`, {
+            method: 'PATCH',
+            headers: {
+                'Authorization': `Bearer ${authToken}`
+            }
+        });
+        
+        if (response.ok) {
+            loadPendingCourses();
+        } else {
+            alert('Failed to reject course');
+        }
+    } catch (error) {
+        alert('Error: ' + error.message);
     }
 }
 

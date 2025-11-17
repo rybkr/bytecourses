@@ -50,23 +50,26 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
-	var status *models.CourseStatus
-	if s := r.URL.Query().Get("status"); s != "" {
-		st := models.CourseStatus(s)
-		status = &st
-	}
-
-	courses, err := h.store.GetCourses(r.Context(), status)
-	if err != nil {
-		log.Printf("failed to get courses in handler: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(courses); err != nil {
-		log.Printf("failed to encode courses response: %v", err)
-	}
+    var status *models.CourseStatus
+    if s := r.URL.Query().Get("status"); s != "" {
+        st := models.CourseStatus(s)
+        status = &st
+    } else {
+        approved := models.StatusApproved
+        status = &approved
+    }
+    
+    courses, err := h.store.GetCourses(r.Context(), status)
+    if err != nil {
+        log.Printf("failed to get courses in handler: %v", err)
+        http.Error(w, "internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    w.Header().Set("Content-Type", "application/json")
+    if err := json.NewEncoder(w).Encode(courses); err != nil {
+        log.Printf("failed to encode courses response: %v", err)
+    }
 }
 
 func (h *CourseHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {

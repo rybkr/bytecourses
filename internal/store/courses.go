@@ -99,3 +99,46 @@ func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
 
 	return nil
 }
+
+func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*models.Course, *models.User, error) {
+    query := `
+        SELECT c.id, c.instructor_id, c.title, c.description, c.status, c.created_at, c.updated_at,
+               u.id, u.email, u.role, u.created_at
+        FROM courses c
+        JOIN users u ON c.instructor_id = u.id
+        WHERE c.id = $1`
+    
+    var course models.Course
+    var instructor models.User
+    
+    err := s.db.QueryRow(ctx, query, courseID).Scan(
+        &course.ID, &course.InstructorID, &course.Title, &course.Description,
+        &course.Status, &course.CreatedAt, &course.UpdatedAt,
+        &instructor.ID, &instructor.Email, &instructor.Role, &instructor.CreatedAt,
+    )
+    
+    if err != nil {
+        log.Printf("failed to get course with instructor: %v", err)
+        return nil, nil, err
+    }
+    
+    return &course, &instructor, nil
+}
+
+func (s *Store) RejectCourse(ctx context.Context, courseID int) error {
+    query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
+    result, err := s.db.Exec(ctx, query, models.StatusRejected, courseID)
+    if err != nil {
+        log.Printf("failed to reject course: courseID=%d, error=%v", courseID, err)
+        return err
+    }
+    
+    rowsAffected := result.RowsAffected()
+    if rowsAffected == 0 {
+        log.Printf("no course found with id=%d", courseID)
+    } else {
+        log.Printf("course rejected: id=%d", courseID)
+    }
+    
+    return nil
+}

@@ -12,6 +12,7 @@
         <nav id="mainNav" style="display: none;">
             <button id="viewCoursesBtn" class="active">Browse Courses</button>
             <button id="submitCourseBtn">Submit Course</button>
+            <button id="adminBtn" style="display: none;">Admin</button>
             <button id="logoutBtn">Logout</button>
         </nav>
         <div id="userInfo" style="display: none;"></div>
@@ -59,7 +60,7 @@
                 <label>
                     Status:
                     <select id="statusFilter">
-                        <option value="">All</option>
+                        <option value="">All Approved</option>
                         <option value="approved">Approved</option>
                         <option value="pending">Pending</option>
                         <option value="rejected">Rejected</option>
@@ -85,6 +86,20 @@
                 <button type="submit">Submit for Approval</button>
             </form>
             <div id="formMessage"></div>
+        </section>
+
+        <section id="adminView" class="view">
+            <h2>Admin Panel</h2>
+            
+            <div class="admin-section">
+                <h3>Users</h3>
+                <div id="usersList"></div>
+            </div>
+            
+            <div class="admin-section">
+                <h3>Pending Courses</h3>
+                <div id="pendingCoursesList"></div>
+            </div>
         </section>
     </main>
 

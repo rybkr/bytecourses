@@ -63,3 +63,33 @@ func (s *Store) ValidateUser(ctx context.Context, email, password string) (*mode
 	log.Printf("user validated: id=%d, email=%s", user.ID, user.Email)
 	return user, nil
 }
+
+func (s *Store) GetAllUsers(ctx context.Context) ([]*models.User, error) {
+    query := `SELECT id, email, role, created_at FROM users ORDER BY created_at DESC`
+    
+    rows, err := s.db.Query(ctx, query)
+    if err != nil {
+        log.Printf("failed to query users: %v", err)
+        return nil, err
+    }
+    defer rows.Close()
+    
+    var users []*models.User
+    for rows.Next() {
+        var u models.User
+        err := rows.Scan(&u.ID, &u.Email, &u.Role, &u.CreatedAt)
+        if err != nil {
+            log.Printf("failed to scan user row: %v", err)
+            return nil, err
+        }
+        users = append(users, &u)
+    }
+    
+    if err := rows.Err(); err != nil {
+        log.Printf("error iterating user rows: %v", err)
+        return nil, err
+    }
+    
+    log.Printf("retrieved %d users", len(users))
+    return users, nil
+}

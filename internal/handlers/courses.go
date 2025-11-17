@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/rybkr/bytecourses/internal/middleware"
 	"github.com/rybkr/bytecourses/internal/models"
 	"github.com/rybkr/bytecourses/internal/store"
 	"log"
@@ -18,6 +19,13 @@ func NewCourseHandler(store *store.Store) *CourseHandler {
 }
 
 func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if !ok {
+		log.Println("user not found in context")
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	var course models.Course
 	if err := json.NewDecoder(r.Body).Decode(&course); err != nil {
 		log.Printf("failed to decode course request: %v", err)
@@ -25,6 +33,7 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	course.InstructorID = user.ID
 	course.Status = models.StatusPending
 
 	if err := h.store.CreateCourse(r.Context(), &course); err != nil {
@@ -79,19 +88,19 @@ func (h *CourseHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) DeleteCourse(w http.ResponseWriter, r *http.Request) {
-    idStr := r.URL.Query().Get("id")
-    id, err := strconv.Atoi(idStr)
-    if err != nil {
-        log.Printf("invalid course id for deletion: %s", idStr)
-        http.Error(w, "invalid course id", http.StatusBadRequest)
-        return
-    }
-    
-    if err := h.store.DeleteCourse(r.Context(), id); err != nil {
-        log.Printf("failed to delete course in handler: id=%d, error=%v", id, err)
-        http.Error(w, "internal server error", http.StatusInternalServerError)
-        return
-    }
-    
-    w.WriteHeader(http.StatusNoContent)
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Printf("invalid course id for deletion: %s", idStr)
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.store.DeleteCourse(r.Context(), id); err != nil {
+		log.Printf("failed to delete course in handler: id=%d, error=%v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

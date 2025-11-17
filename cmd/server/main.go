@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/rybkr/bytecourses/internal/handlers"
+	"github.com/rybkr/bytecourses/internal/middleware"
 	"github.com/rybkr/bytecourses/internal/store"
 	"log"
 	"net/http"
@@ -21,14 +22,18 @@ func main() {
 	}
 	defer store.Close()
 
+	authHandler := handlers.NewAuthHandler(store)
 	courseHandler := handlers.NewCourseHandler(store)
 
 	mux := http.NewServeMux()
 
-	mux.HandleFunc("POST /api/courses", courseHandler.CreateCourse)
+	mux.HandleFunc("POST /api/auth/signup", authHandler.Signup)
+	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+
+	mux.HandleFunc("POST /api/courses", middleware.Auth(courseHandler.CreateCourse))
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
-	mux.HandleFunc("PATCH /api/courses/approve", courseHandler.ApproveCourse)
-    mux.HandleFunc("DELETE /api/courses", courseHandler.DeleteCourse)
+	mux.HandleFunc("PATCH /api/courses/approve", middleware.Auth(courseHandler.ApproveCourse))
+	mux.HandleFunc("DELETE /api/courses", middleware.Auth(courseHandler.DeleteCourse))
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

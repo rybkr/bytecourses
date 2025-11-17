@@ -65,37 +65,37 @@ func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]
 }
 
 func (s *Store) UpdateCourseStatus(ctx context.Context, courseID int, status models.CourseStatus) error {
-    query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
-    result, err := s.db.Exec(ctx, query, status, courseID)
-    if err != nil {
-        log.Printf("failed to update course status: courseID=%d, error=%v", courseID, err)
-        return err
-    }
-    
-    rowsAffected := result.RowsAffected()
-    if rowsAffected == 0 {
-        log.Printf("no course found with id=%d", courseID)
-    } else {
-        log.Printf("course status updated: id=%d, status=%s", courseID, status)
-    }
-    
-    return nil
+	query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
+	result, err := s.db.Exec(ctx, query, status, courseID)
+	if err != nil {
+		log.Printf("failed to update course status: courseID=%d, error=%v", courseID, err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("no course found with id=%d", courseID)
+	} else {
+		log.Printf("course status updated: id=%d, status=%s", courseID, status)
+	}
+
+	return nil
 }
 
 func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
-    query := `DELETE FROM courses WHERE id = $1`
-    result, err := s.db.Exec(ctx, query, courseID)
-    if err != nil {
-        log.Printf("failed to delete course: courseID=%d, error=%v", courseID, err)
-        return err
-    }
-    
-    rowsAffected := result.RowsAffected()
-    if rowsAffected == 0 {
-        log.Printf("no course found to delete with id=%d", courseID)
-    } else {
-        log.Printf("course deleted: id=%d", courseID)
-    }
-    
-    return nil
+	query := `DELETE FROM courses WHERE id = $1`
+	result, err := s.db.Exec(ctx, query, courseID)
+	if err != nil {
+		log.Printf("failed to delete course: courseID=%d, error=%v", courseID, err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("no course found to delete with id=%d", courseID)
+	} else {
+		log.Printf("course deleted: id=%d", courseID)
+	}
+
+	return nil
 }

@@ -77,3 +77,21 @@ func (h *CourseHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *CourseHandler) DeleteCourse(w http.ResponseWriter, r *http.Request) {
+    idStr := r.URL.Query().Get("id")
+    id, err := strconv.Atoi(idStr)
+    if err != nil {
+        log.Printf("invalid course id for deletion: %s", idStr)
+        http.Error(w, "invalid course id", http.StatusBadRequest)
+        return
+    }
+    
+    if err := h.store.DeleteCourse(r.Context(), id); err != nil {
+        log.Printf("failed to delete course in handler: id=%d, error=%v", id, err)
+        http.Error(w, "internal server error", http.StatusInternalServerError)
+        return
+    }
+    
+    w.WriteHeader(http.StatusNoContent)
+}

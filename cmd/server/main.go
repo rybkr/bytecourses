@@ -28,6 +28,7 @@ func main() {
 	mux.HandleFunc("POST /api/courses", courseHandler.CreateCourse)
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
 	mux.HandleFunc("PATCH /api/courses/approve", courseHandler.ApproveCourse)
+    mux.HandleFunc("DELETE /api/courses", courseHandler.DeleteCourse)
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {

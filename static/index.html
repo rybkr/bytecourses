@@ -9,14 +9,52 @@
 <body>
     <header>
         <h1>Byte Course</h1>
-        <nav>
+        <nav id="mainNav" style="display: none;">
             <button id="viewCoursesBtn" class="active">Browse Courses</button>
             <button id="submitCourseBtn">Submit Course</button>
+            <button id="logoutBtn">Logout</button>
         </nav>
+        <div id="userInfo" style="display: none;"></div>
     </header>
 
     <main>
-        <section id="coursesView" class="view active">
+        <section id="authView" class="view active">
+            <div class="auth-container">
+                <div class="auth-box">
+                    <h2 id="authTitle">Login</h2>
+                    <form id="authForm">
+                        <div class="form-group">
+                            <label for="authEmail">Email</label>
+                            <input type="email" id="authEmail" name="email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="authPassword">Password</label>
+                            <input type="password" id="authPassword" name="password" required>
+                        </div>
+                        
+                        <div class="form-group" id="roleGroup" style="display: none;">
+                            <label for="authRole">Role</label>
+                            <select id="authRole" name="role">
+                                <option value="student">Student</option>
+                                <option value="instructor">Instructor</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" id="authSubmitBtn">Login</button>
+                    </form>
+                    
+                    <div id="authMessage"></div>
+                    
+                    <p class="auth-toggle">
+                        <span id="authToggleText">Don't have an account?</span>
+                        <button type="button" id="authToggleBtn">Sign up</button>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <section id="coursesView" class="view">
             <div class="filters">
                 <label>
                     Status:

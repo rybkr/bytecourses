@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/rybkr/bytecourses/internal/models"
 	"github.com/rybkr/bytecourses/internal/store"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -19,20 +20,24 @@ func NewCourseHandler(store *store.Store) *CourseHandler {
 func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	var course models.Course
 	if err := json.NewDecoder(r.Body).Decode(&course); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		log.Printf("failed to decode course request: %v", err)
+		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	course.Status = models.StatusPending
 
 	if err := h.store.CreateCourse(r.Context(), &course); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("failed to create course in handler: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(course)
+	if err := json.NewEncoder(w).Encode(course); err != nil {
+		log.Printf("failed to encode course response: %v", err)
+	}
 }
 
 func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
@@ -44,24 +49,29 @@ func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
 
 	courses, err := h.store.GetCourses(r.Context(), status)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("failed to get courses in handler: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(courses)
+	if err := json.NewEncoder(w).Encode(courses); err != nil {
+		log.Printf("failed to encode courses response: %v", err)
+	}
 }
 
 func (h *CourseHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		log.Printf("invalid course id: %s", idStr)
 		http.Error(w, "invalid course id", http.StatusBadRequest)
 		return
 	}
 
 	if err := h.store.UpdateCourseStatus(r.Context(), id, models.StatusApproved); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.Printf("failed to approve course in handler: id=%d, error=%v", id, err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

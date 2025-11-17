@@ -11,27 +11,37 @@ import (
 func main() {
 	connString := os.Getenv("DATABASE_URL")
 	if connString == "" {
-		connString = "postgres://localhost/byte_course?sslmode=disable"
+		connString = "postgres://localhost/bytecourses?sslmode=disable"
+		log.Println("using default database connection string")
 	}
 
 	store, err := store.New(connString)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatalf("failed to initialize store: %v", err)
 	}
 	defer store.Close()
 
 	courseHandler := handlers.NewCourseHandler(store)
 
 	mux := http.NewServeMux()
+
 	mux.HandleFunc("POST /api/courses", courseHandler.CreateCourse)
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
 	mux.HandleFunc("PATCH /api/courses/approve", courseHandler.ApproveCourse)
 
-    mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
-    mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        http.ServeFile(w, r, "static/index.html")
-    })
+	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			log.Printf("404 not found: %s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		http.ServeFile(w, r, "static/index.html")
+	})
 
-	log.Println("Server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	addr := ":8080"
+	log.Printf("server starting on %s", addr)
+	if err := http.ListenAndServe(addr, mux); err != nil {
+		log.Fatalf("server failed to start: %v", err)
+	}
 }

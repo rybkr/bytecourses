@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"github.com/rybkr/bytecourses/internal/models"
+	"log"
 )
 
 func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
@@ -11,11 +12,19 @@ func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
         VALUES ($1, $2, $3)
         RETURNING id, created_at, updated_at`
 
-	return s.db.QueryRow(ctx, query,
+	err := s.db.QueryRow(ctx, query,
 		course.InstructorID,
 		course.Title,
 		course.Description,
 	).Scan(&course.ID, &course.CreatedAt, &course.UpdatedAt)
+
+	if err != nil {
+		log.Printf("failed to create course: %v", err)
+		return err
+	}
+
+	log.Printf("course created: id=%d, title=%s", course.ID, course.Title)
+	return nil
 }
 
 func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]*models.Course, error) {
@@ -27,6 +36,7 @@ func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]
 
 	rows, err := s.db.Query(ctx, query, status)
 	if err != nil {
+		log.Printf("failed to query courses: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
@@ -39,15 +49,35 @@ func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]
 			&c.Status, &c.CreatedAt, &c.UpdatedAt,
 		)
 		if err != nil {
+			log.Printf("failed to scan course row: %v", err)
 			return nil, err
 		}
 		courses = append(courses, &c)
 	}
-	return courses, rows.Err()
+
+	if err := rows.Err(); err != nil {
+		log.Printf("error iterating course rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("retrieved %d courses", len(courses))
+	return courses, nil
 }
 
 func (s *Store) UpdateCourseStatus(ctx context.Context, courseID int, status models.CourseStatus) error {
-	query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
-	_, err := s.db.Exec(ctx, query, status, courseID)
-	return err
+    query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
+    result, err := s.db.Exec(ctx, query, status, courseID)
+    if err != nil {
+        log.Printf("failed to update course status: courseID=%d, error=%v", courseID, err)
+        return err
+    }
+    
+    rowsAffected := result.RowsAffected()
+    if rowsAffected == 0 {
+        log.Printf("no course found with id=%d", courseID)
+    } else {
+        log.Printf("course status updated: id=%d, status=%s", courseID, status)
+    }
+    
+    return nil
 }

@@ -36,7 +36,13 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
-	courses, err := h.store.GetCourses(r.Context())
+	var status *models.CourseStatus
+	if s := r.URL.Query().Get("status"); s != "" {
+		st := models.CourseStatus(s)
+		status = &st
+	}
+
+	courses, err := h.store.GetCourses(r.Context(), status)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

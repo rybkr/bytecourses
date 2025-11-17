@@ -18,13 +18,14 @@ func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
 	).Scan(&course.ID, &course.CreatedAt, &course.UpdatedAt)
 }
 
-func (s *Store) GetCourses(ctx context.Context) ([]*models.Course, error) {
+func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]*models.Course, error) {
 	query := `
         SELECT id, instructor_id, title, description, status, created_at, updated_at
         FROM courses
+        WHERE ($1::text IS NULL OR status = $1)
         ORDER BY created_at DESC`
 
-	rows, err := s.db.Query(ctx, query)
+	rows, err := s.db.Query(ctx, query, status)
 	if err != nil {
 		return nil, err
 	}

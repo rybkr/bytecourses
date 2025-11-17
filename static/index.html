@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Byte Course</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Byte Course</h1>
+        <nav>
+            <button id="viewCoursesBtn" class="active">Browse Courses</button>
+            <button id="submitCourseBtn">Submit Course</button>
+        </nav>
+    </header>
+
+    <main>
+        <section id="coursesView" class="view active">
+            <div class="filters">
+                <label>
+                    Status:
+                    <select id="statusFilter">
+                        <option value="">All</option>
+                        <option value="approved">Approved</option>
+                        <option value="pending">Pending</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                </label>
+            </div>
+            <div id="coursesList"></div>
+        </section>
+
+        <section id="submitView" class="view">
+            <h2>Submit a Course</h2>
+            <form id="courseForm">
+                <div class="form-group">
+                    <label for="title">Course Title</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" rows="6" required></textarea>
+                </div>
+                
+                <button type="submit">Submit for Approval</button>
+            </form>
+            <div id="formMessage"></div>
+        </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

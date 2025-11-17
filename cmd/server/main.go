@@ -27,6 +27,11 @@ func main() {
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
 	mux.HandleFunc("PATCH /api/courses/approve", courseHandler.ApproveCourse)
 
+    mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+    mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+        http.ServeFile(w, r, "static/index.html")
+    })
+
 	log.Println("Server starting on :8080")
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

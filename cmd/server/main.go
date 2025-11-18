@@ -50,6 +50,9 @@ func main() {
 	mux.HandleFunc("PATCH /api/admin/courses/reject", middleware.RequireAdmin(adminHandler.RejectCourse))
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.HandleFunc("/about/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/about/index.html")
+	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {
 			log.Printf("404 not found: %s", r.URL.Path)

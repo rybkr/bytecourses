@@ -15,6 +15,8 @@ const app = {
 	},
 
 	initElements() {
+		this.homeView = document.getElementById("homeView");
+		this.aboutView = document.getElementById("aboutView");
 		this.authView = document.getElementById("authView");
 		this.coursesView = document.getElementById("coursesView");
 		this.submitView = document.getElementById("submitView");
@@ -28,6 +30,7 @@ const app = {
 		this.mobileNav = document.getElementById("mobileNav");
 		this.mobileOverlay = document.getElementById("mobileOverlay");
 
+		this.homeBtn = document.getElementById("homeBtn");
 		this.viewCoursesBtn = document.getElementById("viewCoursesBtn");
 		this.submitCourseBtn = document.getElementById("submitCourseBtn");
 		this.myCoursesBtn = document.getElementById("myCoursesBtn");
@@ -35,15 +38,20 @@ const app = {
 		this.adminBtn = document.getElementById("adminBtn");
 		this.logoutBtn = document.getElementById("logoutBtn");
 
+		this.mobileHomeBtn = document.getElementById("mobileHomeBtn");
 		this.mobileViewCoursesBtn = document.getElementById("mobileViewCoursesBtn");
 		this.mobileSubmitCourseBtn = document.getElementById("mobileSubmitCourseBtn");
 		this.mobileMyCoursesBtn = document.getElementById("mobileMyCoursesBtn");
 		this.mobileProfileBtn = document.getElementById("mobileProfileBtn");
 		this.mobileAdminBtn = document.getElementById("mobileAdminBtn");
 		this.mobileLogoutBtn = document.getElementById("mobileLogoutBtn");
+
+		this.getStartedBtn = document.getElementById("getStartedBtn");
+		this.aboutGetStartedBtn = document.getElementById("aboutGetStartedBtn");
 	},
 
 	initEventListeners() {
+		this.homeBtn.addEventListener("click", () => this.showView("home"));
 		this.viewCoursesBtn.addEventListener("click", () =>
 			this.showView("courses"),
 		);
@@ -57,6 +65,7 @@ const app = {
 		this.adminBtn.addEventListener("click", () => this.showView("admin"));
 		this.logoutBtn.addEventListener("click", () => authModule.logout());
 
+		this.mobileHomeBtn.addEventListener("click", () => this.showView("home"));
 		this.mobileViewCoursesBtn.addEventListener("click", () =>
 			this.showView("courses"),
 		);
@@ -71,6 +80,9 @@ const app = {
 		);
 		this.mobileAdminBtn.addEventListener("click", () => this.showView("admin"));
 		this.mobileLogoutBtn.addEventListener("click", () => authModule.logout());
+
+		this.getStartedBtn.addEventListener("click", () => this.showView("auth"));
+		this.aboutGetStartedBtn.addEventListener("click", () => this.showView("auth"));
 
 		this.hamburgerBtn.addEventListener("click", () => this.toggleMobileMenu());
 		this.mobileOverlay.addEventListener("click", () => this.closeMobileMenu());
@@ -87,23 +99,34 @@ const app = {
 	showView(view) {
 		this.closeMobileMenu();
 
+		this.homeView.classList.remove("active");
+		this.aboutView.classList.remove("active");
+		this.authView.classList.remove("active");
 		this.coursesView.classList.remove("active");
 		this.submitView.classList.remove("active");
 		this.myCoursesView.classList.remove("active");
 		this.profileView.classList.remove("active");
 		this.adminView.classList.remove("active");
+		this.homeBtn.classList.remove("active");
 		this.viewCoursesBtn.classList.remove("active");
 		this.submitCourseBtn.classList.remove("active");
 		this.myCoursesBtn.classList.remove("active");
 		this.profileBtn.classList.remove("active");
 		this.adminBtn.classList.remove("active");
+		this.mobileHomeBtn.classList.remove("active");
 		this.mobileViewCoursesBtn.classList.remove("active");
 		this.mobileSubmitCourseBtn.classList.remove("active");
 		this.mobileMyCoursesBtn.classList.remove("active");
 		this.mobileProfileBtn.classList.remove("active");
 		this.mobileAdminBtn.classList.remove("active");
 
-		if (view === "courses") {
+		if (view === "home") {
+			this.homeView.classList.add("active");
+			this.homeBtn.classList.add("active");
+			this.mobileHomeBtn.classList.add("active");
+		} else if (view === "auth") {
+			this.authView.classList.add("active");
+		} else if (view === "courses") {
 			this.coursesView.classList.add("active");
 			this.viewCoursesBtn.classList.add("active");
 			this.mobileViewCoursesBtn.classList.add("active");
@@ -131,10 +154,22 @@ const app = {
 	},
 
 	showAuthenticatedUI() {
+		this.homeView.classList.remove("active");
+		this.aboutView.classList.remove("active");
 		this.authView.classList.remove("active");
 		this.coursesView.classList.add("active");
 		this.mainNav.style.display = "flex";
 		this.userInfo.style.display = "block";
+		this.homeBtn.style.display = "none";
+		this.viewCoursesBtn.style.display = "inline-block";
+		this.submitCourseBtn.style.display = "inline-block";
+		this.profileBtn.style.display = "inline-block";
+		this.logoutBtn.style.display = "inline-block";
+		this.mobileHomeBtn.style.display = "none";
+		this.mobileViewCoursesBtn.style.display = "block";
+		this.mobileSubmitCourseBtn.style.display = "block";
+		this.mobileProfileBtn.style.display = "block";
+		this.mobileLogoutBtn.style.display = "block";
 
 		if (this.currentUser) {
 			const userText = `Logged in as ${this.currentUser.email} (${this.currentUser.role})`;
@@ -157,18 +192,30 @@ const app = {
 	},
 
 	showUnauthenticatedUI() {
-		this.authView.classList.add("active");
+		this.homeView.classList.add("active");
+		this.aboutView.classList.remove("active");
+		this.authView.classList.remove("active");
 		this.coursesView.classList.remove("active");
 		this.submitView.classList.remove("active");
 		this.myCoursesView.classList.remove("active");
 		this.profileView.classList.remove("active");
 		this.adminView.classList.remove("active");
-		this.mainNav.style.display = "none";
+		this.mainNav.style.display = "flex";
 		this.userInfo.style.display = "none";
-		this.adminBtn.style.display = "none";
+		this.homeBtn.style.display = "inline-block";
+		this.viewCoursesBtn.style.display = "none";
+		this.submitCourseBtn.style.display = "none";
 		this.myCoursesBtn.style.display = "none";
-		this.mobileAdminBtn.style.display = "none";
+		this.profileBtn.style.display = "none";
+		this.adminBtn.style.display = "none";
+		this.logoutBtn.style.display = "none";
+		this.mobileHomeBtn.style.display = "block";
+		this.mobileViewCoursesBtn.style.display = "none";
+		this.mobileSubmitCourseBtn.style.display = "none";
 		this.mobileMyCoursesBtn.style.display = "none";
+		this.mobileProfileBtn.style.display = "none";
+		this.mobileAdminBtn.style.display = "none";
+		this.mobileLogoutBtn.style.display = "none";
 		this.closeMobileMenu();
 		document.getElementById("authForm").reset();
 	},

@@ -123,7 +123,7 @@ header h1 {
 	height: 3px;
 	background: var(--color-text);
 	border-radius: 2px;
-	transition: all 0.3s ease;
+	transition: all 0.15s ease;
 	transform-origin: center;
 	left: 50%;
 	transform: translateX(-50%);
@@ -223,7 +223,7 @@ nav button#profileBtn {
 	background: var(--color-white);
 	box-shadow: var(--shadow-lg);
 	z-index: 1000;
-	transition: left 0.3s ease;
+	transition: left 0.15s ease;
 	overflow-y: auto;
 	padding: var(--spacing-2xl) var(--spacing-xl);
 	flex-direction: column;
@@ -242,6 +242,7 @@ nav button#profileBtn {
 	border-radius: var(--radius-sm);
 	text-align: left;
 	border-bottom: none;
+	font-size: 0.9375rem;
 }
 
 .mobile-nav button.active {
@@ -259,7 +260,7 @@ nav button#profileBtn {
 	background: rgba(0, 0, 0, 0.5);
 	z-index: 999;
 	opacity: 0;
-	transition: opacity 0.3s ease;
+	transition: opacity 0.15s ease;
 }
 
 .mobile-overlay.open {
@@ -285,7 +286,7 @@ main {
 	display: none;
 	opacity: 0;
 	visibility: hidden;
-	transition: opacity 0.3s ease, visibility 0.3s ease;
+	transition: opacity 0.15s ease, visibility 0.15s ease;
 	pointer-events: none;
 }
 
@@ -739,7 +740,6 @@ button[type="submit"]:hover,
 	}
 
 	header h1 {
-		font-size: 1.5rem;
 		margin-bottom: var(--spacing-sm);
 	}
 

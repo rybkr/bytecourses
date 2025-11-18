@@ -94,12 +94,66 @@ header {
 	box-shadow: var(--shadow-sm);
 	margin-bottom: var(--spacing-2xl);
 	border-bottom: 1px solid var(--color-border);
+	position: relative;
 }
 
 header h1 {
 	margin-bottom: var(--spacing-md);
 	font-size: 1.875rem;
 	letter-spacing: -0.02em;
+}
+
+.hamburger {
+	display: none;
+	width: 30px;
+	height: 30px;
+	background: transparent;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	z-index: 1001;
+	position: absolute;
+	left: var(--spacing-xl);
+	top: var(--spacing-xl);
+}
+
+.hamburger span {
+	position: absolute;
+	width: 100%;
+	height: 3px;
+	background: var(--color-text);
+	border-radius: 2px;
+	transition: all 0.3s ease;
+	transform-origin: center;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.hamburger span:nth-child(1) {
+	top: calc(50% - 8px);
+}
+
+.hamburger span:nth-child(2) {
+	top: 50%;
+	transform: translateX(-50%);
+}
+
+.hamburger span:nth-child(3) {
+	top: calc(50% + 8px);
+}
+
+.hamburger.open span:nth-child(1) {
+	top: 50%;
+	transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.hamburger.open span:nth-child(2) {
+	opacity: 0;
+}
+
+.hamburger.open span:nth-child(3) {
+	top: 50%;
+	transform: translate(-50%, -50%) rotate(-45deg);
 }
 
 nav {
@@ -119,6 +173,9 @@ nav button {
 	border-bottom: 2px solid transparent;
 	transition: all 0.2s ease;
 	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
 }
 
 nav button:hover {
@@ -129,10 +186,91 @@ nav button:hover {
 nav button.active {
 	color: var(--color-primary);
 	border-bottom-color: var(--color-primary);
+	background: rgba(233, 30, 99, 0.1);
+}
+
+nav button#profileBtn {
+	margin-left: var(--spacing-xl);
+}
+
+.nav-icon {
+	width: 18px;
+	height: 18px;
+	margin-right: var(--spacing-sm);
+	vertical-align: middle;
+	flex-shrink: 0;
 }
 
 #userInfo {
 	margin-top: var(--spacing-md);
+	color: var(--color-text-light);
+	font-size: 0.875rem;
+}
+
+.user-info {
+	margin-top: var(--spacing-md);
+	color: var(--color-text-light);
+	font-size: 0.875rem;
+}
+
+.mobile-nav {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: -100%;
+	width: 280px;
+	height: 100vh;
+	background: var(--color-white);
+	box-shadow: var(--shadow-lg);
+	z-index: 1000;
+	transition: left 0.3s ease;
+	overflow-y: auto;
+	padding: var(--spacing-2xl) var(--spacing-xl);
+	flex-direction: column;
+	gap: var(--spacing-sm);
+}
+
+.mobile-nav.open {
+	display: flex;
+	left: 0;
+}
+
+.mobile-nav button {
+	width: 100%;
+	justify-content: flex-start;
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-radius: var(--radius-sm);
+	text-align: left;
+	border-bottom: none;
+}
+
+.mobile-nav button.active {
+	color: var(--color-primary);
+	background: rgba(233, 30, 99, 0.1);
+}
+
+.mobile-overlay {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 999;
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.mobile-overlay.open {
+	display: block;
+	opacity: 1;
+}
+
+.mobile-user-info {
+	margin-top: var(--spacing-xl);
+	padding-top: var(--spacing-xl);
+	border-top: 1px solid var(--color-border);
 	color: var(--color-text-light);
 	font-size: 0.875rem;
 }
@@ -145,10 +283,17 @@ main {
 
 .view {
 	display: none;
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.3s ease, visibility 0.3s ease;
+	pointer-events: none;
 }
 
 .view.active {
 	display: block;
+	opacity: 1;
+	visibility: visible;
+	pointer-events: auto;
 }
 
 .filters {
@@ -587,9 +732,29 @@ button[type="submit"]:hover,
 	color: var(--color-text);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
 	header {
 		padding: var(--spacing-lg);
+		padding-left: calc(var(--spacing-lg) + 30px + var(--spacing-md));
+	}
+
+	header h1 {
+		font-size: 1.5rem;
+		margin-bottom: var(--spacing-sm);
+	}
+
+	.hamburger {
+		display: flex;
+		left: var(--spacing-lg);
+		top: var(--spacing-lg);
+	}
+
+	.desktop-nav {
+		display: none !important;
+	}
+
+	.user-info {
+		display: none !important;
 	}
 
 	main {
@@ -605,13 +770,14 @@ button[type="submit"]:hover,
 		align-items: flex-start;
 		gap: var(--spacing-sm);
 	}
+}
 
-	nav {
-		gap: var(--spacing-xs);
+@media (min-width: 1025px) {
+	.mobile-nav {
+		display: none !important;
 	}
 
-	nav button {
-		padding: var(--spacing-sm) var(--spacing-md);
-		font-size: 0.875rem;
+	.hamburger {
+		display: none !important;
 	}
 }

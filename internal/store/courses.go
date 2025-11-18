@@ -221,3 +221,51 @@ func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course
 
 	return &course, nil
 }
+
+type CourseWithInstructor struct {
+	*models.Course
+	InstructorName  string `json:"instructor_name"`
+	InstructorEmail string `json:"instructor_email"`
+}
+
+func (s *Store) GetCoursesWithInstructors(ctx context.Context, status *models.CourseStatus) ([]*CourseWithInstructor, error) {
+	query := `
+        SELECT c.id, c.instructor_id, c.title, c.description, c.status, c.created_at, c.updated_at,
+               COALESCE(u.name, ''), u.email
+        FROM courses c
+        JOIN users u ON c.instructor_id = u.id
+        WHERE ($1::text IS NULL OR c.status = $1)
+        ORDER BY c.created_at DESC`
+
+	rows, err := s.db.Query(ctx, query, status)
+	if err != nil {
+		log.Printf("failed to query courses with instructors: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses []*CourseWithInstructor
+	for rows.Next() {
+		var cwi CourseWithInstructor
+		var c models.Course
+		err := rows.Scan(
+			&c.ID, &c.InstructorID, &c.Title, &c.Description,
+			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+			&cwi.InstructorName, &cwi.InstructorEmail,
+		)
+		if err != nil {
+			log.Printf("failed to scan course row: %v", err)
+			return nil, err
+		}
+		cwi.Course = &c
+		courses = append(courses, &cwi)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("error iterating course rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("retrieved %d courses with instructors", len(courses))
+	return courses, nil
+}

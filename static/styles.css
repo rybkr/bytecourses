@@ -480,3 +480,33 @@ button[type="submit"]:hover {
 	background: #f8d7da;
 	color: #721c24;
 }
+
+.instructor-info {
+	font-size: 0.9rem;
+	color: #666;
+	margin-top: 0.5rem;
+}
+
+.instructor-name {
+	font-weight: 500;
+	color: #3498db;
+}
+
+#profileMessage {
+	margin-bottom: 1rem;
+	padding: 1rem;
+	border-radius: 4px;
+	display: none;
+}
+
+#profileMessage.success {
+	display: block;
+	background: #d4edda;
+	color: #155724;
+}
+
+#profileMessage.error {
+	display: block;
+	background: #f8d7da;
+	color: #721c24;
+}

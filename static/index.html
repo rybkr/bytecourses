@@ -13,6 +13,7 @@
             <button id="viewCoursesBtn" class="active">Browse Courses</button>
             <button id="submitCourseBtn">Submit Course</button>
             <button id="myCoursesBtn" style="display: none;">My Courses</button>
+            <button id="profileBtn">Profile</button>
             <button id="adminBtn" style="display: none;">Admin</button>
             <button id="logoutBtn">Logout</button>
         </nav>
@@ -93,6 +94,44 @@
             <h2>My Courses</h2>
             <div id="myCoursesMessage"></div>
             <div id="myCoursesList"></div>
+        </section>
+
+        <section id="profileView" class="view">
+            <h2>My Profile</h2>
+            <div id="profileMessage"></div>
+            <form id="profileForm">
+                <div class="form-group">
+                    <label for="profileName">Name</label>
+                    <input type="text" id="profileName" name="name" placeholder="Your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label for="profileBio">Bio</label>
+                    <textarea id="profileBio" name="bio" rows="4" placeholder="Tell us about yourself..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="profileEmail" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Role</label>
+                    <input type="text" id="profileRole" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Member Since</label>
+                    <input type="text" id="profileCreatedAt" disabled>
+                </div>
+                
+                <div class="form-group">
+                    <label>Last Updated</label>
+                    <input type="text" id="profileUpdatedAt" disabled>
+                </div>
+                
+                <button type="submit">Update Profile</button>
+            </form>
         </section>
 
         <section id="adminView" class="view">

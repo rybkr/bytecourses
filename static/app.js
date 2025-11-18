@@ -37,6 +37,11 @@ const editModal = document.getElementById("editModal");
 const editCourseForm = document.getElementById("editCourseForm");
 const closeModal = document.getElementsByClassName("close")[0];
 
+const profileBtn = document.getElementById("profileBtn");
+const profileView = document.getElementById("profileView");
+const profileForm = document.getElementById("profileForm");
+const profileMessage = document.getElementById("profileMessage");
+
 let isSignupMode = false;
 
 if (authToken) {
@@ -200,6 +205,11 @@ editCourseForm.addEventListener("submit", async (e) => {
 	}
 });
 
+profileBtn.addEventListener("click", () => {
+	showView("profile");
+	loadProfile();
+});
+
 function parseJWT(token) {
 	try {
 		const base64Url = token.split(".")[1];
@@ -268,6 +278,7 @@ function showUnauthenticatedUI() {
 	coursesView.classList.remove("active");
 	submitView.classList.remove("active");
 	myCoursesView.classList.remove("active");
+	profileView.classList.remove("active");
 	adminView.classList.remove("active");
 	mainNav.style.display = "none";
 	userInfo.style.display = "none";
@@ -280,10 +291,12 @@ function showView(view) {
 	coursesView.classList.remove("active");
 	submitView.classList.remove("active");
 	myCoursesView.classList.remove("active");
+	profileView.classList.remove("active");
 	adminView.classList.remove("active");
 	viewCoursesBtn.classList.remove("active");
 	submitCourseBtn.classList.remove("active");
 	myCoursesBtn.classList.remove("active");
+	profileBtn.classList.remove("active");
 	adminBtn.classList.remove("active");
 
 	if (view === "courses") {
@@ -295,6 +308,9 @@ function showView(view) {
 	} else if (view === "myCourses") {
 		myCoursesView.classList.add("active");
 		myCoursesBtn.classList.add("active");
+	} else if (view === "profile") {
+		profileView.classList.add("active");
+		profileBtn.classList.add("active");
 	} else if (view === "admin") {
 		adminView.classList.add("active");
 		adminBtn.classList.add("active");
@@ -528,8 +544,10 @@ function renderCourses(courses) {
         <div class="course-card">
             <h3>${escapeHtml(course.title)}</h3>
             <p>${escapeHtml(course.description)}</p>
+            <div class="instructor-info">
+                <span>By: <span class="instructor-name">${escapeHtml(course.instructor_name || course.instructor_email || "Unknown")}</span></span>
+            </div>
             <div class="course-meta">
-                <span>Instructor ID: ${course.instructor_id}</span>
                 <span class="status-badge status-${course.status}">${course.status}</span>
             </div>
         </div>
@@ -563,4 +581,67 @@ function escapeHtml(text) {
 	const div = document.createElement("div");
 	div.textContent = text;
 	return div.innerHTML;
+}
+
+profileForm.addEventListener("submit", async (e) => {
+	e.preventDefault();
+
+	const formData = {
+		name: document.getElementById("profileName").value,
+		bio: document.getElementById("profileBio").value,
+	};
+
+	try {
+		const response = await fetch(`${API_BASE}/profile`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${authToken}`,
+			},
+			body: JSON.stringify(formData),
+		});
+
+		if (response.ok) {
+			showProfileMessage("Profile updated successfully!", "success");
+			loadProfile();
+		} else {
+			showProfileMessage("Failed to update profile", "error");
+		}
+	} catch (error) {
+		showProfileMessage("Error: " + error.message, "error");
+	}
+});
+
+async function loadProfile() {
+	try {
+		const response = await fetch(`${API_BASE}/profile`, {
+			headers: {
+				Authorization: `Bearer ${authToken}`,
+			},
+		});
+
+		if (response.ok) {
+			const profile = await response.json();
+			document.getElementById("profileName").value = profile.name || "";
+			document.getElementById("profileBio").value = profile.bio || "";
+			document.getElementById("profileEmail").value = profile.email;
+			document.getElementById("profileRole").value = profile.role;
+			document.getElementById("profileCreatedAt").value = new Date(
+				profile.created_at,
+			).toLocaleDateString();
+			document.getElementById("profileUpdatedAt").value = new Date(
+				profile.updated_at,
+			).toLocaleDateString();
+		}
+	} catch (error) {
+		console.error("Error loading profile:", error);
+	}
+}
+
+function showProfileMessage(message, type) {
+	profileMessage.textContent = message;
+	profileMessage.className = type;
+	setTimeout(() => {
+		profileMessage.style.display = "none";
+	}, 3000);
 }

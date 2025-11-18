@@ -59,7 +59,7 @@ func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
 		status = &approved
 	}
 
-	courses, err := h.store.GetCourses(r.Context(), status)
+	courses, err := h.store.GetCoursesWithInstructors(r.Context(), status)
 	if err != nil {
 		log.Printf("failed to get courses in handler: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)

@@ -18,10 +18,10 @@ func (s *Store) CreateUser(ctx context.Context, email, password string, role mod
 	query := `
         INSERT INTO users (email, password_hash, role)
         VALUES ($1, $2, $3)
-        RETURNING id, email, role, created_at`
+        RETURNING id, email, COALESCE(name, ''), COALESCE(bio, ''), role, created_at, updated_at`
 
 	err = s.db.QueryRow(ctx, query, email, string(hash), role).Scan(
-		&user.ID, &user.Email, &user.Role, &user.CreatedAt,
+		&user.ID, &user.Email, &user.Name, &user.Bio, &user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -35,10 +35,10 @@ func (s *Store) CreateUser(ctx context.Context, email, password string, role mod
 
 func (s *Store) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	var user models.User
-	query := `SELECT id, email, password_hash, role, created_at FROM users WHERE email = $1`
+	query := `SELECT id, email, password_hash, COALESCE(name, ''), COALESCE(bio, ''), role, created_at, updated_at FROM users WHERE email = $1`
 
 	err := s.db.QueryRow(ctx, query, email).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.Role, &user.CreatedAt,
+		&user.ID, &user.Email, &user.PasswordHash, &user.Name, &user.Bio, &user.Role, &user.CreatedAt, &user.UpdatedAt,
 	)
 
 	if err != nil {
@@ -47,6 +47,44 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*models.User,
 	}
 
 	return &user, nil
+}
+
+func (s *Store) GetUserByID(ctx context.Context, userID int) (*models.User, error) {
+	var user models.User
+	query := `SELECT id, email, COALESCE(name, ''), COALESCE(bio, ''), role, created_at, updated_at FROM users WHERE id = $1`
+
+	err := s.db.QueryRow(ctx, query, userID).Scan(
+		&user.ID, &user.Email, &user.Name, &user.Bio, &user.Role, &user.CreatedAt, &user.UpdatedAt,
+	)
+
+	if err != nil {
+		log.Printf("failed to get user by id: %v", err)
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (s *Store) UpdateUserProfile(ctx context.Context, userID int, name, bio string) error {
+	query := `
+        UPDATE users 
+        SET name = $1, bio = $2, updated_at = NOW() 
+        WHERE id = $3`
+
+	result, err := s.db.Exec(ctx, query, name, bio, userID)
+	if err != nil {
+		log.Printf("failed to update user profile: userID=%d, error=%v", userID, err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("no user found with id=%d", userID)
+	} else {
+		log.Printf("user profile updated: id=%d", userID)
+	}
+
+	return nil
 }
 
 func (s *Store) ValidateUser(ctx context.Context, email, password string) (*models.User, error) {
@@ -65,7 +103,7 @@ func (s *Store) ValidateUser(ctx context.Context, email, password string) (*mode
 }
 
 func (s *Store) GetAllUsers(ctx context.Context) ([]*models.User, error) {
-	query := `SELECT id, email, role, created_at FROM users ORDER BY created_at DESC`
+	query := `SELECT id, email, COALESCE(name, ''), COALESCE(bio, ''), role, created_at, updated_at FROM users ORDER BY created_at DESC`
 
 	rows, err := s.db.Query(ctx, query)
 	if err != nil {
@@ -77,7 +115,7 @@ func (s *Store) GetAllUsers(ctx context.Context) ([]*models.User, error) {
 	var users []*models.User
 	for rows.Next() {
 		var u models.User
-		err := rows.Scan(&u.ID, &u.Email, &u.Role, &u.CreatedAt)
+		err := rows.Scan(&u.ID, &u.Email, &u.Name, &u.Bio, &u.Role, &u.CreatedAt, &u.UpdatedAt)
 		if err != nil {
 			log.Printf("failed to scan user row: %v", err)
 			return nil, err

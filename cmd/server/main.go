@@ -26,11 +26,16 @@ func main() {
 	courseHandler := handlers.NewCourseHandler(store)
 	adminHandler := handlers.NewAdminHandler(store)
 	instructorHandler := handlers.NewInstructorHandler(store)
+	userHandler := handlers.NewUserHandler(store)
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /api/auth/signup", authHandler.Signup)
 	mux.HandleFunc("POST /api/auth/login", authHandler.Login)
+
+	mux.HandleFunc("GET /api/profile", middleware.Auth(userHandler.GetProfile))
+	mux.HandleFunc("PATCH /api/profile", middleware.Auth(userHandler.UpdateProfile))
+	mux.HandleFunc("GET /api/users", userHandler.GetUserByID)
 
 	mux.HandleFunc("POST /api/courses", middleware.Auth(courseHandler.CreateCourse))
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)

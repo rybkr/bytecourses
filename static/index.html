@@ -12,6 +12,7 @@
         <nav id="mainNav" style="display: none;">
             <button id="viewCoursesBtn" class="active">Browse Courses</button>
             <button id="submitCourseBtn">Submit Course</button>
+            <button id="myCoursesBtn" style="display: none;">My Courses</button>
             <button id="adminBtn" style="display: none;">Admin</button>
             <button id="logoutBtn">Logout</button>
         </nav>
@@ -88,6 +89,12 @@
             <div id="formMessage"></div>
         </section>
 
+        <section id="myCoursesView" class="view">
+            <h2>My Courses</h2>
+            <div id="myCoursesMessage"></div>
+            <div id="myCoursesList"></div>
+        </section>
+
         <section id="adminView" class="view">
             <h2>Admin Panel</h2>
             
@@ -102,6 +109,28 @@
             </div>
         </section>
     </main>
+
+    <!-- Edit Course Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Course</h2>
+            <form id="editCourseForm">
+                <input type="hidden" id="editCourseId">
+                <div class="form-group">
+                    <label for="editTitle">Course Title</label>
+                    <input type="text" id="editTitle" name="title" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="editDescription">Description</label>
+                    <textarea id="editDescription" name="description" rows="6" required></textarea>
+                </div>
+                
+                <button type="submit">Update Course</button>
+            </form>
+        </div>
+    </div>
 
     <script src="/static/app.js"></script>
 </body>

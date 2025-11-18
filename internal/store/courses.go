@@ -142,3 +142,82 @@ func (s *Store) RejectCourse(ctx context.Context, courseID int) error {
 
 	return nil
 }
+
+func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([]*models.Course, error) {
+	query := `
+        SELECT id, instructor_id, title, description, status, created_at, updated_at
+        FROM courses
+        WHERE instructor_id = $1
+        ORDER BY created_at DESC`
+
+	rows, err := s.db.Query(ctx, query, instructorID)
+	if err != nil {
+		log.Printf("failed to query courses by instructor: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var courses []*models.Course
+	for rows.Next() {
+		var c models.Course
+		err := rows.Scan(
+			&c.ID, &c.InstructorID, &c.Title, &c.Description,
+			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+		)
+		if err != nil {
+			log.Printf("failed to scan course row: %v", err)
+			return nil, err
+		}
+		courses = append(courses, &c)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("error iterating course rows: %v", err)
+		return nil, err
+	}
+
+	log.Printf("retrieved %d courses for instructor %d", len(courses), instructorID)
+	return courses, nil
+}
+
+func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string) error {
+	query := `
+        UPDATE courses 
+        SET title = $1, description = $2, updated_at = NOW() 
+        WHERE id = $3`
+
+	result, err := s.db.Exec(ctx, query, title, description, courseID)
+	if err != nil {
+		log.Printf("failed to update course: courseID=%d, error=%v", courseID, err)
+		return err
+	}
+
+	rowsAffected := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Printf("no course found with id=%d", courseID)
+	} else {
+		log.Printf("course updated: id=%d", courseID)
+	}
+
+	return nil
+}
+
+func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course, error) {
+	var course models.Course
+	query := `
+        SELECT id, instructor_id, title, description, status, created_at, updated_at
+        FROM courses
+        WHERE id = $1`
+
+	err := s.db.QueryRow(ctx, query, courseID).Scan(
+		&course.ID, &course.InstructorID, &course.Title, &course.Description,
+		&course.Status, &course.CreatedAt, &course.UpdatedAt,
+	)
+
+	if err != nil {
+		log.Printf("failed to get course by id: %v", err)
+		return nil, err
+	}
+
+	return &course, nil
+}

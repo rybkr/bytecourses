@@ -6,6 +6,7 @@ let currentUser = null;
 const authView = document.getElementById("authView");
 const coursesView = document.getElementById("coursesView");
 const submitView = document.getElementById("submitView");
+const myCoursesView = document.getElementById("myCoursesView");
 const adminView = document.getElementById("adminView");
 const mainNav = document.getElementById("mainNav");
 const userInfo = document.getElementById("userInfo");
@@ -20,6 +21,7 @@ const authMessage = document.getElementById("authMessage");
 
 const viewCoursesBtn = document.getElementById("viewCoursesBtn");
 const submitCourseBtn = document.getElementById("submitCourseBtn");
+const myCoursesBtn = document.getElementById("myCoursesBtn");
 const adminBtn = document.getElementById("adminBtn");
 const logoutBtn = document.getElementById("logoutBtn");
 const coursesList = document.getElementById("coursesList");
@@ -28,12 +30,28 @@ const statusFilter = document.getElementById("statusFilter");
 const formMessage = document.getElementById("formMessage");
 const usersList = document.getElementById("usersList");
 const pendingCoursesList = document.getElementById("pendingCoursesList");
+const myCoursesList = document.getElementById("myCoursesList");
+const myCoursesMessage = document.getElementById("myCoursesMessage");
+
+const editModal = document.getElementById("editModal");
+const editCourseForm = document.getElementById("editCourseForm");
+const closeModal = document.getElementsByClassName("close")[0];
 
 let isSignupMode = false;
 
 if (authToken) {
 	fetchCurrentUser();
 }
+
+closeModal.onclick = function () {
+	editModal.style.display = "none";
+};
+
+window.onclick = function (event) {
+	if (event.target == editModal) {
+		editModal.style.display = "none";
+	}
+};
 
 authToggleBtn.addEventListener("click", () => {
 	isSignupMode = !isSignupMode;
@@ -104,6 +122,11 @@ submitCourseBtn.addEventListener("click", () => {
 	showView("submit");
 });
 
+myCoursesBtn.addEventListener("click", () => {
+	showView("myCourses");
+	loadMyCourses();
+});
+
 adminBtn.addEventListener("click", () => {
 	showView("admin");
 	loadAdminData();
@@ -143,6 +166,40 @@ courseForm.addEventListener("submit", async (e) => {
 	}
 });
 
+editCourseForm.addEventListener("submit", async (e) => {
+	e.preventDefault();
+
+	const courseId = document.getElementById("editCourseId").value;
+	const formData = {
+		title: document.getElementById("editTitle").value,
+		description: document.getElementById("editDescription").value,
+	};
+
+	try {
+		const response = await fetch(
+			`${API_BASE}/instructor/courses?id=${courseId}`,
+			{
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${authToken}`,
+				},
+				body: JSON.stringify(formData),
+			},
+		);
+
+		if (response.ok) {
+			editModal.style.display = "none";
+			showMyCoursesMessage("Course updated successfully!", "success");
+			loadMyCourses();
+		} else {
+			alert("Failed to update course");
+		}
+	} catch (error) {
+		alert("Error: " + error.message);
+	}
+});
+
 function parseJWT(token) {
 	try {
 		const base64Url = token.split(".")[1];
@@ -165,14 +222,14 @@ async function fetchCurrentUser() {
 	const payload = parseJWT(authToken);
 	if (!payload) {
 		authToken = null;
-		sessionStorage.removeItem("authToken"); // Changed from localStorage
+		sessionStorage.removeItem("authToken");
 		showUnauthenticatedUI();
 		return;
 	}
 
 	if (payload.exp && payload.exp * 1000 < Date.now()) {
 		authToken = null;
-		sessionStorage.removeItem("authToken"); // Changed from localStorage
+		sessionStorage.removeItem("authToken");
 		showUnauthenticatedUI();
 		return;
 	}
@@ -199,6 +256,10 @@ function showAuthenticatedUI() {
 		if (currentUser.role === "admin") {
 			adminBtn.style.display = "inline-block";
 		}
+
+		if (currentUser.role === "instructor" || currentUser.role === "admin") {
+			myCoursesBtn.style.display = "inline-block";
+		}
 	}
 }
 
@@ -206,19 +267,23 @@ function showUnauthenticatedUI() {
 	authView.classList.add("active");
 	coursesView.classList.remove("active");
 	submitView.classList.remove("active");
+	myCoursesView.classList.remove("active");
 	adminView.classList.remove("active");
 	mainNav.style.display = "none";
 	userInfo.style.display = "none";
 	adminBtn.style.display = "none";
+	myCoursesBtn.style.display = "none";
 	authForm.reset();
 }
 
 function showView(view) {
 	coursesView.classList.remove("active");
 	submitView.classList.remove("active");
+	myCoursesView.classList.remove("active");
 	adminView.classList.remove("active");
 	viewCoursesBtn.classList.remove("active");
 	submitCourseBtn.classList.remove("active");
+	myCoursesBtn.classList.remove("active");
 	adminBtn.classList.remove("active");
 
 	if (view === "courses") {
@@ -227,6 +292,9 @@ function showView(view) {
 	} else if (view === "submit") {
 		submitView.classList.add("active");
 		submitCourseBtn.classList.add("active");
+	} else if (view === "myCourses") {
+		myCoursesView.classList.add("active");
+		myCoursesBtn.classList.add("active");
 	} else if (view === "admin") {
 		adminView.classList.add("active");
 		adminBtn.classList.add("active");
@@ -245,6 +313,25 @@ async function loadCourses() {
 		renderCourses(courses);
 	} catch (error) {
 		coursesList.innerHTML = "<p>Error loading courses</p>";
+	}
+}
+
+async function loadMyCourses() {
+	try {
+		const response = await fetch(`${API_BASE}/instructor/courses`, {
+			headers: {
+				Authorization: `Bearer ${authToken}`,
+			},
+		});
+
+		if (response.ok) {
+			const courses = await response.json();
+			renderMyCourses(courses);
+		} else {
+			myCoursesList.innerHTML = "<p>Error loading your courses</p>";
+		}
+	} catch (error) {
+		myCoursesList.innerHTML = "<p>Error loading your courses</p>";
 	}
 }
 
@@ -335,6 +422,62 @@ function renderPendingCourses(courses) {
 		.join("");
 }
 
+function renderMyCourses(courses) {
+	if (!courses || courses.length === 0) {
+		myCoursesList.innerHTML = "<p>You haven't created any courses yet</p>";
+		return;
+	}
+
+	myCoursesList.innerHTML = courses
+		.map(
+			(course) => `
+        <div class="my-course-card">
+            <h3>${escapeHtml(course.title)}</h3>
+            <p>${escapeHtml(course.description)}</p>
+            <div class="my-course-meta">
+                <span class="status-badge status-${course.status}">${course.status}</span>
+                <div class="my-course-actions">
+                    <button class="edit-btn" onclick="openEditModal(${course.id}, '${escapeHtml(course.title).replace(/'/g, "\\'")}', '${escapeHtml(course.description).replace(/'/g, "\\'")}')">Edit</button>
+                    <button class="delete-btn-small" onclick="deleteMyCourse(${course.id})">Delete</button>
+                </div>
+            </div>
+        </div>
+    `,
+		)
+		.join("");
+}
+
+function openEditModal(id, title, description) {
+	document.getElementById("editCourseId").value = id;
+	document.getElementById("editTitle").value = title;
+	document.getElementById("editDescription").value = description;
+	editModal.style.display = "block";
+}
+
+async function deleteMyCourse(id) {
+	if (!confirm("Are you sure you want to delete this course?")) {
+		return;
+	}
+
+	try {
+		const response = await fetch(`${API_BASE}/instructor/courses?id=${id}`, {
+			method: "DELETE",
+			headers: {
+				Authorization: `Bearer ${authToken}`,
+			},
+		});
+
+		if (response.ok) {
+			showMyCoursesMessage("Course deleted successfully", "success");
+			loadMyCourses();
+		} else {
+			alert("Failed to delete course");
+		}
+	} catch (error) {
+		alert("Error: " + error.message);
+	}
+}
+
 async function approveCourse(id) {
 	try {
 		const response = await fetch(`${API_BASE}/admin/courses/approve?id=${id}`, {
@@ -401,6 +544,14 @@ function showMessage(message, type) {
 	setTimeout(() => {
 		formMessage.style.display = "none";
 	}, 5000);
+}
+
+function showMyCoursesMessage(message, type) {
+	myCoursesMessage.textContent = message;
+	myCoursesMessage.className = type;
+	setTimeout(() => {
+		myCoursesMessage.style.display = "none";
+	}, 3000);
 }
 
 function showAuthMessage(message, type) {

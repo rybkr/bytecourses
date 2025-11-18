@@ -1,9 +1,11 @@
 package middleware
 
 import (
-	"github.com/rybkr/bytecourses/internal/models"
 	"log"
 	"net/http"
+
+	"github.com/rybkr/bytecourses/internal/helpers"
+	"github.com/rybkr/bytecourses/internal/models"
 )
 
 func RequireAdmin(next http.HandlerFunc) http.HandlerFunc {
@@ -11,13 +13,13 @@ func RequireAdmin(next http.HandlerFunc) http.HandlerFunc {
 		user, ok := GetUserFromContext(r.Context())
 		if !ok {
 			log.Println("user not found in context for admin check")
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			helpers.Unauthorized(w, "unauthorized")
 			return
 		}
 
 		if user.Role != models.RoleAdmin {
 			log.Printf("user %s attempted to access admin endpoint without admin role", user.Email)
-			http.Error(w, "forbidden: admin access required", http.StatusForbidden)
+			helpers.Forbidden(w, "forbidden: admin access required")
 			return
 		}
 

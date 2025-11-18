@@ -1,610 +1,617 @@
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	box-sizing: border-box;
 }
 
 :root {
-    --color-primary: #e91e63;
-    --color-primary-light: #f48fb1;
-    --color-primary-dark: #c2185b;
-    --color-accent-blue: #64b5f6;
-    --color-accent-blue-light: #90caf9;
-    --color-accent-blue-dark: #42a5f5;
-    --color-accent-violet: #9c27b0;
-    --color-accent-violet-light: #ba68c8;
-    --color-accent-violet-dark: #7b1fa2;
-    --color-success: #66bb6a;
-    --color-success-dark: #4caf50;
-    --color-danger: #ef5350;
-    --color-danger-dark: #e53935;
-    --color-warning: #ffa726;
-    --color-text: #1a1a2e;
-    --color-text-light: #6b7280;
-    --color-border: #e5e7eb;
-    --color-bg: #f8f9fa;
-    --color-white: #ffffff;
+	--color-primary: #e91e63;
+	--color-primary-light: #f48fb1;
+	--color-primary-dark: #c2185b;
+	--color-accent-blue: #64b5f6;
+	--color-accent-blue-light: #90caf9;
+	--color-accent-blue-dark: #42a5f5;
+	--color-accent-violet: #9c27b0;
+	--color-accent-violet-light: #ba68c8;
+	--color-accent-violet-dark: #7b1fa2;
+	--color-success: #66bb6a;
+	--color-success-dark: #4caf50;
+	--color-danger: #ef5350;
+	--color-danger-dark: #e53935;
+	--color-warning: #ffa726;
+	--color-text: #1a1a2e;
+	--color-text-light: #6b7280;
+	--color-border: #e5e7eb;
+	--color-bg: #f8f9fa;
+	--color-white: #ffffff;
 
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
-    --spacing-3xl: 4rem;
-    
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
-    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
-    --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+	--spacing-xs: 0.25rem;
+	--spacing-sm: 0.5rem;
+	--spacing-md: 1rem;
+	--spacing-lg: 1.5rem;
+	--spacing-xl: 2rem;
+	--spacing-2xl: 3rem;
+	--spacing-3xl: 4rem;
+
+	--radius-sm: 4px;
+	--radius-md: 8px;
+	--radius-lg: 12px;
+
+	--shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+	--shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+	--shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
 }
 
 body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    line-height: 1.6;
-    color: var(--color-text);
-    background: var(--color-bg);
-    font-size: 16px;
+	font-family:
+		-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+		Arial, sans-serif;
+	line-height: 1.6;
+	color: var(--color-text);
+	background: var(--color-bg);
+	font-size: 16px;
 }
 
-h1, h2, h3, h4, h5, h6 {
-    line-height: 1.2;
-    font-weight: 600;
-    color: var(--color-text);
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	line-height: 1.2;
+	font-weight: 600;
+	color: var(--color-text);
 }
 
 h1 {
-    font-size: 2rem;
-    margin-bottom: var(--spacing-lg);
+	font-size: 2rem;
+	margin-bottom: var(--spacing-lg);
 }
 
 h2 {
-    font-size: 1.75rem;
-    margin-bottom: var(--spacing-lg);
+	font-size: 1.75rem;
+	margin-bottom: var(--spacing-lg);
 }
 
 h3 {
-    font-size: 1.5rem;
-    margin-bottom: var(--spacing-md);
+	font-size: 1.5rem;
+	margin-bottom: var(--spacing-md);
 }
 
 h4 {
-    font-size: 1.25rem;
-    margin-bottom: var(--spacing-md);
+	font-size: 1.25rem;
+	margin-bottom: var(--spacing-md);
 }
 
 p {
-    margin-bottom: var(--spacing-md);
-    color: var(--color-text-light);
+	margin-bottom: var(--spacing-md);
+	color: var(--color-text-light);
 }
 
 header {
-    background: var(--color-white);
-    padding: var(--spacing-xl);
-    box-shadow: var(--shadow-sm);
-    margin-bottom: var(--spacing-2xl);
-    border-bottom: 1px solid var(--color-border);
+	background: var(--color-white);
+	padding: var(--spacing-xl);
+	box-shadow: var(--shadow-sm);
+	margin-bottom: var(--spacing-2xl);
+	border-bottom: 1px solid var(--color-border);
 }
 
 header h1 {
-    margin-bottom: var(--spacing-md);
-    font-size: 1.875rem;
-    letter-spacing: -0.02em;
+	margin-bottom: var(--spacing-md);
+	font-size: 1.875rem;
+	letter-spacing: -0.02em;
 }
 
 nav {
-    display: flex;
-    gap: var(--spacing-sm);
-    flex-wrap: wrap;
+	display: flex;
+	gap: var(--spacing-sm);
+	flex-wrap: wrap;
 }
 
 nav button {
-    background: none;
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    cursor: pointer;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    color: var(--color-text-light);
-    border-bottom: 2px solid transparent;
-    transition: all 0.2s ease;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+	background: none;
+	border: none;
+	padding: var(--spacing-sm) var(--spacing-lg);
+	cursor: pointer;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	color: var(--color-text-light);
+	border-bottom: 2px solid transparent;
+	transition: all 0.2s ease;
+	border-radius: var(--radius-sm) var(--radius-sm) 0 0;
 }
 
 nav button:hover {
-    color: var(--color-text);
-    background: var(--color-bg);
+	color: var(--color-text);
+	background: var(--color-bg);
 }
 
 nav button.active {
-    color: var(--color-primary);
-    border-bottom-color: var(--color-primary);
+	color: var(--color-primary);
+	border-bottom-color: var(--color-primary);
 }
 
 #userInfo {
-    margin-top: var(--spacing-md);
-    color: var(--color-text-light);
-    font-size: 0.875rem;
+	margin-top: var(--spacing-md);
+	color: var(--color-text-light);
+	font-size: 0.875rem;
 }
 
 main {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 var(--spacing-xl);
+	max-width: 1200px;
+	margin: 0 auto;
+	padding: 0 var(--spacing-xl);
 }
 
 .view {
-    display: none;
+	display: none;
 }
 
 .view.active {
-    display: block;
+	display: block;
 }
 
 .filters {
-    background: var(--color-white);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-md);
-    margin-bottom: var(--spacing-xl);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
+	background: var(--color-white);
+	padding: var(--spacing-lg);
+	border-radius: var(--radius-md);
+	margin-bottom: var(--spacing-xl);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--color-border);
 }
 
 .filters label {
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--color-text);
+	font-size: 0.875rem;
+	font-weight: 500;
+	color: var(--color-text);
 }
 
 .filters select {
-    margin-left: var(--spacing-md);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-size: 0.9375rem;
-    color: var(--color-text);
-    background: var(--color-white);
-    cursor: pointer;
-    transition: all 0.2s ease;
+	margin-left: var(--spacing-md);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	font-size: 0.9375rem;
+	color: var(--color-text);
+	background: var(--color-white);
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 .filters select:hover {
-    border-color: var(--color-primary);
+	border-color: var(--color-primary);
 }
 
 .filters select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 #coursesList {
-    display: grid;
-    gap: var(--spacing-xl);
+	display: grid;
+	gap: var(--spacing-xl);
 }
 
 .course-card {
-    background: var(--color-white);
-    padding: var(--spacing-xl);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
-    transition: all 0.2s ease;
+	background: var(--color-white);
+	padding: var(--spacing-xl);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--color-border);
+	transition: all 0.2s ease;
 }
 
 .course-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
 }
 
 .course-card h3 {
-    font-size: 1.25rem;
-    margin-bottom: var(--spacing-md);
+	font-size: 1.25rem;
+	margin-bottom: var(--spacing-md);
 }
 
 .course-card p {
-    margin-bottom: var(--spacing-lg);
-    line-height: 1.6;
+	margin-bottom: var(--spacing-lg);
+	line-height: 1.6;
 }
 
 .instructor-info {
-    font-size: 0.875rem;
-    color: var(--color-text-light);
-    margin-bottom: var(--spacing-md);
+	font-size: 0.875rem;
+	color: var(--color-text-light);
+	margin-bottom: var(--spacing-md);
 }
 
 .instructor-name {
-    font-weight: 500;
-    color: var(--color-primary);
+	font-weight: 500;
+	color: var(--color-primary);
 }
 
 .course-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 0.875rem;
-    color: var(--color-text-light);
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--color-border);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	font-size: 0.875rem;
+	color: var(--color-text-light);
+	margin-top: var(--spacing-lg);
+	padding-top: var(--spacing-lg);
+	border-top: 1px solid var(--color-border);
 }
 
 .status-badge {
-    padding: var(--spacing-xs) var(--spacing-md);
-    border-radius: var(--radius-lg);
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+	padding: var(--spacing-xs) var(--spacing-md);
+	border-radius: var(--radius-lg);
+	font-size: 0.75rem;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
 }
 
 .status-approved {
-    background: #d4edda;
-    color: #155724;
+	background: #d4edda;
+	color: #155724;
 }
 
 .status-pending {
-    background: #fff3cd;
-    color: #856404;
+	background: #fff3cd;
+	color: #856404;
 }
 
 .status-rejected {
-    background: #f8d7da;
-    color: #721c24;
+	background: #f8d7da;
+	color: #721c24;
 }
 
 .auth-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 60vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-height: 60vh;
 }
 
 .auth-box {
-    background: var(--color-white);
-    padding: var(--spacing-2xl);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
-    width: 100%;
-    max-width: 420px;
+	background: var(--color-white);
+	padding: var(--spacing-2xl);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-md);
+	border: 1px solid var(--color-border);
+	width: 100%;
+	max-width: 420px;
 }
 
 .auth-box h2 {
-    text-align: center;
-    margin-bottom: var(--spacing-xl);
-    font-size: 1.75rem;
+	text-align: center;
+	margin-bottom: var(--spacing-xl);
+	font-size: 1.75rem;
 }
 
 .form-group {
-    margin-bottom: var(--spacing-xl);
+	margin-bottom: var(--spacing-xl);
 }
 
 .form-group label {
-    display: block;
-    margin-bottom: var(--spacing-sm);
-    font-weight: 500;
-    font-size: 0.875rem;
-    color: var(--color-text);
+	display: block;
+	margin-bottom: var(--spacing-sm);
+	font-weight: 500;
+	font-size: 0.875rem;
+	color: var(--color-text);
 }
 
 .form-group input,
 .form-group textarea,
 .form-group select {
-    width: 100%;
-    padding: var(--spacing-md);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-sm);
-    font-size: 0.9375rem;
-    font-family: inherit;
-    color: var(--color-text);
-    background: var(--color-white);
-    transition: all 0.2s ease;
+	width: 100%;
+	padding: var(--spacing-md);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-sm);
+	font-size: 0.9375rem;
+	font-family: inherit;
+	color: var(--color-text);
+	background: var(--color-white);
+	transition: all 0.2s ease;
 }
 
 .form-group input:focus,
 .form-group textarea:focus,
 .form-group select:focus {
-    outline: none;
-    border-color: var(--color-primary);
-    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+	outline: none;
+	border-color: var(--color-primary);
+	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
 }
 
 .form-group input:disabled,
 .form-group textarea:disabled,
 .form-group select:disabled {
-    background: var(--color-bg);
-    color: var(--color-text-light);
-    cursor: not-allowed;
+	background: var(--color-bg);
+	color: var(--color-text-light);
+	cursor: not-allowed;
 }
 
 button[type="submit"],
 .btn-primary {
-    width: 100%;
-    background: var(--color-primary);
-    color: var(--color-white);
-    border: none;
-    padding: var(--spacing-md) var(--spacing-xl);
-    border-radius: var(--radius-sm);
-    font-size: 0.9375rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
+	width: 100%;
+	background: var(--color-primary);
+	color: var(--color-white);
+	border: none;
+	padding: var(--spacing-md) var(--spacing-xl);
+	border-radius: var(--radius-sm);
+	font-size: 0.9375rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.2s ease;
 }
 
 button[type="submit"]:hover,
 .btn-primary:hover {
-    background: var(--color-primary-dark);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
+	background: var(--color-primary-dark);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-sm);
 }
 
 .auth-toggle {
-    text-align: center;
-    margin-top: var(--spacing-xl);
-    color: var(--color-text-light);
-    font-size: 0.875rem;
+	text-align: center;
+	margin-top: var(--spacing-xl);
+	color: var(--color-text-light);
+	font-size: 0.875rem;
 }
 
 .auth-toggle button {
-    background: none;
-    border: none;
-    color: var(--color-primary);
-    cursor: pointer;
-    font-weight: 500;
-    font-size: 0.875rem;
-    padding: 0;
-    margin-left: var(--spacing-xs);
+	background: none;
+	border: none;
+	color: var(--color-primary);
+	cursor: pointer;
+	font-weight: 500;
+	font-size: 0.875rem;
+	padding: 0;
+	margin-left: var(--spacing-xs);
 }
 
 .auth-toggle button:hover {
-    text-decoration: underline;
+	text-decoration: underline;
 }
 
 #authMessage,
 #formMessage,
 #myCoursesMessage,
 #profileMessage {
-    margin-top: var(--spacing-lg);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-sm);
-    display: none;
-    font-size: 0.875rem;
+	margin-top: var(--spacing-lg);
+	padding: var(--spacing-md) var(--spacing-lg);
+	border-radius: var(--radius-sm);
+	display: none;
+	font-size: 0.875rem;
 }
 
 #authMessage.success,
 #formMessage.success,
 #myCoursesMessage.success,
 #profileMessage.success {
-    display: block;
-    background: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+	display: block;
+	background: #d4edda;
+	color: #155724;
+	border: 1px solid #c3e6cb;
 }
 
 #authMessage.error,
 #formMessage.error,
 #myCoursesMessage.error,
 #profileMessage.error {
-    display: block;
-    background: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+	display: block;
+	background: #f8d7da;
+	color: #721c24;
+	border: 1px solid #f5c6cb;
 }
 
 #logoutBtn {
-    background: var(--color-danger);
-    color: var(--color-white);
-    border: none;
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 0.9375rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+	background: var(--color-danger);
+	color: var(--color-white);
+	border: none;
+	padding: var(--spacing-sm) var(--spacing-lg);
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	font-size: 0.9375rem;
+	font-weight: 500;
+	transition: all 0.2s ease;
 }
 
 #logoutBtn:hover {
-    background: var(--color-danger-dark);
+	background: var(--color-danger-dark);
 }
 
 .admin-section {
-    margin-bottom: var(--spacing-3xl);
+	margin-bottom: var(--spacing-3xl);
 }
 
 .admin-section h3 {
-    margin-bottom: var(--spacing-lg);
-    padding-bottom: var(--spacing-md);
-    border-bottom: 2px solid var(--color-border);
-    font-size: 1.25rem;
+	margin-bottom: var(--spacing-lg);
+	padding-bottom: var(--spacing-md);
+	border-bottom: 2px solid var(--color-border);
+	font-size: 1.25rem;
 }
 
 .user-card,
 .pending-course-card {
-    background: var(--color-white);
-    padding: var(--spacing-lg);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
-    margin-bottom: var(--spacing-lg);
+	background: var(--color-white);
+	padding: var(--spacing-lg);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--color-border);
+	margin-bottom: var(--spacing-lg);
 }
 
 .user-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
 }
 
 .user-info {
-    flex: 1;
+	flex: 1;
 }
 
 .user-email {
-    font-weight: 500;
-    font-size: 0.9375rem;
-    margin-bottom: var(--spacing-xs);
+	font-weight: 500;
+	font-size: 0.9375rem;
+	margin-bottom: var(--spacing-xs);
 }
 
 .user-role {
-    color: var(--color-text-light);
-    font-size: 0.875rem;
+	color: var(--color-text-light);
+	font-size: 0.875rem;
 }
 
 .pending-course-card h4 {
-    margin-bottom: var(--spacing-md);
+	margin-bottom: var(--spacing-md);
 }
 
 .pending-course-card p {
-    margin-bottom: var(--spacing-lg);
+	margin-bottom: var(--spacing-lg);
 }
 
 .course-actions {
-    display: flex;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-lg);
+	display: flex;
+	gap: var(--spacing-sm);
+	margin-top: var(--spacing-lg);
 }
 
 .approve-btn,
 .reject-btn,
 .edit-btn,
 .delete-btn-small {
-    padding: var(--spacing-sm) var(--spacing-lg);
-    border: none;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all 0.2s ease;
+	padding: var(--spacing-sm) var(--spacing-lg);
+	border: none;
+	border-radius: var(--radius-sm);
+	cursor: pointer;
+	font-size: 0.875rem;
+	font-weight: 500;
+	transition: all 0.2s ease;
 }
 
 .approve-btn {
-    background: var(--color-success);
-    color: var(--color-white);
+	background: var(--color-success);
+	color: var(--color-white);
 }
 
 .approve-btn:hover {
-    background: var(--color-success-dark);
-    transform: translateY(-1px);
+	background: var(--color-success-dark);
+	transform: translateY(-1px);
 }
 
 .reject-btn,
 .delete-btn-small {
-    background: var(--color-danger);
-    color: var(--color-white);
+	background: var(--color-danger);
+	color: var(--color-white);
 }
 
 .reject-btn:hover,
 .delete-btn-small:hover {
-    background: var(--color-danger-dark);
-    transform: translateY(-1px);
+	background: var(--color-danger-dark);
+	transform: translateY(-1px);
 }
 
 .edit-btn {
-    background: var(--color-primary);
-    color: var(--color-white);
+	background: var(--color-primary);
+	color: var(--color-white);
 }
 
 .edit-btn:hover {
-    background: var(--color-primary-dark);
-    transform: translateY(-1px);
+	background: var(--color-primary-dark);
+	transform: translateY(-1px);
 }
 
 .my-course-card {
-    background: var(--color-white);
-    padding: var(--spacing-xl);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-sm);
-    border: 1px solid var(--color-border);
-    margin-bottom: var(--spacing-xl);
+	background: var(--color-white);
+	padding: var(--spacing-xl);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+	border: 1px solid var(--color-border);
+	margin-bottom: var(--spacing-xl);
 }
 
 .my-course-card h3 {
-    margin-bottom: var(--spacing-md);
+	margin-bottom: var(--spacing-md);
 }
 
 .my-course-card p {
-    margin-bottom: var(--spacing-lg);
+	margin-bottom: var(--spacing-lg);
 }
 
 .my-course-meta {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: var(--spacing-lg);
-    padding-top: var(--spacing-lg);
-    border-top: 1px solid var(--color-border);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-top: var(--spacing-lg);
+	padding-top: var(--spacing-lg);
+	border-top: 1px solid var(--color-border);
 }
 
 .my-course-actions {
-    display: flex;
-    gap: var(--spacing-sm);
+	display: flex;
+	gap: var(--spacing-sm);
 }
 
 .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.5);
+	display: none;
+	position: fixed;
+	z-index: 1000;
+	left: 0;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	overflow: auto;
+	background-color: rgba(0, 0, 0, 0.5);
 }
 
 .modal-content {
-    background-color: var(--color-white);
-    margin: 5% auto;
-    padding: var(--spacing-2xl);
-    border-radius: var(--radius-lg);
-    width: 90%;
-    max-width: 600px;
-    box-shadow: var(--shadow-lg);
+	background-color: var(--color-white);
+	margin: 5% auto;
+	padding: var(--spacing-2xl);
+	border-radius: var(--radius-lg);
+	width: 90%;
+	max-width: 600px;
+	box-shadow: var(--shadow-lg);
 }
 
 .close {
-    color: var(--color-text-light);
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    line-height: 1;
-    transition: color 0.2s ease;
+	color: var(--color-text-light);
+	float: right;
+	font-size: 28px;
+	font-weight: bold;
+	cursor: pointer;
+	line-height: 1;
+	transition: color 0.2s ease;
 }
 
 .close:hover,
 .close:focus {
-    color: var(--color-text);
+	color: var(--color-text);
 }
 
 @media (max-width: 768px) {
-    header {
-        padding: var(--spacing-lg);
-    }
-    
-    main {
-        padding: 0 var(--spacing-lg);
-    }
-    
-    .auth-box {
-        padding: var(--spacing-xl);
-    }
-    
-    .course-meta {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: var(--spacing-sm);
-    }
-    
-    nav {
-        gap: var(--spacing-xs);
-    }
-    
-    nav button {
-        padding: var(--spacing-sm) var(--spacing-md);
-        font-size: 0.875rem;
-    }
+	header {
+		padding: var(--spacing-lg);
+	}
+
+	main {
+		padding: 0 var(--spacing-lg);
+	}
+
+	.auth-box {
+		padding: var(--spacing-xl);
+	}
+
+	.course-meta {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--spacing-sm);
+	}
+
+	nav {
+		gap: var(--spacing-xs);
+	}
+
+	nav button {
+		padding: var(--spacing-sm) var(--spacing-md);
+		font-size: 0.875rem;
+	}
 }

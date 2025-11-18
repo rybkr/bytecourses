@@ -2,12 +2,14 @@ package middleware
 
 import (
 	"context"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/rybkr/bytecourses/internal/models"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/rybkr/bytecourses/internal/helpers"
+	"github.com/rybkr/bytecourses/internal/models"
 )
 
 type contextKey string
@@ -27,14 +29,14 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
 			log.Println("missing authorization header")
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			helpers.Unauthorized(w, "unauthorized")
 			return
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 		if tokenString == authHeader {
 			log.Println("invalid authorization header format")
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			helpers.Unauthorized(w, "unauthorized")
 			return
 		}
 
@@ -47,14 +49,14 @@ func Auth(next http.HandlerFunc) http.HandlerFunc {
 
 		if err != nil || !token.Valid {
 			log.Printf("invalid token: %v", err)
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			helpers.Unauthorized(w, "unauthorized")
 			return
 		}
 
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			log.Println("invalid token claims")
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			helpers.Unauthorized(w, "unauthorized")
 			return
 		}
 

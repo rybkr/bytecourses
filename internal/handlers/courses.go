@@ -1,109 +1,83 @@
 package handlers
 
 import (
-	"encoding/json"
-	"github.com/rybkr/bytecourses/internal/middleware"
-	"github.com/rybkr/bytecourses/internal/models"
-	"github.com/rybkr/bytecourses/internal/store"
-	"log"
-	"net/http"
-	"strconv"
+    "encoding/json"
+    "log"
+    "net/http"
+    "github.com/rybkr/bytecourses/internal/helpers"
+    "github.com/rybkr/bytecourses/internal/middleware"
+    "github.com/rybkr/bytecourses/internal/models"
+    "github.com/rybkr/bytecourses/internal/store"
+    "github.com/rybkr/bytecourses/internal/validation"
 )
 
 type CourseHandler struct {
-	store *store.Store
+    store *store.Store
 }
 
 func NewCourseHandler(store *store.Store) *CourseHandler {
-	return &CourseHandler{store: store}
+    return &CourseHandler{store: store}
 }
 
 func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.GetUserFromContext(r.Context())
-	if !ok {
-		log.Println("user not found in context")
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
-	var course models.Course
-	if err := json.NewDecoder(r.Body).Decode(&course); err != nil {
-		log.Printf("failed to decode course request: %v", err)
-		http.Error(w, "invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	course.InstructorID = user.ID
-	course.Status = models.StatusPending
-
-	if err := h.store.CreateCourse(r.Context(), &course); err != nil {
-		log.Printf("failed to create course in handler: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	if err := json.NewEncoder(w).Encode(course); err != nil {
-		log.Printf("failed to encode course response: %v", err)
-	}
+    user, ok := middleware.GetUserFromContext(r.Context())
+    if !ok {
+        log.Println("user not found in context")
+        helpers.Error(w, http.StatusUnauthorized, "unauthorized")
+        return
+    }
+    
+    var course models.Course
+    if err := json.NewDecoder(r.Body).Decode(&course); err != nil {
+        log.Printf("failed to decode course request: %v", err)
+        helpers.Error(w, http.StatusBadRequest, "invalid request body")
+        return
+    }
+    
+    v := validation.New()
+    v.Required(course.Title, "title")
+    v.MinLength(course.Title, 3, "title")
+    v.MaxLength(course.Title, 255, "title")
+    v.Required(course.Description, "description")
+    v.MinLength(course.Description, 10, "description")
+    
+    if !v.Valid() {
+        log.Printf("course validation failed: %v", v.Errors)
+        helpers.JSON(w, http.StatusBadRequest, map[string]interface{}{
+            "error": "validation failed",
+            "fields": v.Errors,
+        })
+        return
+    }
+    
+    course.InstructorID = user.ID
+    course.Status = models.StatusPending
+    
+    if err := h.store.CreateCourse(r.Context(), &course); err != nil {
+        log.Printf("failed to create course in handler: %v", err)
+        helpers.Error(w, http.StatusInternalServerError, "internal server error")
+        return
+    }
+    
+    helpers.Created(w, course)
 }
 
 func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
-	var status *models.CourseStatus
-	if s := r.URL.Query().Get("status"); s != "" {
-		st := models.CourseStatus(s)
-		status = &st
-	} else {
-		approved := models.StatusApproved
-		status = &approved
-	}
-
-	courses, err := h.store.GetCoursesWithInstructors(r.Context(), status)
-	if err != nil {
-		log.Printf("failed to get courses in handler: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(courses); err != nil {
-		log.Printf("failed to encode courses response: %v", err)
-	}
-}
-
-func (h *CourseHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		log.Printf("invalid course id: %s", idStr)
-		http.Error(w, "invalid course id", http.StatusBadRequest)
-		return
-	}
-
-	if err := h.store.UpdateCourseStatus(r.Context(), id, models.StatusApproved); err != nil {
-		log.Printf("failed to approve course in handler: id=%d, error=%v", id, err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func (h *CourseHandler) DeleteCourse(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		log.Printf("invalid course id for deletion: %s", idStr)
-		http.Error(w, "invalid course id", http.StatusBadRequest)
-		return
-	}
-
-	if err := h.store.DeleteCourse(r.Context(), id); err != nil {
-		log.Printf("failed to delete course in handler: id=%d, error=%v", id, err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
+    var status *models.CourseStatus
+    if s := r.URL.Query().Get("status"); s != "" {
+        st := models.CourseStatus(s)
+        status = &st
+    } else {
+        approved := models.StatusApproved
+        status = &approved
+    }
+    
+    courses, err := h.store.GetCoursesWithInstructors(r.Context(), status)
+    if err != nil {
+        log.Printf("failed to get courses in handler: %v", err)
+        helpers.Error(w, http.StatusInternalServerError, "internal server error")
+        return
+    }
+    
+    helpers.Success(w, courses)
 }

@@ -25,11 +25,13 @@ async function request(endpoint, options = {}) {
 				error.type = "validation";
 				error.fields = errorData.fields;
 				error.message = "validation_failed";
+				error.status = response.status;
 				throw error;
 			} else {
 				const error = new Error(errorData.error || "Request failed");
 				error.type = "simple";
 				error.message = errorData.error || "Request failed";
+				error.status = response.status;
 				throw error;
 			}
 		}
@@ -70,6 +72,7 @@ const api = {
 
 	courses: {
 		list: () => request("/courses"),
+		get: (id) => request(`/courses/${id}`),
 	},
 
 	applications: {

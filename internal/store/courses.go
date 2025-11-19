@@ -46,7 +46,7 @@ func (s *Store) CreateCourseFromApplication(ctx context.Context, app *models.App
 
 func (s *Store) GetCourses(ctx context.Context) ([]*models.Course, error) {
 	query := `
-        SELECT id, instructor_id, title, description, content, created_at, updated_at
+        SELECT id, instructor_id, title, description, COALESCE(content, ''), created_at, updated_at
         FROM courses
         ORDER BY created_at DESC`
 
@@ -102,8 +102,8 @@ func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
 
 func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*models.Course, *models.User, error) {
 	query := `
-        SELECT c.id, c.instructor_id, c.title, c.description, c.content, c.created_at, c.updated_at,
-               u.id, u.email, u.name, u.role, u.created_at
+        SELECT c.id, c.instructor_id, c.title, c.description, COALESCE(c.content, ''), c.created_at, c.updated_at,
+               u.id, u.email, COALESCE(u.name, ''), u.role, u.created_at
         FROM courses c
         JOIN users u ON c.instructor_id = u.id
         WHERE c.id = $1`
@@ -129,7 +129,7 @@ func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*mod
 
 func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([]*models.Course, error) {
 	query := `
-        SELECT id, instructor_id, title, description, content, created_at, updated_at
+        SELECT id, instructor_id, title, description, COALESCE(content, ''), created_at, updated_at
         FROM courses
         WHERE instructor_id = $1
         ORDER BY created_at DESC`
@@ -191,7 +191,7 @@ func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, descripti
 func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course, error) {
 	var course models.Course
 	query := `
-        SELECT id, instructor_id, title, description, content, created_at, updated_at
+        SELECT id, instructor_id, title, description, COALESCE(content, ''), created_at, updated_at
         FROM courses
         WHERE id = $1`
 
@@ -216,7 +216,7 @@ type CourseWithInstructor struct {
 
 func (s *Store) GetCoursesWithInstructors(ctx context.Context) ([]*CourseWithInstructor, error) {
 	query := `
-        SELECT c.id, c.instructor_id, c.title, c.description, c.content, c.created_at, c.updated_at,
+        SELECT c.id, c.instructor_id, c.title, c.description, COALESCE(c.content, ''), c.created_at, c.updated_at,
                COALESCE(u.name, ''), u.email
         FROM courses c
         JOIN users u ON c.instructor_id = u.id

@@ -8,14 +8,15 @@ import (
 
 func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
 	query := `
-        INSERT INTO courses (instructor_id, title, description)
-        VALUES ($1, $2, $3)
+        INSERT INTO courses (instructor_id, title, description, status)
+        VALUES ($1, $2, $3, $4)
         RETURNING id, created_at, updated_at`
 
 	err := s.db.QueryRow(ctx, query,
 		course.InstructorID,
 		course.Title,
 		course.Description,
+		course.Status,
 	).Scan(&course.ID, &course.CreatedAt, &course.UpdatedAt)
 
 	if err != nil {
@@ -180,13 +181,25 @@ func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([
 	return courses, nil
 }
 
-func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string) error {
-	query := `
+func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string, status *models.CourseStatus) error {
+	var query string
+	var err error
+	var result interface{ RowsAffected() int64 }
+
+	if status != nil {
+		query = `
+        UPDATE courses 
+        SET title = $1, description = $2, status = $3, updated_at = NOW() 
+        WHERE id = $4`
+		result, err = s.db.Exec(ctx, query, title, description, *status, courseID)
+	} else {
+		query = `
         UPDATE courses 
         SET title = $1, description = $2, updated_at = NOW() 
         WHERE id = $3`
+		result, err = s.db.Exec(ctx, query, title, description, courseID)
+	}
 
-	result, err := s.db.Exec(ctx, query, title, description, courseID)
 	if err != nil {
 		log.Printf("failed to update course: courseID=%d, error=%v", courseID, err)
 		return err
@@ -200,6 +213,17 @@ func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, descripti
 	}
 
 	return nil
+}
+
+func (s *Store) CountDraftsByInstructor(ctx context.Context, instructorID int) (int, error) {
+	query := `SELECT COUNT(*) FROM courses WHERE instructor_id = $1 AND status = 'draft'`
+	var count int
+	err := s.db.QueryRow(ctx, query, instructorID).Scan(&count)
+	if err != nil {
+		log.Printf("failed to count drafts: instructorID=%d, error=%v", instructorID, err)
+		return 0, err
+	}
+	return count, nil
 }
 
 func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course, error) {

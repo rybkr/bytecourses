@@ -10,11 +10,15 @@ const applyModule = {
     autoSaveDebounce: null,
     isSubmitting: false,
     editingCourseId: null,
+    currentDraftId: null,
+    draftsList: [],
+    unsavedChanges: false,
 
     init() {
         this.initElements();
         this.initEventListeners();
         this.loadApplications();
+        this.loadDraftsFromBackend();
         this.initFormEnhancements();
         this.checkForDraft();
     },
@@ -67,13 +71,15 @@ const applyModule = {
         closeButtons.forEach((btn) => {
             btn.addEventListener("click", (e) => {
                 const modal = e.target.closest(".modal");
-                if (modal) modal.style.display = "none";
+                if (modal) {
+                    this.handleModalClose(modal);
+                }
             });
         });
 
         window.addEventListener("click", (e) => {
             if (e.target.classList.contains("modal")) {
-                e.target.style.display = "none";
+                this.handleModalClose(e.target);
             }
         });
 
@@ -127,7 +133,7 @@ const applyModule = {
     async loadApplications() {
         try {
             const courses = await api.instructor.getCourses();
-            this.renderApplicationList(courses);
+            this.renderApplicationList(courses || []);
         } catch (error) {
             if (this.applicationList) {
                 this.applicationList.innerHTML = "<p>Error loading applications. Please try again.</p>";
@@ -135,10 +141,112 @@ const applyModule = {
         }
     },
 
+    async loadDraftsFromBackend() {
+        try {
+            const courses = await api.instructor.getCourses();
+            this.draftsList = (courses || []).filter((c) => c.status === "draft");
+            this.renderDraftList();
+        } catch (error) {
+            console.error("Failed to load drafts:", error);
+            this.draftsList = [];
+            this.renderDraftList();
+        }
+    },
+
+    renderDraftList() {
+        const draftsList = document.getElementById("draftsList");
+        const draftCount = document.getElementById("draftCount");
+        if (!draftsList) return;
+
+        if (draftCount) {
+            draftCount.textContent = `(${this.draftsList.length}/16)`;
+        }
+
+        if (!this.draftsList || this.draftsList.length === 0) {
+            draftsList.innerHTML = "<p style='color: var(--color-text-light);'>No drafts yet.</p>";
+            return;
+        }
+
+        draftsList.innerHTML = this.draftsList
+            .map(
+                (draft) => {
+                    const displayTitle = draft.title && draft.title.trim() ? draft.title : this.generateDraftName("", this.draftsList);
+                    const lastSaved = new Date(draft.updated_at || draft.created_at).toLocaleString();
+                    return `
+                <div class="my-course-card" style="border-left: 3px solid var(--color-accent-blue);">
+                    <h3>${escapeHtml(displayTitle)}</h3>
+                    <p>${escapeHtml((draft.description || "").length > 200 ? draft.description.substring(0, 200) + "..." : draft.description || "")}</p>
+                    <div class="my-course-meta">
+                        <span class="status-badge" style="background: var(--color-accent-blue);">Draft</span>
+                        <span style="color: var(--color-text-light); font-size: 0.875rem;">Last saved: ${lastSaved}</span>
+                        <div class="my-course-actions">
+                            <button class="edit-application-btn continue-draft-btn" data-draft-id="${draft.id}">Continue</button>
+                            <button class="delete-btn-small delete-draft-btn" data-draft-id="${draft.id}">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+                },
+            )
+            .join("");
+
+        // Add event listeners for draft buttons
+        document.querySelectorAll(".continue-draft-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                const draftId = parseInt(e.target.dataset.draftId);
+                this.openDraftModal(draftId);
+            });
+        });
+
+        document.querySelectorAll(".delete-draft-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                const draftId = parseInt(e.target.dataset.draftId);
+                this.deleteDraft(draftId);
+            });
+        });
+    },
+
+    generateDraftName(title, existingDrafts) {
+        if (title && title.trim().length > 0) {
+            return title;
+        }
+
+        const untitledPattern = /^Untitled Course( \d+)?$/;
+        const untitledDrafts = existingDrafts.filter((d) => {
+            const draftTitle = d.title || "";
+            return untitledPattern.test(draftTitle.trim());
+        });
+
+        if (untitledDrafts.length === 0) {
+            return "Untitled Course";
+        }
+
+        const numbers = untitledDrafts
+            .map((d) => {
+                const match = (d.title || "").match(/^Untitled Course( (\d+))?$/);
+                return match && match[2] ? parseInt(match[2]) : 1;
+            })
+            .sort((a, b) => a - b);
+
+        let nextNumber = 1;
+        for (const num of numbers) {
+            if (num === nextNumber) {
+                nextNumber++;
+            } else {
+                break;
+            }
+        }
+
+        return nextNumber === 1 ? "Untitled Course" : `Untitled Course ${nextNumber}`;
+    },
+
     renderApplicationList(courses) {
         if (!this.applicationList) return;
 
-        if (!courses || courses.length === 0) {
+        // Filter out drafts
+        const applications = (courses || []).filter((c) => c.status !== "draft");
+
+        if (!applications || applications.length === 0) {
             this.applicationList.innerHTML = `
 				<div style="text-align: center; padding: var(--spacing-3xl); color: var(--color-text-light);">
 					<p style="margin-bottom: var(--spacing-lg);">You haven't submitted any applications yet.</p>
@@ -152,7 +260,7 @@ const applyModule = {
             return;
         }
 
-        this.applicationList.innerHTML = courses
+        this.applicationList.innerHTML = applications
             .map(
                 (course) => `
 			<div class="my-course-card">
@@ -173,13 +281,60 @@ const applyModule = {
 
     openNewApplicationModal() {
         if (this.newApplicationModal) {
+            // Check draft limit
+            if (this.draftsList.length >= 16) {
+                this.showMessage("Draft limit reached (16 max). Please delete a draft to create a new one.", "error");
+                return;
+            }
+
             this.newApplicationModal.style.display = "block";
             this.editingCourseId = null;
+            this.currentDraftId = null;
             if (this.newApplicationForm) this.newApplicationForm.reset();
             this.clearAllFieldErrors("new");
             this.updateCharCounter("newTitle", 255);
             this.updateCharCounter("newDescription");
+            this.unsavedChanges = false;
             this.checkForDraft();
+            this.initAutoSave("new");
+        }
+    },
+
+    async openDraftModal(draftId) {
+        try {
+            const draft = this.draftsList.find((d) => d.id === draftId);
+            if (!draft) {
+                // Reload drafts if not found
+                await this.loadDraftsFromBackend();
+                const reloadedDraft = this.draftsList.find((d) => d.id === draftId);
+                if (!reloadedDraft) {
+                    this.showMessage("Draft not found", "error");
+                    return;
+                }
+                this.populateDraftModal(reloadedDraft);
+            } else {
+                this.populateDraftModal(draft);
+            }
+        } catch (error) {
+            this.showMessage("Failed to load draft", "error");
+        }
+    },
+
+    populateDraftModal(draft) {
+        if (this.newApplicationModal) {
+            this.newApplicationModal.style.display = "block";
+            this.currentDraftId = draft.id;
+            this.editingCourseId = null;
+            if (this.newTitleField) this.newTitleField.value = draft.title || "";
+            if (this.newDescriptionField) this.newDescriptionField.value = draft.description || "";
+            this.clearAllFieldErrors("new");
+            this.updateCharCounter("newTitle", 255);
+            this.updateCharCounter("newDescription");
+            this.unsavedChanges = false;
+            this.lastSavedState = {
+                title: draft.title || "",
+                description: draft.description || "",
+            };
             this.initAutoSave("new");
         }
     },
@@ -219,13 +374,22 @@ const applyModule = {
         };
 
         try {
-            await api.courses.create(formData);
+            if (this.currentDraftId) {
+                // Submit existing draft
+                await api.drafts.submit(this.currentDraftId, formData);
+            } else {
+                // Create new submission
+                await api.courses.create(formData);
+            }
             this.showMessage("Application submitted successfully!", "success");
             if (this.newApplicationModal) this.newApplicationModal.style.display = "none";
             if (this.newApplicationForm) this.newApplicationForm.reset();
             this.clearDraft();
             this.lastSavedState = null;
+            this.currentDraftId = null;
+            this.unsavedChanges = false;
             this.loadApplications();
+            this.loadDraftsFromBackend();
         } catch (error) {
             if (error.type === "validation" && error.fields) {
                 Object.entries(error.fields).forEach(([field, message]) => {
@@ -283,6 +447,37 @@ const applyModule = {
         }
     },
 
+    async deleteDraft(draftId) {
+        if (!confirm("Are you sure you want to delete this draft?")) return;
+
+        try {
+            await api.instructor.deleteCourse(draftId);
+            this.showMessage("Draft deleted successfully", "success");
+            this.loadDraftsFromBackend();
+            // If this was the current draft, reset modal
+            if (this.currentDraftId === draftId) {
+                this.currentDraftId = null;
+                if (this.newApplicationForm) this.newApplicationForm.reset();
+            }
+        } catch (error) {
+            this.showMessage(error.message || "Failed to delete draft", "error");
+        }
+    },
+
+    handleModalClose(modal) {
+        if (modal.id === "newApplicationModal" && this.unsavedChanges) {
+            if (confirm("You have unsaved changes. Save to backend before closing?")) {
+                this.saveDraftToBackend().then(() => {
+                    modal.style.display = "none";
+                    this.unsavedChanges = false;
+                });
+                return;
+            }
+        }
+        modal.style.display = "none";
+        this.unsavedChanges = false;
+    },
+
     getDraft() {
         try {
             const draft = localStorage.getItem("courseDraft");
@@ -334,16 +529,70 @@ const applyModule = {
                 description: formData.description,
             };
 
-            if (showMessage) {
-                this.showMessage("Draft saved successfully!", "success");
+            // Set unsaved changes flag for auto-saves
+            if (!showMessage) {
+                this.unsavedChanges = true;
             }
 
             this.updateDraftStatus(formType);
+
+            // If manual save, also save to backend
+            if (showMessage) {
+                this.saveDraftToBackend();
+            }
         } catch (error) {
             if (error.name === "QuotaExceededError") {
                 this.showMessage("Storage quota exceeded. Please clear some space.", "error");
             } else {
                 this.showMessage("Failed to save draft", "error");
+            }
+        }
+    },
+
+    async saveDraftToBackend() {
+        if (this.isSubmitting) return;
+
+        const formData = {
+            title: this.newTitleField.value.trim(),
+            description: this.newDescriptionField.value.trim(),
+        };
+
+        try {
+            let draft;
+            if (this.currentDraftId) {
+                // Update existing draft
+                draft = await api.drafts.update(this.currentDraftId, formData);
+            } else {
+                // Create new draft
+                draft = await api.drafts.create(formData);
+                this.currentDraftId = draft.id;
+            }
+
+            this.unsavedChanges = false;
+            this.lastSavedState = {
+                title: formData.title,
+                description: formData.description,
+            };
+
+            // Update localStorage with draft ID
+            const localDraft = {
+                title: formData.title,
+                description: formData.description,
+                savedAt: Date.now(),
+                draftId: this.currentDraftId,
+            };
+            localStorage.setItem("courseDraft", JSON.stringify(localDraft));
+
+            this.showMessage("Draft saved successfully!", "success");
+            this.updateDraftStatus("new");
+            this.loadDraftsFromBackend();
+        } catch (error) {
+            if (error.type === "validation" && error.fields) {
+                Object.entries(error.fields).forEach(([field, message]) => {
+                    this.showFieldError(`new${field.charAt(0).toUpperCase() + field.slice(1)}`, message);
+                });
+            } else {
+                this.showMessage(error.message || "Failed to save draft to server", "error");
             }
         }
     },
@@ -386,7 +635,15 @@ const applyModule = {
 
     checkForDraft() {
         const draft = this.getDraft();
-        if (!draft || !draft.title) return;
+        if (!draft) {
+            this.initAutoSave("new");
+            return;
+        }
+        // If we have a draftId, we're editing an existing draft, don't show prompt
+        if (draft.draftId && draft.draftId === this.currentDraftId) {
+            this.initAutoSave("new");
+            return;
+        }
 
         const draftPrompt = document.getElementById("newDraftPrompt");
         if (!draftPrompt) return;

@@ -2,13 +2,14 @@ package handlers
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	"github.com/rybkr/bytecourses/internal/helpers"
 	"github.com/rybkr/bytecourses/internal/middleware"
 	"github.com/rybkr/bytecourses/internal/models"
 	"github.com/rybkr/bytecourses/internal/store"
 	"github.com/rybkr/bytecourses/internal/validation"
-	"log"
-	"net/http"
 )
 
 type CourseHandler struct {
@@ -34,21 +35,52 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	course.InstructorID = user.ID
+
+	// Default to pending if status not provided
+	if course.Status == "" {
+		course.Status = models.StatusPending
+	}
+
+	// Validate based on status
 	v := validation.New()
-	v.Required(course.Title, "title")
-	v.MinLength(course.Title, 3, "title")
-	v.MaxLength(course.Title, 255, "title")
-	v.Required(course.Description, "description")
-	v.MinLength(course.Description, 10, "description")
+	isDraft := course.Status == models.StatusDraft
+
+	if isDraft {
+		// For drafts: title can be empty, but if provided must be valid
+		if course.Title != "" {
+			v.MinLength(course.Title, 3, "title")
+			v.MaxLength(course.Title, 255, "title")
+		}
+		// Description still required for drafts
+		v.Required(course.Description, "description")
+		v.MinLength(course.Description, 10, "description")
+
+		// Check draft limit
+		count, err := h.store.CountDraftsByInstructor(r.Context(), user.ID)
+		if err != nil {
+			log.Printf("failed to count drafts: %v", err)
+			helpers.InternalServerError(w, "internal server error")
+			return
+		}
+		if count >= 16 {
+			helpers.BadRequest(w, "draft limit reached (maximum 16 drafts)")
+			return
+		}
+	} else {
+		// For submissions: full validation required
+		v.Required(course.Title, "title")
+		v.MinLength(course.Title, 3, "title")
+		v.MaxLength(course.Title, 255, "title")
+		v.Required(course.Description, "description")
+		v.MinLength(course.Description, 10, "description")
+	}
 
 	if !v.Valid() {
 		log.Printf("course validation failed: %v", v.Errors)
 		helpers.ValidationError(w, v.Errors)
 		return
 	}
-
-	course.InstructorID = user.ID
-	course.Status = models.StatusPending
 
 	if err := h.store.CreateCourse(r.Context(), &course); err != nil {
 		log.Printf("failed to create course in handler: %v", err)

@@ -93,6 +93,24 @@ const api = {
 			}),
 	},
 
+	drafts: {
+		create: (data) =>
+			request("/courses", {
+				method: "POST",
+				body: JSON.stringify({ ...data, status: "draft" }),
+			}),
+		update: (id, data) =>
+			request(`/instructor/courses?id=${id}`, {
+				method: "PATCH",
+				body: JSON.stringify({ ...data, status: "draft" }),
+			}),
+		submit: (id, data) =>
+			request(`/instructor/courses?id=${id}`, {
+				method: "PATCH",
+				body: JSON.stringify({ ...data, status: "pending" }),
+			}),
+	},
+
 	admin: {
 		getUsers: () => request("/admin/users"),
 		getCourses: (status) => request(`/admin/courses?status=${status}`),

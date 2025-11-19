@@ -10,6 +10,7 @@ const (
 	StatusPending  CourseStatus = "pending"
 	StatusApproved CourseStatus = "approved"
 	StatusRejected CourseStatus = "rejected"
+	StatusDraft    CourseStatus = "draft"
 )
 
 type Course struct {

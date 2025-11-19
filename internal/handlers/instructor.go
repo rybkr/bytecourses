@@ -8,6 +8,7 @@ import (
 
 	"github.com/rybkr/bytecourses/internal/helpers"
 	"github.com/rybkr/bytecourses/internal/middleware"
+	"github.com/rybkr/bytecourses/internal/models"
 	"github.com/rybkr/bytecourses/internal/store"
 )
 
@@ -67,8 +68,9 @@ func (h *InstructorHandler) UpdateCourse(w http.ResponseWriter, r *http.Request)
 	}
 
 	var updateData struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
+		Title       string               `json:"title"`
+		Description string               `json:"description"`
+		Status      *models.CourseStatus `json:"status"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
@@ -77,7 +79,15 @@ func (h *InstructorHandler) UpdateCourse(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.store.UpdateCourse(r.Context(), id, updateData.Title, updateData.Description); err != nil {
+	if updateData.Status != nil && course.Status == models.StatusDraft && *updateData.Status == models.StatusPending {
+		// Allow submitting draft (changing status from draft to pending)
+	} else if updateData.Status != nil && course.Status != models.StatusDraft {
+		// Don't allow status changes for non-draft courses
+		helpers.BadRequest(w, "cannot change status for non-draft courses")
+		return
+	}
+
+	if err := h.store.UpdateCourse(r.Context(), id, updateData.Title, updateData.Description, updateData.Status); err != nil {
 		log.Printf("failed to update course: %v", err)
 		helpers.InternalServerError(w, "internal server error")
 		return

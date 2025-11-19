@@ -103,7 +103,7 @@ func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
 func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*models.Course, *models.User, error) {
 	query := `
         SELECT c.id, c.instructor_id, c.title, c.description, c.content, c.created_at, c.updated_at,
-               u.id, u.email, u.role, u.created_at
+               u.id, u.email, u.name, u.role, u.created_at
         FROM courses c
         JOIN users u ON c.instructor_id = u.id
         WHERE c.id = $1`
@@ -114,7 +114,7 @@ func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*mod
 	err := s.db.QueryRow(ctx, query, courseID).Scan(
 		&course.ID, &course.InstructorID, &course.Title, &course.Description, &course.Content,
 		&course.CreatedAt, &course.UpdatedAt,
-		&instructor.ID, &instructor.Email, &instructor.Role, &instructor.CreatedAt,
+		&instructor.ID, &instructor.Email, &instructor.Name, &instructor.Role, &instructor.CreatedAt,
 	)
 
 	if err != nil {
@@ -129,7 +129,7 @@ func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*mod
 
 func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([]*models.Course, error) {
 	query := `
-        SELECT id, instructor_id, title, description, created_at, updated_at
+        SELECT id, instructor_id, title, description, content, created_at, updated_at
         FROM courses
         WHERE instructor_id = $1
         ORDER BY created_at DESC`
@@ -145,7 +145,7 @@ func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([
 	for rows.Next() {
 		var c models.Course
 		err := rows.Scan(
-			&c.ID, &c.InstructorID, &c.Title, &c.Description,
+			&c.ID, &c.InstructorID, &c.Title, &c.Description, &c.Content,
 			&c.CreatedAt, &c.UpdatedAt,
 		)
 		if err != nil {
@@ -164,12 +164,12 @@ func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([
 	return courses, nil
 }
 
-func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string) error {
+func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description, content string) error {
 	query := `
         UPDATE courses 
-        SET title = $1, description = $2, updated_at = NOW() 
-        WHERE id = $3`
-	result, err := s.db.Exec(ctx, query, title, description, courseID)
+        SET title = $1, description = $2, content = $3, updated_at = NOW() 
+        WHERE id = $4`
+	result, err := s.db.Exec(ctx, query, title, description, content, courseID)
 
 	if err != nil {
 		log.Printf("failed to update course: courseID=%d, error=%v", courseID, err)
@@ -191,12 +191,12 @@ func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, descripti
 func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course, error) {
 	var course models.Course
 	query := `
-        SELECT id, instructor_id, title, description, created_at, updated_at
+        SELECT id, instructor_id, title, description, content, created_at, updated_at
         FROM courses
         WHERE id = $1`
 
 	err := s.db.QueryRow(ctx, query, courseID).Scan(
-		&course.ID, &course.InstructorID, &course.Title, &course.Description,
+		&course.ID, &course.InstructorID, &course.Title, &course.Description, &course.Content,
 		&course.CreatedAt, &course.UpdatedAt,
 	)
 
@@ -216,7 +216,7 @@ type CourseWithInstructor struct {
 
 func (s *Store) GetCoursesWithInstructors(ctx context.Context) ([]*CourseWithInstructor, error) {
 	query := `
-        SELECT c.id, c.instructor_id, c.title, c.description, c.created_at, c.updated_at,
+        SELECT c.id, c.instructor_id, c.title, c.description, c.content, c.created_at, c.updated_at,
                COALESCE(u.name, ''), u.email
         FROM courses c
         JOIN users u ON c.instructor_id = u.id
@@ -234,7 +234,7 @@ func (s *Store) GetCoursesWithInstructors(ctx context.Context) ([]*CourseWithIns
 		var cwi CourseWithInstructor
 		var c models.Course
 		err := rows.Scan(
-			&c.ID, &c.InstructorID, &c.Title, &c.Description,
+			&c.ID, &c.InstructorID, &c.Title, &c.Description, &c.Content,
 			&c.CreatedAt, &c.UpdatedAt,
 			&cwi.InstructorName, &cwi.InstructorEmail,
 		)

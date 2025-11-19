@@ -50,6 +50,7 @@ func main() {
 	mux.HandleFunc("PATCH /api/instructor/applications/submit", middleware.Auth(applicationHandler.SubmitApplication))
 
 	// Course routes (browsing only - all courses are approved)
+	mux.HandleFunc("GET /api/courses/{id}", courseHandler.GetCourse)
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
 
 	// Instructor course routes (published courses only)
@@ -64,6 +65,9 @@ func main() {
 	mux.HandleFunc("PATCH /api/admin/applications/reject", middleware.RequireAdmin(adminHandler.RejectApplication))
 
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
+	mux.HandleFunc("/course/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/course/index.html")
+	})
 	mux.HandleFunc("/about/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/about/index.html")
 	})

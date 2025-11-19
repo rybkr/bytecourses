@@ -3,6 +3,8 @@ package handlers
 import (
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/rybkr/bytecourses/internal/helpers"
 	"github.com/rybkr/bytecourses/internal/store"
@@ -27,4 +29,35 @@ func (h *CourseHandler) ListCourses(w http.ResponseWriter, r *http.Request) {
 	}
 
 	helpers.Success(w, courses)
+}
+
+func (h *CourseHandler) GetCourse(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/api/courses/")
+	id, err := strconv.Atoi(path)
+	if err != nil {
+		log.Printf("invalid course id: %s", path)
+		helpers.BadRequest(w, "invalid course id")
+		return
+	}
+
+	course, instructor, err := h.store.GetCourseWithInstructor(r.Context(), id)
+	if err != nil {
+		log.Printf("failed to get course: %v", err)
+		helpers.NotFound(w, "course not found")
+		return
+	}
+
+	type CourseResponse struct {
+		*store.CourseWithInstructor
+	}
+
+	response := &CourseResponse{
+		CourseWithInstructor: &store.CourseWithInstructor{
+			Course:          course,
+			InstructorName:  instructor.Name,
+			InstructorEmail: instructor.Email,
+		},
+	}
+
+	helpers.Success(w, response)
 }

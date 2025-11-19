@@ -1,2 +1,1 @@
 ALTER TABLE courses ADD COLUMN content TEXT;
-

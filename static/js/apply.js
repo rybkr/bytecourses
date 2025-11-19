@@ -21,7 +21,6 @@ const applyModule = {
         this.loadApplications();
         this.loadDraftsFromBackend();
         this.initFormEnhancements();
-        this.checkForDraft();
     },
 
     getStatusIcon(status) {
@@ -65,46 +64,16 @@ const applyModule = {
 
     initElements() {
         this.applicationList = document.getElementById("applicationList");
-        this.newApplicationBtn = document.getElementById("newApplicationBtn");
-        this.newApplicationModal = document.getElementById("newApplicationModal");
         this.editApplicationModal = document.getElementById("editApplicationModal");
-        this.newApplicationForm = document.getElementById("newApplicationForm");
         this.editApplicationForm = document.getElementById("editApplicationForm");
-        this.newTitleField = document.getElementById("newTitle");
-        this.newDescriptionField = document.getElementById("newDescription");
         this.editTitleField = document.getElementById("editTitle");
         this.editDescriptionField = document.getElementById("editDescription");
-        this.newDraftStatus = document.getElementById("newDraftStatus");
         this.editDraftStatus = document.getElementById("editDraftStatus");
     },
 
     initEventListeners() {
-        if (this.newApplicationBtn) {
-            this.newApplicationBtn.addEventListener("click", () => this.openNewApplicationModal());
-        }
-
-        if (this.newApplicationForm) {
-            this.newApplicationForm.addEventListener("submit", (e) => this.handleNewApplication(e));
-        }
-
         if (this.editApplicationForm) {
             this.editApplicationForm.addEventListener("submit", (e) => this.handleEditApplication(e));
-        }
-
-        const loadNewDraftBtn = document.getElementById("loadNewDraftBtn");
-        const discardNewDraftBtn = document.getElementById("discardNewDraftBtn");
-        const saveNewDraftBtn = document.getElementById("saveNewDraftBtn");
-
-        if (loadNewDraftBtn) {
-            loadNewDraftBtn.addEventListener("click", () => this.loadDraft());
-        }
-
-        if (discardNewDraftBtn) {
-            discardNewDraftBtn.addEventListener("click", () => this.discardDraft());
-        }
-
-        if (saveNewDraftBtn) {
-            saveNewDraftBtn.addEventListener("click", () => this.saveDraft("new", true));
         }
 
         const closeButtons = document.querySelectorAll(".close");
@@ -135,31 +104,13 @@ const applyModule = {
     },
 
     initFormEnhancements() {
-        if (this.newTitleField) {
-            this.newTitleField.addEventListener("input", () => {
-                this.updateCharCounter("newTitle", 255);
-                this.clearFieldError("newTitle");
-                this.scheduleAutoSave("new");
-                this.updateDraftStatus("new");
-            });
-            this.updateCharCounter("newTitle", 255);
-        }
-
-        if (this.newDescriptionField) {
-            this.newDescriptionField.addEventListener("input", () => {
-                this.updateCharCounter("newDescription");
-                this.clearFieldError("newDescription");
-                this.scheduleAutoSave("new");
-                this.updateDraftStatus("new");
-            });
-            this.updateCharCounter("newDescription");
-        }
-
+        // Form enhancements for edit modal only
         if (this.editTitleField) {
             this.editTitleField.addEventListener("input", () => {
                 this.updateCharCounter("editTitle", 255);
                 this.clearFieldError("editTitle");
             });
+            this.updateCharCounter("editTitle", 255);
         }
 
         if (this.editDescriptionField) {
@@ -167,6 +118,7 @@ const applyModule = {
                 this.updateCharCounter("editDescription");
                 this.clearFieldError("editDescription");
             });
+            this.updateCharCounter("editDescription");
         }
     },
 
@@ -248,7 +200,7 @@ const applyModule = {
                     <p>${escapeHtml((draft.description || "").length > 200 ? draft.description.substring(0, 200) + "..." : draft.description || "")}</p>
                     <div class="my-course-meta">
                         <div class="my-course-actions">
-                            <button class="btn-secondary continue-draft-btn" data-draft-id="${draft.id}" style="padding: var(--spacing-sm) var(--spacing-lg); font-size: 0.875rem;">Continue</button>
+                            <a href="/apply/new/?draft=${draft.id}" class="btn-secondary continue-draft-btn" style="padding: var(--spacing-sm) var(--spacing-lg); font-size: 0.875rem; text-decoration: none; display: inline-block;">Continue</a>
                             <button class="delete-btn-small delete-draft-btn" data-draft-id="${draft.id}">Delete</button>
                         </div>
                     </div>
@@ -258,13 +210,7 @@ const applyModule = {
             )
             .join("");
 
-        // Add event listeners for draft buttons
-        document.querySelectorAll(".continue-draft-btn").forEach((btn) => {
-            btn.addEventListener("click", (e) => {
-                const draftId = parseInt(e.target.dataset.draftId);
-                this.openDraftModal(draftId);
-            });
-        });
+        // Continue buttons are now links, no event listeners needed
 
         document.querySelectorAll(".delete-draft-btn").forEach((btn) => {
             btn.addEventListener("click", (e) => {
@@ -383,44 +329,7 @@ const applyModule = {
         }
     },
 
-    async openDraftModal(draftId) {
-        try {
-            const draft = this.draftsList.find((d) => d.id === draftId);
-            if (!draft) {
-                // Reload drafts if not found
-                await this.loadDraftsFromBackend();
-                const reloadedDraft = this.draftsList.find((d) => d.id === draftId);
-                if (!reloadedDraft) {
-                    this.showMessage("Draft not found", "error");
-                    return;
-                }
-                this.populateDraftModal(reloadedDraft);
-            } else {
-                this.populateDraftModal(draft);
-            }
-        } catch (error) {
-            this.showMessage("Failed to load draft", "error");
-        }
-    },
-
-    populateDraftModal(draft) {
-        if (this.newApplicationModal) {
-            this.newApplicationModal.style.display = "block";
-            this.currentDraftId = draft.id;
-            this.editingCourseId = null;
-            if (this.newTitleField) this.newTitleField.value = draft.title || "";
-            if (this.newDescriptionField) this.newDescriptionField.value = draft.description || "";
-            this.clearAllFieldErrors("new");
-            this.updateCharCounter("newTitle", 255);
-            this.updateCharCounter("newDescription");
-            this.unsavedChanges = false;
-            this.lastSavedState = {
-                title: draft.title || "",
-                description: draft.description || "",
-            };
-            this.initAutoSave("new");
-        }
-    },
+    // openDraftModal and populateDraftModal removed - navigation handled by links to /apply/new/
 
     async openEditApplicationModal(courseId) {
         try {
@@ -445,47 +354,7 @@ const applyModule = {
         }
     },
 
-    async handleNewApplication(e) {
-        e.preventDefault();
-        this.clearAllFieldErrors("new");
-        this.isSubmitting = true;
-        this.stopAutoSave("new");
-
-        const formData = {
-            title: this.newTitleField.value.trim(),
-            description: this.newDescriptionField.value.trim(),
-        };
-
-        try {
-            if (this.currentDraftId) {
-                // Submit existing draft
-                await api.drafts.submit(this.currentDraftId, formData);
-            } else {
-                // Create new submission
-                await api.courses.create(formData);
-            }
-            this.showMessage("Application submitted successfully!", "success");
-            if (this.newApplicationModal) this.newApplicationModal.style.display = "none";
-            if (this.newApplicationForm) this.newApplicationForm.reset();
-            this.clearDraft();
-            this.lastSavedState = null;
-            this.currentDraftId = null;
-            this.unsavedChanges = false;
-            this.loadApplications();
-            this.loadDraftsFromBackend();
-        } catch (error) {
-            if (error.type === "validation" && error.fields) {
-                Object.entries(error.fields).forEach(([field, message]) => {
-                    this.showFieldError(`new${field.charAt(0).toUpperCase() + field.slice(1)}`, message);
-                });
-            } else {
-                this.showMessage(error.message || "Failed to submit application", "error");
-            }
-        } finally {
-            this.isSubmitting = false;
-            this.initAutoSave("new");
-        }
-    },
+    // handleNewApplication removed - handled in apply-new.js
 
     async handleEditApplication(e) {
         e.preventDefault();
@@ -537,28 +406,15 @@ const applyModule = {
             await api.instructor.deleteCourse(draftId);
             this.showMessage("Draft deleted successfully", "success");
             this.loadDraftsFromBackend();
-            // If this was the current draft, reset modal
-            if (this.currentDraftId === draftId) {
-                this.currentDraftId = null;
-                if (this.newApplicationForm) this.newApplicationForm.reset();
-            }
+            // Draft deleted, no need to reset anything
         } catch (error) {
             this.showMessage(error.message || "Failed to delete draft", "error");
         }
     },
 
     handleModalClose(modal) {
-        if (modal.id === "newApplicationModal" && this.unsavedChanges) {
-            if (confirm("You have unsaved changes. Save to backend before closing?")) {
-                this.saveDraftToBackend().then(() => {
-                    modal.style.display = "none";
-                    this.unsavedChanges = false;
-                });
-                return;
-            }
-        }
+        // Only edit modal remains
         modal.style.display = "none";
-        this.unsavedChanges = false;
     },
 
     getDraft() {

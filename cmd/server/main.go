@@ -54,6 +54,9 @@ func main() {
 	mux.HandleFunc("/about/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/about/index.html")
 	})
+	mux.HandleFunc("/apply/new/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/apply/new/index.html")
+	})
 	mux.HandleFunc("/apply/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/apply/index.html")
 	})

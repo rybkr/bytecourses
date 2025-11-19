@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Application Portal - The Byte Course Project</title>
+    <title>New Course Application - The Byte Course Project</title>
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 
@@ -168,46 +168,123 @@
             <p>Checking authentication...</p>
         </div>
 
-        <div id="portalContent" style="display: none;">
-            <div style="max-width: 1200px; margin: 0 auto;">
-                <div
-                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xl);">
-                    <h2>Application Portal</h2>
-                    <a href="/apply/new/" class="btn-primary" style="text-decoration: none;">New Application</a>
-                </div>
+        <div id="formContent" style="display: none;">
+            <div class="form-container" style="max-width: 800px;">
+                <a href="/apply/" class="btn-secondary"
+                    style="display: inline-flex; align-items: center; gap: var(--spacing-sm); margin-bottom: var(--spacing-xl); text-decoration: none;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back to Portal
+                </a>
 
-                <div id="portalMessage" class="message" style="display: none; margin-bottom: var(--spacing-lg);"></div>
+                <h2>New Course Application</h2>
+                <p style="color: var(--color-text-light); margin-bottom: var(--spacing-xl);">Create a course proposal
+                    for
+                    admin review. You can save your progress and return later.</p>
 
-                <div id="draftsSection" style="margin-bottom: var(--spacing-2xl);">
-                    <div class="section-header"
-                        style="display: flex; justify-content: space-between; align-items: center;">
-                        <h3 class="section-header" style="margin: 0;">
-                            <svg class="section-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" style="vertical-align: middle; margin-right: var(--spacing-xs);">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                            </svg>
-                            Drafts <span id="draftCount"
-                                style="color: var(--color-text-light); font-size: 0.9rem; font-weight: normal;">(0/16)</span>
-                        </h3>
+                <div id="draftPrompt" class="draft-prompt" style="display: none;">
+                    <p><strong>You have a saved draft.</strong> Would you like to load it?</p>
+                    <div class="draft-preview" id="draftPreview"></div>
+                    <div class="button-group" style="margin-top: var(--spacing-md);">
+                        <button type="button" id="loadDraftBtn" class="btn-secondary">Load Draft</button>
+                        <button type="button" id="discardDraftBtn" class="btn-secondary">Start Fresh</button>
                     </div>
-                    <div id="draftsList"></div>
                 </div>
 
-                <div style="margin-bottom: var(--spacing-lg);">
-                    <h3 class="section-header" style="margin-bottom: var(--spacing-lg);">
-                        <svg class="section-header-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" style="vertical-align: middle; margin-right: var(--spacing-xs);">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                        Applications
-                    </h3>
-                </div>
+                <div id="draftStatus" class="draft-status" style="display: none;"></div>
 
-                <div id="applicationList"></div>
+                <div id="formMessage" class="message" style="display: none; margin-bottom: var(--spacing-lg);"></div>
+
+                <form id="applicationForm">
+                    <div class="form-group">
+                        <label for="title">Course Title *</label>
+                        <input type="text" id="title" name="title" maxlength="255" required>
+                        <div class="field-hint">Choose a clear, descriptive title for your course</div>
+                        <div class="char-counter" id="titleCounter">0 / 255 characters</div>
+                        <div class="field-error" id="titleError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description *</label>
+                        <textarea id="description" name="description" rows="6" required></textarea>
+                        <div class="field-hint">Provide a detailed description of what students will learn</div>
+                        <div class="char-counter" id="descriptionCounter">0 characters</div>
+                        <div class="field-error" id="descriptionError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="learningObjectives">Learning Objectives *</label>
+                        <textarea id="learningObjectives" name="learningObjectives" rows="5" required></textarea>
+                        <div class="field-hint">List what students will learn or achieve (one per line or bullet points)
+                        </div>
+                        <div class="char-counter" id="learningObjectivesCounter">0 characters</div>
+                        <div class="field-error" id="learningObjectivesError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="prerequisites">Prerequisites</label>
+                        <textarea id="prerequisites" name="prerequisites" rows="4"></textarea>
+                        <div class="field-hint">What knowledge or skills should students have before taking this course?
+                        </div>
+                        <div class="char-counter" id="prerequisitesCounter">0 characters</div>
+                        <div class="field-error" id="prerequisitesError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseFormat">Course Format *</label>
+                        <select id="courseFormat" name="courseFormat" required>
+                            <option value="">Select a format...</option>
+                            <option value="live-sessions">Live Sessions</option>
+                            <option value="self-paced">Self-paced</option>
+                            <option value="hybrid">Hybrid</option>
+                            <option value="workshop">Workshop</option>
+                        </select>
+                        <div class="field-error" id="courseFormatError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="categoryTags">Category/Tags</label>
+                        <input type="text" id="categoryTags" name="categoryTags" maxlength="200">
+                        <div class="field-hint">Enter categories or tags separated by commas (e.g., Web Development,
+                            Python, Data Science)</div>
+                        <div class="char-counter" id="categoryTagsCounter">0 / 200 characters</div>
+                        <div class="field-error" id="categoryTagsError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="skillLevel">Skill Level *</label>
+                        <select id="skillLevel" name="skillLevel" required>
+                            <option value="">Select a level...</option>
+                            <option value="beginner">Beginner</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                        <div class="field-error" id="skillLevelError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="courseDuration">Course Duration</label>
+                        <input type="text" id="courseDuration" name="courseDuration" maxlength="100">
+                        <div class="field-hint">Estimated duration (e.g., '4 weeks', '10 hours', '5 sessions')</div>
+                        <div class="char-counter" id="courseDurationCounter">0 / 100 characters</div>
+                        <div class="field-error" id="courseDurationError"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="instructorQualifications">Instructor Qualifications</label>
+                        <textarea id="instructorQualifications" name="instructorQualifications" rows="4"></textarea>
+                        <div class="field-hint">Briefly describe your qualifications or experience relevant to teaching
+                            this course</div>
+                        <div class="char-counter" id="instructorQualificationsCounter">0 characters</div>
+                        <div class="field-error" id="instructorQualificationsError"></div>
+                    </div>
+
+                    <div class="button-group">
+                        <button type="button" id="saveDraftBtn" class="btn-secondary">Save Draft</button>
+                        <button type="submit" id="submitBtn" class="btn-primary">Submit for Approval</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -215,50 +292,18 @@
             style="display: none; text-align: center; padding: var(--spacing-3xl); max-width: 500px; margin: 0 auto;">
             <h2>Login Required</h2>
             <p style="color: var(--color-text-light); margin-bottom: var(--spacing-xl);">You need to be logged in to
-                access the application portal.</p>
+                create a course application.</p>
             <a href="/" class="btn-primary" style="display: inline-block; text-decoration: none;">Go to Home</a>
         </div>
     </main>
 
-    <div id="editApplicationModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Edit Application</h2>
-            <form id="editApplicationForm">
-                <div class="form-group">
-                    <label for="editTitle">Course Title</label>
-                    <input type="text" id="editTitle" name="title" maxlength="255" required>
-                    <div class="char-counter" id="editTitleCounter">0 / 255 characters</div>
-                    <div class="field-error" id="editTitleError"></div>
-                </div>
-
-                <div class="form-group">
-                    <label for="editDescription">Description</label>
-                    <textarea id="editDescription" name="description" rows="6" required></textarea>
-                    <div class="char-counter" id="editDescriptionCounter">0 characters</div>
-                    <div class="field-error" id="editDescriptionError"></div>
-                </div>
-
-                <div class="button-group">
-                    <button type="submit" id="updateEditBtn" class="btn-primary">Update Application</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
     <script src="/static/js/api.js"></script>
     <script src="/static/js/navbar.js"></script>
-    <script src="/static/js/apply.js"></script>
+    <script src="/static/js/apply-new.js"></script>
     <script>
-        function escapeHtml(text) {
-            const div = document.createElement("div");
-            div.textContent = text;
-            return div.innerHTML;
-        }
-
         async function checkAuthAndInit() {
             const authCheck = document.getElementById("authCheck");
-            const portalContent = document.getElementById("portalContent");
+            const formContent = document.getElementById("formContent");
             const loginPrompt = document.getElementById("loginPrompt");
 
             const token = sessionStorage.getItem("authToken");
@@ -283,9 +328,9 @@
                 }
 
                 authCheck.style.display = "none";
-                portalContent.style.display = "block";
+                formContent.style.display = "block";
 
-                applyModule.init();
+                applyNewModule.init();
             } catch (error) {
                 authCheck.style.display = "none";
                 loginPrompt.style.display = "block";

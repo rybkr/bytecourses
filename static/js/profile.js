@@ -1,7 +1,23 @@
 const profileModule = {
 	init() {
 		const profileForm = document.getElementById("profileForm");
-		profileForm.addEventListener("submit", this.handleSubmit.bind(this));
+		if (profileForm) {
+			profileForm.addEventListener("submit", this.handleSubmit.bind(this));
+		}
+	},
+
+	initStandalone() {
+		const token = sessionStorage.getItem("authToken");
+		if (!token) {
+			this.showMessage("You must be logged in to view your profile.", "error");
+			setTimeout(() => {
+				window.location.href = "/";
+			}, 2000);
+			return;
+		}
+
+		this.init();
+		this.load();
 	},
 
 	async load() {
@@ -19,6 +35,14 @@ const profileModule = {
 			).toLocaleDateString();
 		} catch (error) {
 			console.error("Error loading profile:", error);
+			if (error.status === 401 || error.status === 403) {
+				this.showMessage("You must be logged in to view your profile.", "error");
+				setTimeout(() => {
+					window.location.href = "/";
+				}, 2000);
+			} else {
+				this.showMessage("Failed to load profile. Please try again.", "error");
+			}
 		}
 	},
 
@@ -48,10 +72,15 @@ const profileModule = {
 
 	showMessage(message, type) {
 		const profileMessage = document.getElementById("profileMessage");
-		profileMessage.textContent = message;
-		profileMessage.className = type;
-		setTimeout(() => {
-			profileMessage.style.display = "none";
-		}, 3000);
+		if (profileMessage) {
+			profileMessage.textContent = message;
+			profileMessage.className = type;
+			profileMessage.style.display = "block";
+			if (type !== "error") {
+				setTimeout(() => {
+					profileMessage.style.display = "none";
+				}, 3000);
+			}
+		}
 	},
 };

@@ -49,6 +49,8 @@ const authModule = {
 
 			sessionStorage.setItem("authToken", data.token);
 			app.currentUser = data.user;
+			navbarModule.currentUser = data.user;
+			navbarModule.checkAuthState();
 			app.showAuthenticatedUI();
 			coursesModule.load();
 		} catch (error) {
@@ -70,7 +72,7 @@ const authModule = {
 	},
 
 	logout() {
-		sessionStorage.removeItem("authToken");
+		navbarModule.handleLogout();
 		app.currentUser = null;
 		app.showUnauthenticatedUI();
 	},
@@ -94,6 +96,7 @@ const authModule = {
 	},
 
 	async validateToken() {
+		navbarModule.checkAuthState();
 		const token = sessionStorage.getItem("authToken");
 		if (!token) {
 			app.showUnauthenticatedUI();

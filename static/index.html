@@ -473,6 +473,17 @@
                     <textarea id="editDescription" name="description" rows="6" required></textarea>
                 </div>
 
+                <div class="form-group">
+                    <label for="editContent">Course Content (JSON)</label>
+                    <textarea id="editContent" name="content" rows="12"
+                        placeholder='{"sections": [{"title": "Section Title", "type": "lesson", "content": "Content here...", "order": 1}]}'></textarea>
+                    <small
+                        style="color: var(--color-text-light); font-size: 0.875rem; display: block; margin-top: var(--spacing-xs);">
+                        Enter course content as JSON. Structure: {"sections": [{"title": "...", "type":
+                        "lesson|material|assignment", "content": "...", "order": 1}]}
+                    </small>
+                </div>
+
                 <button type="submit">Update Course</button>
             </form>
         </div>

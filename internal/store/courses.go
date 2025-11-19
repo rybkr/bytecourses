@@ -2,21 +2,21 @@ package store
 
 import (
 	"context"
-	"github.com/rybkr/bytecourses/internal/models"
 	"log"
+
+	"github.com/rybkr/bytecourses/internal/models"
 )
 
 func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
 	query := `
-        INSERT INTO courses (instructor_id, title, description, status)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO courses (instructor_id, title, description)
+        VALUES ($1, $2, $3)
         RETURNING id, created_at, updated_at`
 
 	err := s.db.QueryRow(ctx, query,
 		course.InstructorID,
 		course.Title,
 		course.Description,
-		course.Status,
 	).Scan(&course.ID, &course.CreatedAt, &course.UpdatedAt)
 
 	if err != nil {
@@ -28,14 +28,28 @@ func (s *Store) CreateCourse(ctx context.Context, course *models.Course) error {
 	return nil
 }
 
-func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]*models.Course, error) {
+func (s *Store) CreateCourseFromApplication(ctx context.Context, app *models.Application) (*models.Course, error) {
+	course := &models.Course{
+		InstructorID: app.InstructorID,
+		Title:        app.Title,
+		Description:  app.Description,
+	}
+
+	err := s.CreateCourse(ctx, course)
+	if err != nil {
+		return nil, err
+	}
+
+	return course, nil
+}
+
+func (s *Store) GetCourses(ctx context.Context) ([]*models.Course, error) {
 	query := `
-        SELECT id, instructor_id, title, description, status, created_at, updated_at
+        SELECT id, instructor_id, title, description, created_at, updated_at
         FROM courses
-        WHERE ($1::text IS NULL OR status = $1)
         ORDER BY created_at DESC`
 
-	rows, err := s.db.Query(ctx, query, status)
+	rows, err := s.db.Query(ctx, query)
 	if err != nil {
 		log.Printf("failed to query courses: %v", err)
 		return nil, err
@@ -47,7 +61,7 @@ func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]
 		var c models.Course
 		err := rows.Scan(
 			&c.ID, &c.InstructorID, &c.Title, &c.Description,
-			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+			&c.CreatedAt, &c.UpdatedAt,
 		)
 		if err != nil {
 			log.Printf("failed to scan course row: %v", err)
@@ -65,23 +79,7 @@ func (s *Store) GetCourses(ctx context.Context, status *models.CourseStatus) ([]
 	return courses, nil
 }
 
-func (s *Store) UpdateCourseStatus(ctx context.Context, courseID int, status models.CourseStatus) error {
-	query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
-	result, err := s.db.Exec(ctx, query, status, courseID)
-	if err != nil {
-		log.Printf("failed to update course status: courseID=%d, error=%v", courseID, err)
-		return err
-	}
-
-	rowsAffected := result.RowsAffected()
-	if rowsAffected == 0 {
-		log.Printf("no course found with id=%d", courseID)
-	} else {
-		log.Printf("course status updated: id=%d, status=%s", courseID, status)
-	}
-
-	return nil
-}
+// UpdateCourseStatus removed - status management moved to applications
 
 func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
 	query := `DELETE FROM courses WHERE id = $1`
@@ -103,7 +101,7 @@ func (s *Store) DeleteCourse(ctx context.Context, courseID int) error {
 
 func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*models.Course, *models.User, error) {
 	query := `
-        SELECT c.id, c.instructor_id, c.title, c.description, c.status, c.created_at, c.updated_at,
+        SELECT c.id, c.instructor_id, c.title, c.description, c.created_at, c.updated_at,
                u.id, u.email, u.role, u.created_at
         FROM courses c
         JOIN users u ON c.instructor_id = u.id
@@ -114,7 +112,7 @@ func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*mod
 
 	err := s.db.QueryRow(ctx, query, courseID).Scan(
 		&course.ID, &course.InstructorID, &course.Title, &course.Description,
-		&course.Status, &course.CreatedAt, &course.UpdatedAt,
+		&course.CreatedAt, &course.UpdatedAt,
 		&instructor.ID, &instructor.Email, &instructor.Role, &instructor.CreatedAt,
 	)
 
@@ -126,27 +124,11 @@ func (s *Store) GetCourseWithInstructor(ctx context.Context, courseID int) (*mod
 	return &course, &instructor, nil
 }
 
-func (s *Store) RejectCourse(ctx context.Context, courseID int) error {
-	query := `UPDATE courses SET status = $1, updated_at = NOW() WHERE id = $2`
-	result, err := s.db.Exec(ctx, query, models.StatusRejected, courseID)
-	if err != nil {
-		log.Printf("failed to reject course: courseID=%d, error=%v", courseID, err)
-		return err
-	}
-
-	rowsAffected := result.RowsAffected()
-	if rowsAffected == 0 {
-		log.Printf("no course found with id=%d", courseID)
-	} else {
-		log.Printf("course rejected: id=%d", courseID)
-	}
-
-	return nil
-}
+// RejectCourse removed - rejection moved to applications
 
 func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([]*models.Course, error) {
 	query := `
-        SELECT id, instructor_id, title, description, status, created_at, updated_at
+        SELECT id, instructor_id, title, description, created_at, updated_at
         FROM courses
         WHERE instructor_id = $1
         ORDER BY created_at DESC`
@@ -163,7 +145,7 @@ func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([
 		var c models.Course
 		err := rows.Scan(
 			&c.ID, &c.InstructorID, &c.Title, &c.Description,
-			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+			&c.CreatedAt, &c.UpdatedAt,
 		)
 		if err != nil {
 			log.Printf("failed to scan course row: %v", err)
@@ -181,24 +163,12 @@ func (s *Store) GetCoursesByInstructor(ctx context.Context, instructorID int) ([
 	return courses, nil
 }
 
-func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string, status *models.CourseStatus) error {
-	var query string
-	var err error
-	var result interface{ RowsAffected() int64 }
-
-	if status != nil {
-		query = `
-        UPDATE courses 
-        SET title = $1, description = $2, status = $3, updated_at = NOW() 
-        WHERE id = $4`
-		result, err = s.db.Exec(ctx, query, title, description, *status, courseID)
-	} else {
-		query = `
+func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, description string) error {
+	query := `
         UPDATE courses 
         SET title = $1, description = $2, updated_at = NOW() 
         WHERE id = $3`
-		result, err = s.db.Exec(ctx, query, title, description, courseID)
-	}
+	result, err := s.db.Exec(ctx, query, title, description, courseID)
 
 	if err != nil {
 		log.Printf("failed to update course: courseID=%d, error=%v", courseID, err)
@@ -215,27 +185,18 @@ func (s *Store) UpdateCourse(ctx context.Context, courseID int, title, descripti
 	return nil
 }
 
-func (s *Store) CountDraftsByInstructor(ctx context.Context, instructorID int) (int, error) {
-	query := `SELECT COUNT(*) FROM courses WHERE instructor_id = $1 AND status = 'draft'`
-	var count int
-	err := s.db.QueryRow(ctx, query, instructorID).Scan(&count)
-	if err != nil {
-		log.Printf("failed to count drafts: instructorID=%d, error=%v", instructorID, err)
-		return 0, err
-	}
-	return count, nil
-}
+// CountDraftsByInstructor moved to applications.go
 
 func (s *Store) GetCourseByID(ctx context.Context, courseID int) (*models.Course, error) {
 	var course models.Course
 	query := `
-        SELECT id, instructor_id, title, description, status, created_at, updated_at
+        SELECT id, instructor_id, title, description, created_at, updated_at
         FROM courses
         WHERE id = $1`
 
 	err := s.db.QueryRow(ctx, query, courseID).Scan(
 		&course.ID, &course.InstructorID, &course.Title, &course.Description,
-		&course.Status, &course.CreatedAt, &course.UpdatedAt,
+		&course.CreatedAt, &course.UpdatedAt,
 	)
 
 	if err != nil {
@@ -252,16 +213,15 @@ type CourseWithInstructor struct {
 	InstructorEmail string `json:"instructor_email"`
 }
 
-func (s *Store) GetCoursesWithInstructors(ctx context.Context, status *models.CourseStatus) ([]*CourseWithInstructor, error) {
+func (s *Store) GetCoursesWithInstructors(ctx context.Context) ([]*CourseWithInstructor, error) {
 	query := `
-        SELECT c.id, c.instructor_id, c.title, c.description, c.status, c.created_at, c.updated_at,
+        SELECT c.id, c.instructor_id, c.title, c.description, c.created_at, c.updated_at,
                COALESCE(u.name, ''), u.email
         FROM courses c
         JOIN users u ON c.instructor_id = u.id
-        WHERE ($1::text IS NULL OR c.status = $1)
         ORDER BY c.created_at DESC`
 
-	rows, err := s.db.Query(ctx, query, status)
+	rows, err := s.db.Query(ctx, query)
 	if err != nil {
 		log.Printf("failed to query courses with instructors: %v", err)
 		return nil, err
@@ -274,7 +234,7 @@ func (s *Store) GetCoursesWithInstructors(ctx context.Context, status *models.Co
 		var c models.Course
 		err := rows.Scan(
 			&c.ID, &c.InstructorID, &c.Title, &c.Description,
-			&c.Status, &c.CreatedAt, &c.UpdatedAt,
+			&c.CreatedAt, &c.UpdatedAt,
 			&cwi.InstructorName, &cwi.InstructorEmail,
 		)
 		if err != nil {

@@ -106,8 +106,8 @@ const applyNewModule = {
 
         if (draftId) {
             try {
-                const courses = await api.instructor.getCourses();
-                const draft = courses.find(c => c.id === parseInt(draftId) && c.status === "draft");
+                const applications = await api.instructor.getApplications();
+                const draft = (applications || []).find(a => a.id === parseInt(draftId) && a.status === "draft");
                 if (draft) {
                     this.currentDraftId = draft.id;
                     this.loadDraftFromBackend(draft);
@@ -128,20 +128,16 @@ const applyNewModule = {
     },
 
     loadDraftFromBackend(draft) {
+        // Load all fields from backend draft (convert snake_case to camelCase)
         if (this.titleField) this.titleField.value = draft.title || "";
         if (this.descriptionField) this.descriptionField.value = draft.description || "";
-
-        // Note: New fields not yet in backend, so we'll load from localStorage if available
-        const localDraft = this.getDraft();
-        if (localDraft && localDraft.draftId === draft.id) {
-            if (this.learningObjectivesField) this.learningObjectivesField.value = localDraft.learningObjectives || "";
-            if (this.prerequisitesField) this.prerequisitesField.value = localDraft.prerequisites || "";
-            if (this.courseFormatField) this.courseFormatField.value = localDraft.courseFormat || "";
-            if (this.categoryTagsField) this.categoryTagsField.value = localDraft.categoryTags || "";
-            if (this.skillLevelField) this.skillLevelField.value = localDraft.skillLevel || "";
-            if (this.courseDurationField) this.courseDurationField.value = localDraft.courseDuration || "";
-            if (this.instructorQualificationsField) this.instructorQualificationsField.value = localDraft.instructorQualifications || "";
-        }
+        if (this.learningObjectivesField) this.learningObjectivesField.value = draft.learning_objectives || "";
+        if (this.prerequisitesField) this.prerequisitesField.value = draft.prerequisites || "";
+        if (this.courseFormatField) this.courseFormatField.value = draft.course_format || "";
+        if (this.categoryTagsField) this.categoryTagsField.value = draft.category_tags || "";
+        if (this.skillLevelField) this.skillLevelField.value = draft.skill_level || "";
+        if (this.courseDurationField) this.courseDurationField.value = draft.course_duration || "";
+        if (this.instructorQualificationsField) this.instructorQualificationsField.value = draft.instructor_qualifications || "";
 
         this.updateAllCharCounters();
         this.lastSavedState = this.getFormState();
@@ -221,6 +217,38 @@ const applyNewModule = {
         };
     },
 
+    // Convert camelCase field names to snake_case for API calls
+    convertToSnakeCase(formData) {
+        const mapping = {
+            learningObjectives: "learning_objectives",
+            courseFormat: "course_format",
+            categoryTags: "category_tags",
+            skillLevel: "skill_level",
+            courseDuration: "course_duration",
+            instructorQualifications: "instructor_qualifications"
+        };
+
+        const apiData = {};
+        for (const [key, value] of Object.entries(formData)) {
+            const apiKey = mapping[key] || key;
+            apiData[apiKey] = value;
+        }
+        return apiData;
+    },
+
+    // Convert snake_case field names back to camelCase for error display
+    convertToCamelCase(fieldName) {
+        const mapping = {
+            learning_objectives: "learningObjectives",
+            course_format: "courseFormat",
+            category_tags: "categoryTags",
+            skill_level: "skillLevel",
+            course_duration: "courseDuration",
+            instructor_qualifications: "instructorQualifications"
+        };
+        return mapping[fieldName] || fieldName;
+    },
+
     hasUnsavedChanges() {
         const currentState = this.getFormState();
         if (!this.lastSavedState) {
@@ -264,17 +292,21 @@ const applyNewModule = {
     async saveDraftToBackend() {
         if (this.isSubmitting) return;
 
-        const formData = {
-            title: this.titleField.value.trim(),
-            description: this.descriptionField.value.trim(),
-        };
+        const formData = this.getFormState();
+        // Trim all string values
+        Object.keys(formData).forEach(key => {
+            if (typeof formData[key] === 'string') {
+                formData[key] = formData[key].trim();
+            }
+        });
+        const apiData = this.convertToSnakeCase(formData);
 
         try {
             let draft;
             if (this.currentDraftId) {
-                draft = await api.drafts.update(this.currentDraftId, formData);
+                draft = await api.drafts.update(this.currentDraftId, apiData);
             } else {
-                draft = await api.drafts.create(formData);
+                draft = await api.drafts.create(apiData);
                 this.currentDraftId = draft.id;
             }
 
@@ -292,7 +324,9 @@ const applyNewModule = {
         } catch (error) {
             if (error.type === "validation" && error.fields) {
                 Object.entries(error.fields).forEach(([field, message]) => {
-                    this.showFieldError(field, message);
+                    // Convert snake_case field names back to camelCase for error display
+                    const camelCaseField = this.convertToCamelCase(field);
+                    this.showFieldError(camelCaseField, message);
                 });
             } else {
                 this.showMessage(error.message || "Failed to save draft to server", "error");
@@ -306,16 +340,20 @@ const applyNewModule = {
         this.isSubmitting = true;
         this.stopAutoSave();
 
-        const formData = {
-            title: this.titleField.value.trim(),
-            description: this.descriptionField.value.trim(),
-        };
+        const formData = this.getFormState();
+        // Trim all string values
+        Object.keys(formData).forEach(key => {
+            if (typeof formData[key] === 'string') {
+                formData[key] = formData[key].trim();
+            }
+        });
+        const apiData = this.convertToSnakeCase(formData);
 
         try {
             if (this.currentDraftId) {
-                await api.drafts.submit(this.currentDraftId, formData);
+                await api.drafts.submit(this.currentDraftId, apiData);
             } else {
-                await api.courses.create(formData);
+                await api.applications.create({ ...apiData, status: "pending" });
             }
 
             this.showMessage("Application submitted successfully!", "success");
@@ -331,7 +369,9 @@ const applyNewModule = {
         } catch (error) {
             if (error.type === "validation" && error.fields) {
                 Object.entries(error.fields).forEach(([field, message]) => {
-                    this.showFieldError(field, message);
+                    // Convert snake_case field names back to camelCase for error display
+                    const camelCaseField = this.convertToCamelCase(field);
+                    this.showFieldError(camelCaseField, message);
                 });
             } else {
                 this.showMessage(error.message || "Failed to submit application", "error");

@@ -51,32 +51,31 @@ const adminModule = {
 
 	async loadPendingCourses() {
 		try {
-			const courses = await api.admin.getCourses("pending");
-			this.renderPendingCourses(courses);
+			const applications = await api.admin.getApplications();
+			this.renderPendingCourses(applications);
 		} catch (error) {
 			document.getElementById("pendingCoursesList").innerHTML =
-				"<p>Error loading pending courses</p>";
+				"<p>Error loading pending applications</p>";
 		}
 	},
 
-	renderPendingCourses(courses) {
+	renderPendingCourses(applications) {
 		const pendingCoursesList = document.getElementById("pendingCoursesList");
 
-		if (!courses || courses.length === 0) {
-			pendingCoursesList.innerHTML = "<p>No pending courses</p>";
+		if (!applications || applications.length === 0) {
+			pendingCoursesList.innerHTML = "<p>No pending applications</p>";
 			return;
 		}
 
-		pendingCoursesList.innerHTML = courses
+		pendingCoursesList.innerHTML = applications
 			.map(
-				(course) => `
+				(app) => `
             <div class="pending-course-card">
-                <h4>${escapeHtml(course.title)}</h4>
-                <p>${escapeHtml(course.description)}</p>
-                <div>Instructor: ${escapeHtml(course.instructor_name || course.instructor_email)}</div>
+                <h4>${escapeHtml(app.title)}</h4>
+                <p>${escapeHtml(app.description)}</p>
                 <div class="course-actions">
-                    <button class="approve-btn" data-course-id="${course.id}">Approve</button>
-                    <button class="reject-btn" data-course-id="${course.id}">Reject</button>
+                    <button class="approve-btn" data-course-id="${app.id}">Approve</button>
+                    <button class="reject-btn" data-course-id="${app.id}">Reject</button>
                 </div>
             </div>
         `,
@@ -86,7 +85,7 @@ const adminModule = {
 
 	async approveCourse(id) {
 		try {
-			await api.admin.approveCourse(id);
+			await api.admin.approveApplication(id);
 			this.loadPendingCourses();
 		} catch (error) {
 			this.showError(error.message);
@@ -95,7 +94,7 @@ const adminModule = {
 
 	async rejectCourse(id) {
 		try {
-			await api.admin.rejectCourse(id);
+			await api.admin.rejectApplication(id);
 			this.loadPendingCourses();
 		} catch (error) {
 			this.showError(error.message);

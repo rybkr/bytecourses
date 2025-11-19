@@ -1,12 +1,12 @@
 package handlers
 
 import (
-	"github.com/rybkr/bytecourses/internal/helpers"
-	"github.com/rybkr/bytecourses/internal/models"
-	"github.com/rybkr/bytecourses/internal/store"
 	"log"
 	"net/http"
 	"strconv"
+
+	"github.com/rybkr/bytecourses/internal/helpers"
+	"github.com/rybkr/bytecourses/internal/store"
 )
 
 type AdminHandler struct {
@@ -28,35 +28,62 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	helpers.Success(w, users)
 }
 
-func (h *AdminHandler) ApproveCourse(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
-	id, err := strconv.Atoi(idStr)
+func (h *AdminHandler) ListPendingApplications(w http.ResponseWriter, r *http.Request) {
+	applications, err := h.store.GetPendingApplications(r.Context())
 	if err != nil {
-		log.Printf("invalid course id for approval: %s", idStr)
-		helpers.BadRequest(w, "invalid course id")
-		return
-	}
-
-	if err := h.store.UpdateCourseStatus(r.Context(), id, models.StatusApproved); err != nil {
-		log.Printf("failed to approve course in admin handler: id=%d, error=%v", id, err)
+		log.Printf("failed to get pending applications in admin handler: %v", err)
 		helpers.InternalServerError(w, "internal server error")
 		return
 	}
 
-	helpers.NoContent(w)
+	helpers.Success(w, applications)
 }
 
-func (h *AdminHandler) RejectCourse(w http.ResponseWriter, r *http.Request) {
+func (h *AdminHandler) ApproveApplication(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		log.Printf("invalid course id for rejection: %s", idStr)
-		helpers.BadRequest(w, "invalid course id")
+		log.Printf("invalid application id for approval: %s", idStr)
+		helpers.BadRequest(w, "invalid application id")
 		return
 	}
 
-	if err := h.store.RejectCourse(r.Context(), id); err != nil {
-		log.Printf("failed to reject course in admin handler: id=%d, error=%v", id, err)
+	app, err := h.store.ApproveApplication(r.Context(), id)
+	if err != nil {
+		log.Printf("failed to approve application in admin handler: id=%d, error=%v", id, err)
+		helpers.InternalServerError(w, "internal server error")
+		return
+	}
+
+	// Create course from application
+	course, err := h.store.CreateCourseFromApplication(r.Context(), app)
+	if err != nil {
+		log.Printf("failed to create course from application: id=%d, error=%v", id, err)
+		helpers.InternalServerError(w, "internal server error")
+		return
+	}
+
+	// Delete application after creating course
+	if err := h.store.DeleteApplication(r.Context(), id); err != nil {
+		log.Printf("failed to delete application after approval: id=%d, error=%v", id, err)
+		helpers.InternalServerError(w, "internal server error")
+		return
+	}
+
+	helpers.Success(w, course)
+}
+
+func (h *AdminHandler) RejectApplication(w http.ResponseWriter, r *http.Request) {
+	idStr := r.URL.Query().Get("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		log.Printf("invalid application id for rejection: %s", idStr)
+		helpers.BadRequest(w, "invalid application id")
+		return
+	}
+
+	if err := h.store.RejectApplication(r.Context(), id); err != nil {
+		log.Printf("failed to reject application in admin handler: id=%d, error=%v", id, err)
 		helpers.InternalServerError(w, "internal server error")
 		return
 	}

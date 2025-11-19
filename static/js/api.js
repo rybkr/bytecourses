@@ -69,19 +69,40 @@ const api = {
 	},
 
 	courses: {
-		list: (status) => {
-			const url = status ? `/courses?status=${status}` : "/courses";
-			return request(url);
-		},
+		list: () => request("/courses"),
+	},
+
+	applications: {
 		create: (data) =>
-			request("/courses", {
+			request("/applications", {
 				method: "POST",
+				body: JSON.stringify(data),
+			}),
+		list: () => request("/instructor/applications"),
+		update: (id, data) =>
+			request(`/instructor/applications?id=${id}`, {
+				method: "PATCH",
+				body: JSON.stringify(data),
+			}),
+		delete: (id) =>
+			request(`/instructor/applications?id=${id}`, {
+				method: "DELETE",
+			}),
+		submit: (id, data) =>
+			request(`/instructor/applications/submit?id=${id}`, {
+				method: "PATCH",
 				body: JSON.stringify(data),
 			}),
 	},
 
 	instructor: {
+		getApplications: () => request("/instructor/applications"),
 		getCourses: () => request("/instructor/courses"),
+		updateApplication: (id, data) =>
+			request(`/instructor/applications?id=${id}`, {
+				method: "PATCH",
+				body: JSON.stringify(data),
+			}),
 		updateCourse: (id, data) =>
 			request(`/instructor/courses?id=${id}`, {
 				method: "PATCH",
@@ -95,31 +116,31 @@ const api = {
 
 	drafts: {
 		create: (data) =>
-			request("/courses", {
+			request("/applications", {
 				method: "POST",
 				body: JSON.stringify({ ...data, status: "draft" }),
 			}),
 		update: (id, data) =>
-			request(`/instructor/courses?id=${id}`, {
+			request(`/instructor/applications?id=${id}`, {
 				method: "PATCH",
 				body: JSON.stringify({ ...data, status: "draft" }),
 			}),
 		submit: (id, data) =>
-			request(`/instructor/courses?id=${id}`, {
+			request(`/instructor/applications/submit?id=${id}`, {
 				method: "PATCH",
-				body: JSON.stringify({ ...data, status: "pending" }),
+				body: JSON.stringify(data),
 			}),
 	},
 
 	admin: {
 		getUsers: () => request("/admin/users"),
-		getCourses: (status) => request(`/admin/courses?status=${status}`),
-		approveCourse: (id) =>
-			request(`/admin/courses/approve?id=${id}`, {
+		getApplications: () => request("/admin/applications"),
+		approveApplication: (id) =>
+			request(`/admin/applications/approve?id=${id}`, {
 				method: "PATCH",
 			}),
-		rejectCourse: (id) =>
-			request(`/admin/courses/reject?id=${id}`, {
+		rejectApplication: (id) =>
+			request(`/admin/applications/reject?id=${id}`, {
 				method: "PATCH",
 			}),
 	},

@@ -128,9 +128,9 @@ const applyModule = {
             this.applicationList.innerHTML = this.renderSkeletonLoader(3);
         }
         try {
-            const courses = await api.instructor.getCourses();
+            const applications = await api.instructor.getApplications();
             this.isLoading = false;
-            this.renderApplicationList(courses || []);
+            this.renderApplicationList(applications || []);
         } catch (error) {
             this.isLoading = false;
             if (this.applicationList) {
@@ -146,8 +146,8 @@ const applyModule = {
             draftsList.innerHTML = this.renderSkeletonLoader(2);
         }
         try {
-            const courses = await api.instructor.getCourses();
-            this.draftsList = (courses || []).filter((c) => c.status === "draft");
+            const applications = await api.instructor.getApplications();
+            this.draftsList = (applications || []).filter((a) => a.status === "draft");
             this.isLoading = false;
             this.renderDraftList();
         } catch (error) {
@@ -254,13 +254,13 @@ const applyModule = {
         return nextNumber === 1 ? "Untitled Course" : `Untitled Course ${nextNumber}`;
     },
 
-    renderApplicationList(courses) {
+    renderApplicationList(applications) {
         if (!this.applicationList) return;
 
         // Filter out drafts
-        const applications = (courses || []).filter((c) => c.status !== "draft");
+        const nonDraftApplications = (applications || []).filter((a) => a.status !== "draft");
 
-        if (!applications || applications.length === 0) {
+        if (!nonDraftApplications || nonDraftApplications.length === 0) {
             this.applicationList.innerHTML = `
                 <div class="empty-state">
                     <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -278,31 +278,31 @@ const applyModule = {
             return;
         }
 
-        this.applicationList.innerHTML = applications
+        this.applicationList.innerHTML = nonDraftApplications
             .map(
-                (course) => {
-                    const submittedDate = this.formatRelativeTime(course.created_at);
-                    const submittedDateAbsolute = new Date(course.created_at).toLocaleString();
-                    const showEdit = this.shouldShowEditButton(course.status);
-                    const isReadOnly = course.status === 'approved' || course.status === 'rejected';
+                (app) => {
+                    const submittedDate = this.formatRelativeTime(app.created_at);
+                    const submittedDateAbsolute = new Date(app.created_at).toLocaleString();
+                    const showEdit = this.shouldShowEditButton(app.status);
+                    const isReadOnly = app.status === 'rejected';
                     return `
-                    <div class="my-course-card application-card status-${course.status} ${isReadOnly ? 'read-only-card' : ''}">
-                        <div class="my-course-card-header">
-                            <div style="flex: 1;">
-                                <h3>${escapeHtml(course.title)}</h3>
-                                <div class="my-course-date" title="${submittedDateAbsolute}">Submitted ${submittedDate}</div>
+                        <div class="my-course-card application-card status-${app.status} ${isReadOnly ? 'read-only-card' : ''}">
+                            <div class="my-course-card-header">
+                                <div style="flex: 1;">
+                                    <h3>${escapeHtml(app.title)}</h3>
+                                    <div class="my-course-date" title="${submittedDateAbsolute}">Submitted ${submittedDate}</div>
+                                </div>
+                                <span class="status-badge status-${app.status}">${this.getStatusIcon(app.status)} ${app.status}</span>
                             </div>
-                            <span class="status-badge status-${course.status}">${this.getStatusIcon(course.status)} ${course.status}</span>
-                        </div>
-                        <p>${escapeHtml(course.description.length > 200 ? course.description.substring(0, 200) + "..." : course.description)}</p>
-                        <div class="my-course-meta">
-                            <div class="my-course-actions">
-                                ${showEdit ? `<button class="edit-application-btn" data-course-id="${course.id}">Edit</button>` : ''}
-                                <button class="delete-btn-small delete-application-btn" data-course-id="${course.id}">Delete</button>
+                            <p>${escapeHtml(app.description.length > 200 ? app.description.substring(0, 200) + "..." : app.description)}</p>
+                            <div class="my-course-meta">
+                                <div class="my-course-actions">
+                                    ${showEdit ? `<button class="edit-application-btn" data-course-id="${app.id}">Edit</button>` : ''}
+                                    <button class="delete-btn-small delete-application-btn" data-course-id="${app.id}">Delete</button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
+                    `;
                 },
             )
             .join("");
@@ -333,24 +333,24 @@ const applyModule = {
 
     async openEditApplicationModal(courseId) {
         try {
-            const courses = await api.instructor.getCourses();
-            const course = courses.find((c) => c.id === courseId);
-            if (!course) {
-                this.showMessage("Course not found", "error");
+            const applications = await api.instructor.getApplications();
+            const application = applications.find((a) => a.id === courseId);
+            if (!application) {
+                this.showMessage("Application not found", "error");
                 return;
             }
 
             if (this.editApplicationModal) {
                 this.editApplicationModal.style.display = "block";
                 this.editingCourseId = courseId;
-                if (this.editTitleField) this.editTitleField.value = course.title;
-                if (this.editDescriptionField) this.editDescriptionField.value = course.description;
+                if (this.editTitleField) this.editTitleField.value = application.title;
+                if (this.editDescriptionField) this.editDescriptionField.value = application.description;
                 this.clearAllFieldErrors("edit");
                 this.updateCharCounter("editTitle", 255);
                 this.updateCharCounter("editDescription");
             }
         } catch (error) {
-            this.showMessage("Failed to load course", "error");
+            this.showMessage("Failed to load application", "error");
         }
     },
 
@@ -369,7 +369,7 @@ const applyModule = {
         };
 
         try {
-            await api.instructor.updateCourse(this.editingCourseId, formData);
+            await api.instructor.updateApplication(this.editingCourseId, formData);
             this.showMessage("Application updated successfully!", "success");
             if (this.editApplicationModal) this.editApplicationModal.style.display = "none";
             this.editingCourseId = null;
@@ -391,7 +391,7 @@ const applyModule = {
         if (!confirm("Are you sure you want to delete this application?")) return;
 
         try {
-            await api.instructor.deleteCourse(courseId);
+            await api.applications.delete(courseId);
             this.showMessage("Application deleted successfully", "success");
             this.loadApplications();
         } catch (error) {
@@ -403,7 +403,7 @@ const applyModule = {
         if (!confirm("Are you sure you want to delete this draft?")) return;
 
         try {
-            await api.instructor.deleteCourse(draftId);
+            await api.applications.delete(draftId);
             this.showMessage("Draft deleted successfully", "success");
             this.loadDraftsFromBackend();
             // Draft deleted, no need to reset anything

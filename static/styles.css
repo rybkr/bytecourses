@@ -392,6 +392,15 @@ main {
 	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+	display: inline-flex;
+	align-items: center;
+	gap: var(--spacing-xs);
+}
+
+.status-badge svg {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
 }
 
 .status-approved {
@@ -402,6 +411,19 @@ main {
 .status-pending {
 	background: #fff3cd;
 	color: #856404;
+	animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+	0%,
+	100% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.8;
+	}
 }
 
 .status-rejected {
@@ -861,10 +883,74 @@ button[type="submit"]:disabled,
 	box-shadow: var(--shadow-sm);
 	border: 1px solid var(--color-border);
 	margin-bottom: var(--spacing-xl);
+	position: relative;
+	transition: all 0.2s ease;
+}
+
+.my-course-card:hover {
+	transform: translateY(-2px);
+	box-shadow: var(--shadow-md);
+}
+
+.draft-card {
+	background: rgba(59, 130, 246, 0.05);
+	border: 1px dashed var(--color-border);
+	border-left: 3px solid var(--color-accent-blue);
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.draft-card:hover {
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.application-card {
+	background: var(--color-white);
+	border: 1px solid var(--color-border);
+	box-shadow: var(--shadow-sm);
+}
+
+.application-card.status-pending {
+	border-left: 3px solid #f59e0b;
+}
+
+.application-card.status-approved {
+	border-left: 3px solid #10b981;
+}
+
+.application-card.status-rejected {
+	border-left: 3px solid #ef4444;
+}
+
+.read-only-card {
+	opacity: 0.9;
+}
+
+.read-only-card .edit-application-btn {
+	display: none;
+}
+
+.my-course-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	margin-bottom: var(--spacing-md);
 }
 
 .my-course-card h3 {
-	margin-bottom: var(--spacing-md);
+	margin-bottom: var(--spacing-sm);
+	flex: 1;
+}
+
+.my-course-card .status-badge {
+	position: absolute;
+	top: var(--spacing-md);
+	right: var(--spacing-md);
+}
+
+.my-course-date {
+	font-size: 0.875rem;
+	color: var(--color-text-light);
+	margin-bottom: var(--spacing-sm);
 }
 
 .my-course-card p {
@@ -883,6 +969,66 @@ button[type="submit"]:disabled,
 .my-course-actions {
 	display: flex;
 	gap: var(--spacing-sm);
+}
+
+.empty-state {
+	text-align: center;
+	padding: var(--spacing-3xl);
+	color: var(--color-text-light);
+}
+
+.empty-state-icon {
+	width: 64px;
+	height: 64px;
+	margin: 0 auto var(--spacing-lg);
+	opacity: 0.5;
+}
+
+.empty-state h3 {
+	margin-bottom: var(--spacing-sm);
+	color: var(--color-text);
+	font-size: 1.25rem;
+}
+
+.empty-state p {
+	margin-bottom: var(--spacing-xl);
+	font-size: 0.9375rem;
+}
+
+.skeleton-loader {
+	background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+	background-size: 200% 100%;
+	animation: shimmer 1.5s infinite;
+	border-radius: var(--radius-md);
+}
+
+@keyframes shimmer {
+	0% {
+		background-position: 200% 0;
+	}
+
+	100% {
+		background-position: -200% 0;
+	}
+}
+
+.skeleton-card {
+	height: 150px;
+	border-radius: var(--radius-md);
+	margin-bottom: var(--spacing-xl);
+}
+
+.section-header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-sm);
+	margin-bottom: var(--spacing-lg);
+}
+
+.section-header-icon {
+	width: 20px;
+	height: 20px;
+	color: var(--color-text-light);
 }
 
 .modal {
@@ -958,6 +1104,33 @@ button[type="submit"]:disabled,
 		flex-direction: column;
 		align-items: flex-start;
 		gap: var(--spacing-sm);
+	}
+}
+
+@media (max-width: 768px) {
+	.my-course-card-header {
+		flex-direction: column;
+	}
+
+	.my-course-card .status-badge {
+		position: static;
+		align-self: flex-start;
+		margin-bottom: var(--spacing-sm);
+	}
+
+	.my-course-meta {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: var(--spacing-md);
+	}
+
+	.my-course-actions {
+		width: 100%;
+		flex-direction: column;
+	}
+
+	.my-course-actions button {
+		width: 100%;
 	}
 }
 

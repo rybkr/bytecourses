@@ -13,6 +13,7 @@ const applyModule = {
     currentDraftId: null,
     draftsList: [],
     unsavedChanges: false,
+    isLoading: false,
 
     init() {
         this.initElements();
@@ -21,6 +22,45 @@ const applyModule = {
         this.loadDraftsFromBackend();
         this.initFormEnhancements();
         this.checkForDraft();
+    },
+
+    getStatusIcon(status) {
+        const icons = {
+            draft: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`,
+            pending: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`,
+            approved: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`,
+            rejected: `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>`
+        };
+        return icons[status] || '';
+    },
+
+    formatRelativeTime(dateString) {
+        if (!dateString) return 'Unknown';
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffMs = now - date;
+        const diffSecs = Math.floor(diffMs / 1000);
+        const diffMins = Math.floor(diffSecs / 60);
+        const diffHours = Math.floor(diffMins / 60);
+        const diffDays = Math.floor(diffHours / 24);
+
+        if (diffSecs < 60) return 'Just now';
+        if (diffMins < 60) return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+        if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        if (diffDays < 30) return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+
+        // Fall back to formatted date if older than 30 days
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined });
+    },
+
+    shouldShowEditButton(status) {
+        return status === 'pending' || status === 'draft';
+    },
+
+    renderSkeletonLoader(count = 3) {
+        return Array(count).fill(0).map(() =>
+            `<div class="skeleton-loader skeleton-card"></div>`
+        ).join('');
     },
 
     initElements() {
@@ -131,10 +171,16 @@ const applyModule = {
     },
 
     async loadApplications() {
+        if (this.applicationList) {
+            this.isLoading = true;
+            this.applicationList.innerHTML = this.renderSkeletonLoader(3);
+        }
         try {
             const courses = await api.instructor.getCourses();
+            this.isLoading = false;
             this.renderApplicationList(courses || []);
         } catch (error) {
+            this.isLoading = false;
             if (this.applicationList) {
                 this.applicationList.innerHTML = "<p>Error loading applications. Please try again.</p>";
             }
@@ -142,12 +188,19 @@ const applyModule = {
     },
 
     async loadDraftsFromBackend() {
+        const draftsList = document.getElementById("draftsList");
+        if (draftsList) {
+            this.isLoading = true;
+            draftsList.innerHTML = this.renderSkeletonLoader(2);
+        }
         try {
             const courses = await api.instructor.getCourses();
             this.draftsList = (courses || []).filter((c) => c.status === "draft");
+            this.isLoading = false;
             this.renderDraftList();
         } catch (error) {
             console.error("Failed to load drafts:", error);
+            this.isLoading = false;
             this.draftsList = [];
             this.renderDraftList();
         }
@@ -163,7 +216,17 @@ const applyModule = {
         }
 
         if (!this.draftsList || this.draftsList.length === 0) {
-            draftsList.innerHTML = "<p style='color: var(--color-text-light);'>No drafts yet.</p>";
+            draftsList.innerHTML = `
+                <div class="empty-state">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                    <h3>No drafts yet</h3>
+                    <p>Start creating your first course application</p>
+                    <button class="btn-primary" onclick="applyModule.openNewApplicationModal()">Create Draft</button>
+                </div>
+            `;
             return;
         }
 
@@ -171,14 +234,19 @@ const applyModule = {
             .map(
                 (draft) => {
                     const displayTitle = draft.title && draft.title.trim() ? draft.title : this.generateDraftName("", this.draftsList);
-                    const lastSaved = new Date(draft.updated_at || draft.created_at).toLocaleString();
+                    const lastSaved = this.formatRelativeTime(draft.updated_at || draft.created_at);
+                    const lastSavedAbsolute = new Date(draft.updated_at || draft.created_at).toLocaleString();
                     return `
-                <div class="my-course-card" style="border-left: 3px solid var(--color-accent-blue);">
-                    <h3>${escapeHtml(displayTitle)}</h3>
+                <div class="my-course-card draft-card">
+                    <div class="my-course-card-header">
+                        <div style="flex: 1;">
+                            <h3>${escapeHtml(displayTitle)}</h3>
+                            <div class="my-course-date" title="${lastSavedAbsolute}">Last saved: ${lastSaved}</div>
+                        </div>
+                        <span class="status-badge status-draft" style="background: var(--color-accent-blue);">${this.getStatusIcon('draft')} Draft</span>
+                    </div>
                     <p>${escapeHtml((draft.description || "").length > 200 ? draft.description.substring(0, 200) + "..." : draft.description || "")}</p>
                     <div class="my-course-meta">
-                        <span class="status-badge" style="background: var(--color-accent-blue);">Draft</span>
-                        <span style="color: var(--color-text-light); font-size: 0.875rem;">Last saved: ${lastSaved}</span>
                         <div class="my-course-actions">
                             <button class="btn-secondary continue-draft-btn" data-draft-id="${draft.id}" style="padding: var(--spacing-sm) var(--spacing-lg); font-size: 0.875rem;">Continue</button>
                             <button class="delete-btn-small delete-draft-btn" data-draft-id="${draft.id}">Delete</button>
@@ -248,33 +316,48 @@ const applyModule = {
 
         if (!applications || applications.length === 0) {
             this.applicationList.innerHTML = `
-				<div style="text-align: center; padding: var(--spacing-3xl); color: var(--color-text-light);">
-					<p style="margin-bottom: var(--spacing-lg);">You haven't submitted any applications yet.</p>
-					<button id="emptyStateNewBtn" class="btn-primary">Create Your First Application</button>
-				</div>
-			`;
-            const emptyStateBtn = document.getElementById("emptyStateNewBtn");
-            if (emptyStateBtn) {
-                emptyStateBtn.addEventListener("click", () => this.openNewApplicationModal());
-            }
+                <div class="empty-state">
+                    <svg class="empty-state-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <h3>No applications submitted</h3>
+                    <p>Submit your first course for review</p>
+                    <button class="btn-primary" onclick="applyModule.openNewApplicationModal()">New Application</button>
+                </div>
+            `;
             return;
         }
 
         this.applicationList.innerHTML = applications
             .map(
-                (course) => `
-			<div class="my-course-card">
-				<h3>${escapeHtml(course.title)}</h3>
-				<p>${escapeHtml(course.description.length > 200 ? course.description.substring(0, 200) + "..." : course.description)}</p>
-				<div class="my-course-meta">
-					<span class="status-badge status-${course.status}">${course.status}</span>
-					<div class="my-course-actions">
-						<button class="edit-application-btn" data-course-id="${course.id}">Edit</button>
-						<button class="delete-btn-small delete-application-btn" data-course-id="${course.id}">Delete</button>
-					</div>
-				</div>
-			</div>
-		`,
+                (course) => {
+                    const submittedDate = this.formatRelativeTime(course.created_at);
+                    const submittedDateAbsolute = new Date(course.created_at).toLocaleString();
+                    const showEdit = this.shouldShowEditButton(course.status);
+                    const isReadOnly = course.status === 'approved' || course.status === 'rejected';
+                    return `
+                    <div class="my-course-card application-card status-${course.status} ${isReadOnly ? 'read-only-card' : ''}">
+                        <div class="my-course-card-header">
+                            <div style="flex: 1;">
+                                <h3>${escapeHtml(course.title)}</h3>
+                                <div class="my-course-date" title="${submittedDateAbsolute}">Submitted ${submittedDate}</div>
+                            </div>
+                            <span class="status-badge status-${course.status}">${this.getStatusIcon(course.status)} ${course.status}</span>
+                        </div>
+                        <p>${escapeHtml(course.description.length > 200 ? course.description.substring(0, 200) + "..." : course.description)}</p>
+                        <div class="my-course-meta">
+                            <div class="my-course-actions">
+                                ${showEdit ? `<button class="edit-application-btn" data-course-id="${course.id}">Edit</button>` : ''}
+                                <button class="delete-btn-small delete-application-btn" data-course-id="${course.id}">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                },
             )
             .join("");
     },

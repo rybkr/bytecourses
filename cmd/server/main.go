@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/rybkr/bytecourses/internal/handlers"
-	"github.com/rybkr/bytecourses/internal/middleware"
-	"github.com/rybkr/bytecourses/internal/store"
 	"log"
 	"net/http"
 	"os"
+
+	"github.com/rybkr/bytecourses/internal/handlers"
+	"github.com/rybkr/bytecourses/internal/middleware"
+	"github.com/rybkr/bytecourses/internal/store"
 )
 
 func main() {
@@ -52,6 +53,9 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	mux.HandleFunc("/about/", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "static/about/index.html")
+	})
+	mux.HandleFunc("/apply/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/apply/index.html")
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != "/" {

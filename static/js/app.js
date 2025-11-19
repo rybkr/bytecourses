@@ -32,7 +32,6 @@ const app = {
 
 		this.homeBtn = document.getElementById("homeBtn");
 		this.viewCoursesBtn = document.getElementById("viewCoursesBtn");
-		this.submitCourseBtn = document.getElementById("submitCourseBtn");
 		this.myCoursesBtn = document.getElementById("myCoursesBtn");
 		this.profileBtn = document.getElementById("profileBtn");
 		this.adminBtn = document.getElementById("adminBtn");
@@ -40,7 +39,6 @@ const app = {
 
 		this.mobileHomeBtn = document.getElementById("mobileHomeBtn");
 		this.mobileViewCoursesBtn = document.getElementById("mobileViewCoursesBtn");
-		this.mobileSubmitCourseBtn = document.getElementById("mobileSubmitCourseBtn");
 		this.mobileMyCoursesBtn = document.getElementById("mobileMyCoursesBtn");
 		this.mobileProfileBtn = document.getElementById("mobileProfileBtn");
 		this.mobileAdminBtn = document.getElementById("mobileAdminBtn");
@@ -55,9 +53,6 @@ const app = {
 		this.viewCoursesBtn.addEventListener("click", () =>
 			this.showView("courses"),
 		);
-		this.submitCourseBtn.addEventListener("click", () =>
-			this.showView("submit"),
-		);
 		this.myCoursesBtn.addEventListener("click", () =>
 			this.showView("myCourses"),
 		);
@@ -68,9 +63,6 @@ const app = {
 		this.mobileHomeBtn.addEventListener("click", () => this.showView("home"));
 		this.mobileViewCoursesBtn.addEventListener("click", () =>
 			this.showView("courses"),
-		);
-		this.mobileSubmitCourseBtn.addEventListener("click", () =>
-			this.showView("submit"),
 		);
 		this.mobileMyCoursesBtn.addEventListener("click", () =>
 			this.showView("myCourses"),
@@ -103,19 +95,16 @@ const app = {
 		this.aboutView.classList.remove("active");
 		this.authView.classList.remove("active");
 		this.coursesView.classList.remove("active");
-		this.submitView.classList.remove("active");
 		this.myCoursesView.classList.remove("active");
 		this.profileView.classList.remove("active");
 		this.adminView.classList.remove("active");
 		this.homeBtn.classList.remove("active");
 		this.viewCoursesBtn.classList.remove("active");
-		this.submitCourseBtn.classList.remove("active");
 		this.myCoursesBtn.classList.remove("active");
 		this.profileBtn.classList.remove("active");
 		this.adminBtn.classList.remove("active");
 		this.mobileHomeBtn.classList.remove("active");
 		this.mobileViewCoursesBtn.classList.remove("active");
-		this.mobileSubmitCourseBtn.classList.remove("active");
 		this.mobileMyCoursesBtn.classList.remove("active");
 		this.mobileProfileBtn.classList.remove("active");
 		this.mobileAdminBtn.classList.remove("active");
@@ -131,10 +120,6 @@ const app = {
 			this.viewCoursesBtn.classList.add("active");
 			this.mobileViewCoursesBtn.classList.add("active");
 			coursesModule.load();
-		} else if (view === "submit") {
-			this.submitView.classList.add("active");
-			this.submitCourseBtn.classList.add("active");
-			this.mobileSubmitCourseBtn.classList.add("active");
 		} else if (view === "myCourses") {
 			this.myCoursesView.classList.add("active");
 			this.myCoursesBtn.classList.add("active");
@@ -162,12 +147,10 @@ const app = {
 		this.userInfo.style.display = "block";
 		this.homeBtn.style.display = "none";
 		this.viewCoursesBtn.style.display = "inline-block";
-		this.submitCourseBtn.style.display = "inline-block";
 		this.profileBtn.style.display = "inline-block";
 		this.logoutBtn.style.display = "inline-block";
 		this.mobileHomeBtn.style.display = "none";
 		this.mobileViewCoursesBtn.style.display = "block";
-		this.mobileSubmitCourseBtn.style.display = "block";
 		this.mobileProfileBtn.style.display = "block";
 		this.mobileLogoutBtn.style.display = "block";
 
@@ -204,14 +187,12 @@ const app = {
 		this.userInfo.style.display = "none";
 		this.homeBtn.style.display = "inline-block";
 		this.viewCoursesBtn.style.display = "none";
-		this.submitCourseBtn.style.display = "none";
 		this.myCoursesBtn.style.display = "none";
 		this.profileBtn.style.display = "none";
 		this.adminBtn.style.display = "none";
 		this.logoutBtn.style.display = "none";
 		this.mobileHomeBtn.style.display = "block";
 		this.mobileViewCoursesBtn.style.display = "none";
-		this.mobileSubmitCourseBtn.style.display = "none";
 		this.mobileMyCoursesBtn.style.display = "none";
 		this.mobileProfileBtn.style.display = "none";
 		this.mobileAdminBtn.style.display = "none";

@@ -463,7 +463,20 @@ main {
 .form-group select:focus {
 	outline: none;
 	border-color: var(--color-primary);
-	box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+	box-shadow: 0 0 0 3px rgba(233, 30, 99, 0.1);
+	transition: all 0.15s ease;
+}
+
+.form-group input.error:focus,
+.form-group textarea.error:focus {
+	border-color: var(--color-danger);
+	box-shadow: 0 0 0 3px rgba(239, 83, 80, 0.1);
+}
+
+.form-group input.success:focus,
+.form-group textarea.success:focus {
+	border-color: var(--color-success);
+	box-shadow: 0 0 0 3px rgba(102, 187, 106, 0.1);
 }
 
 .form-group input:disabled,
@@ -474,9 +487,18 @@ main {
 	cursor: not-allowed;
 }
 
+.form-group input.error,
+.form-group textarea.error {
+	border-color: var(--color-danger);
+}
+
+.form-group input.success,
+.form-group textarea.success {
+	border-color: var(--color-success);
+}
+
 button[type="submit"],
 .btn-primary {
-	width: 100%;
 	background: var(--color-primary);
 	color: var(--color-white);
 	border: none;
@@ -488,11 +510,165 @@ button[type="submit"],
 	transition: all 0.2s ease;
 }
 
+.button-group button[type="submit"],
+.button-group .btn-primary {
+	width: auto;
+}
+
+form>button[type="submit"]:not(.button-group button),
+form>.btn-primary:not(.button-group .btn-primary) {
+	width: 100%;
+}
+
 button[type="submit"]:hover,
 .btn-primary:hover {
 	background: var(--color-primary-dark);
 	transform: translateY(-1px);
 	box-shadow: var(--shadow-sm);
+}
+
+button[type="submit"]:disabled,
+.btn-primary:disabled {
+	background: var(--color-text-light);
+	cursor: not-allowed;
+	transform: none;
+	opacity: 0.6;
+}
+
+.form-container {
+	max-width: 700px;
+	margin: 0 auto;
+	padding: var(--spacing-2xl);
+	background: var(--color-white);
+	border-radius: var(--radius-md);
+	box-shadow: var(--shadow-sm);
+}
+
+.form-container h2 {
+	margin-bottom: var(--spacing-md);
+}
+
+.char-counter {
+	text-align: right;
+	font-size: 0.75rem;
+	color: var(--color-text-light);
+	margin-top: var(--spacing-xs);
+}
+
+.char-counter.warning {
+	color: var(--color-warning);
+}
+
+.char-counter.error {
+	color: var(--color-danger);
+}
+
+.field-error {
+	color: var(--color-danger);
+	font-size: 0.875rem;
+	margin-top: var(--spacing-xs);
+	display: none;
+}
+
+.field-error.show {
+	display: block;
+}
+
+.field-hint {
+	color: var(--color-text-light);
+	font-size: 0.875rem;
+	margin-top: var(--spacing-xs);
+}
+
+.button-group {
+	display: flex;
+	gap: var(--spacing-md);
+	margin-top: var(--spacing-xl);
+}
+
+.btn-secondary {
+	background: transparent;
+	color: var(--color-primary);
+	border: 2px solid var(--color-primary);
+	padding: var(--spacing-md) var(--spacing-xl);
+	border-radius: var(--radius-sm);
+	font-size: 0.9375rem;
+	font-weight: 500;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	flex: 1;
+}
+
+.btn-secondary:hover {
+	background: var(--color-primary);
+	color: var(--color-white);
+	transform: translateY(-1px);
+	box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:disabled {
+	opacity: 0.6;
+	cursor: not-allowed;
+	transform: none;
+}
+
+.button-group .btn-primary {
+	flex: 1;
+}
+
+.draft-prompt {
+	background: var(--color-bg);
+	border: 2px solid var(--color-primary);
+	border-radius: var(--radius-md);
+	padding: var(--spacing-lg);
+	margin-bottom: var(--spacing-xl);
+}
+
+.draft-prompt p {
+	margin-bottom: var(--spacing-md);
+	color: var(--color-text);
+}
+
+.draft-preview {
+	margin-bottom: var(--spacing-md);
+	color: var(--color-text-light);
+	font-style: italic;
+}
+
+.draft-status {
+	font-size: 0.875rem;
+	margin-bottom: var(--spacing-lg);
+	padding: var(--spacing-sm) var(--spacing-md);
+	border-radius: var(--radius-sm);
+	text-align: center;
+}
+
+.draft-status-success {
+	background: rgba(102, 187, 106, 0.1);
+	color: var(--color-success-dark);
+}
+
+.draft-status-warning {
+	background: rgba(255, 167, 38, 0.1);
+	color: var(--color-warning);
+}
+
+.draft-status-saved {
+	font-weight: 500;
+}
+
+.draft-status-unsaved {
+	font-weight: 500;
+}
+
+@media (max-width: 768px) {
+	.button-group {
+		flex-direction: column;
+	}
+
+	.form-container {
+		padding: var(--spacing-xl);
+	}
 }
 
 .auth-toggle {

@@ -180,7 +180,7 @@ const applyModule = {
                         <span class="status-badge" style="background: var(--color-accent-blue);">Draft</span>
                         <span style="color: var(--color-text-light); font-size: 0.875rem;">Last saved: ${lastSaved}</span>
                         <div class="my-course-actions">
-                            <button class="edit-application-btn continue-draft-btn" data-draft-id="${draft.id}">Continue</button>
+                            <button class="btn-secondary continue-draft-btn" data-draft-id="${draft.id}" style="padding: var(--spacing-sm) var(--spacing-lg); font-size: 0.875rem;">Continue</button>
                             <button class="delete-btn-small delete-draft-btn" data-draft-id="${draft.id}">Delete</button>
                         </div>
                     </div>
@@ -621,6 +621,12 @@ const applyModule = {
         this.lastSavedState = null;
         this.updateDraftStatus("new");
         this.initAutoSave("new");
+
+        // Hide the draft prompt
+        const draftPrompt = document.getElementById("newDraftPrompt");
+        if (draftPrompt) {
+            draftPrompt.style.display = "none";
+        }
     },
 
     clearDraft() {
@@ -725,13 +731,8 @@ const applyModule = {
                 counter.classList.add("error");
             }
         } else {
-            counter.textContent = `${length} characters (minimum 10)`;
+            counter.textContent = `${length} characters`;
             counter.className = "char-counter";
-            if (length < 10) {
-                counter.classList.add("error");
-            } else if (length < 20) {
-                counter.classList.add("warning");
-            }
         }
     },
 

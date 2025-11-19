@@ -54,7 +54,6 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		}
 		// Description still required for drafts
 		v.Required(course.Description, "description")
-		v.MinLength(course.Description, 10, "description")
 
 		// Check draft limit
 		count, err := h.store.CountDraftsByInstructor(r.Context(), user.ID)
@@ -73,7 +72,6 @@ func (h *CourseHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		v.MinLength(course.Title, 3, "title")
 		v.MaxLength(course.Title, 255, "title")
 		v.Required(course.Description, "description")
-		v.MinLength(course.Description, 10, "description")
 	}
 
 	if !v.Valid() {

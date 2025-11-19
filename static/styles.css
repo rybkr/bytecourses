@@ -799,6 +799,7 @@ button[type="submit"]:disabled,
 .approve-btn,
 .reject-btn,
 .edit-btn,
+.edit-application-btn,
 .delete-btn-small {
 	padding: var(--spacing-sm) var(--spacing-lg);
 	border: none;
@@ -819,24 +820,36 @@ button[type="submit"]:disabled,
 	transform: translateY(-1px);
 }
 
-.reject-btn,
-.delete-btn-small {
+.reject-btn {
 	background: var(--color-danger);
 	color: var(--color-white);
 }
 
-.reject-btn:hover,
-.delete-btn-small:hover {
+.reject-btn:hover {
 	background: var(--color-danger-dark);
 	transform: translateY(-1px);
 }
 
-.edit-btn {
+.delete-btn-small {
+	background: transparent;
+	color: var(--color-text-light);
+	border: 1px solid var(--color-text-light);
+}
+
+.delete-btn-small:hover {
+	background: var(--color-text-light);
+	color: var(--color-white);
+	transform: translateY(-1px);
+}
+
+.edit-btn,
+.edit-application-btn {
 	background: var(--color-primary);
 	color: var(--color-white);
 }
 
-.edit-btn:hover {
+.edit-btn:hover,
+.edit-application-btn:hover {
 	background: var(--color-primary-dark);
 	transform: translateY(-1px);
 }

@@ -282,12 +282,8 @@ const coursesModule = {
 				counter.classList.add("warning");
 			}
 		} else {
-			counter.textContent = `${length} characters (minimum 10)`;
+			counter.textContent = `${length} characters`;
 			counter.classList.remove("warning", "error");
-
-			if (length > 0 && length < 10) {
-				counter.classList.add("warning");
-			}
 		}
 	},
 

@@ -1,5 +1,0 @@
-ALTER TABLE users ADD COLUMN name VARCHAR(255);
-ALTER TABLE users ADD COLUMN bio TEXT;
-ALTER TABLE users ADD COLUMN updated_at TIMESTAMP NOT NULL DEFAULT NOW();
-
-CREATE INDEX idx_users_email ON users(email)

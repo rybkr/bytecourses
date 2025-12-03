@@ -23,7 +23,7 @@ Enables clubs and committees to organize educational content, track member progr
     - Description: Login/signup system for students
     - User Story: As a student, I want to create an account so that I can access courses
     - Acceptance Criteria:
-        - [ ] Email/password registration
+        - [+] Email/password registration
         - [ ] Login/logout functionality
         - [ ] Password reset capability
 

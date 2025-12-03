@@ -79,3 +79,40 @@ func GetUserFromContext(ctx context.Context) (*models.User, bool) {
 	user, ok := ctx.Value(UserContextKey).(*models.User)
 	return user, ok
 }
+
+func OptionalAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString != authHeader {
+				token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+						return nil, jwt.ErrSignatureInvalid
+					}
+					return getJWTSecret(), nil
+				})
+
+				if err == nil && token.Valid {
+					if claims, ok := token.Claims.(jwt.MapClaims); ok {
+						userID := int(claims["user_id"].(float64))
+						email := claims["email"].(string)
+						role := models.UserRole(claims["role"].(string))
+
+						user := &models.User{
+							ID:    userID,
+							Email: email,
+							Role:  role,
+						}
+
+						ctx := context.WithValue(r.Context(), UserContextKey, user)
+						next.ServeHTTP(w, r.WithContext(ctx))
+						return
+					}
+				}
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	}
+}

@@ -32,6 +32,7 @@ func main() {
 	instructorHandler := handlers.NewInstructorHandler(store)
 	userHandler := handlers.NewUserHandler(store)
 	applicationHandler := handlers.NewApplicationHandler(store)
+	enrollmentHandler := handlers.NewEnrollmentHandler(store)
 
 	mux := http.NewServeMux()
 
@@ -50,8 +51,14 @@ func main() {
 	mux.HandleFunc("PATCH /api/instructor/applications/submit", middleware.Auth(applicationHandler.SubmitApplication))
 
 	// Course routes (browsing only - all courses are approved)
-	mux.HandleFunc("GET /api/courses/{id}", courseHandler.GetCourse)
+	mux.HandleFunc("GET /api/courses/{id}", middleware.OptionalAuth(courseHandler.GetCourse))
 	mux.HandleFunc("GET /api/courses", courseHandler.ListCourses)
+
+	// Enrollment routes
+	mux.HandleFunc("POST /api/courses/{id}/enroll", middleware.Auth(enrollmentHandler.Enroll))
+	mux.HandleFunc("DELETE /api/courses/{id}/enroll", middleware.Auth(enrollmentHandler.Unenroll))
+	mux.HandleFunc("GET /api/courses/{id}/enrollments", enrollmentHandler.GetEnrollmentStatus)
+	mux.HandleFunc("GET /api/students/enrollments", middleware.Auth(enrollmentHandler.GetStudentEnrollments))
 
 	// Instructor course routes (published courses only)
 	mux.HandleFunc("GET /api/instructor/courses", middleware.Auth(instructorHandler.GetMyCourses))

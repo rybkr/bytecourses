@@ -83,7 +83,47 @@ const instructorModule = {
 		document.getElementById("editCourseId").value = id;
 		document.getElementById("editTitle").value = title;
 		document.getElementById("editDescription").value = description;
-		document.getElementById("editContent").value = content || "";
+
+		const contentTextarea = document.getElementById("editContent");
+		const sectionsContainer = document.getElementById("sectionsContainer");
+		const toggleJSONBtn = document.getElementById("toggleJSONViewBtn");
+		let isJSONView = false;
+
+		if (sectionsContainer && toggleJSONBtn) {
+			contentEditorModule.init(content || "");
+			sectionsContainer.style.display = "block";
+			contentTextarea.style.display = "none";
+			isJSONView = false;
+
+			toggleJSONBtn.textContent = "Show JSON";
+			toggleJSONBtn.onclick = () => {
+				if (isJSONView) {
+					const json = contentEditorModule.getJSON();
+					contentTextarea.value = json;
+					sectionsContainer.style.display = "block";
+					contentTextarea.style.display = "none";
+					toggleJSONBtn.textContent = "Show JSON";
+					isJSONView = false;
+				} else {
+					const json = contentEditorModule.getJSON();
+					contentTextarea.value = json;
+					sectionsContainer.style.display = "none";
+					contentTextarea.style.display = "block";
+					toggleJSONBtn.textContent = "Show Visual Editor";
+					isJSONView = true;
+				}
+			};
+
+			const addSectionBtn = document.getElementById("addSectionBtn");
+			if (addSectionBtn) {
+				addSectionBtn.onclick = () => {
+					contentEditorModule.addSection();
+				};
+			}
+		} else {
+			contentTextarea.value = content || "";
+		}
+
 		document.getElementById("editModal").style.display = "block";
 	},
 
@@ -91,7 +131,15 @@ const instructorModule = {
 		e.preventDefault();
 
 		const courseId = document.getElementById("editCourseId").value;
-		const contentValue = document.getElementById("editContent").value.trim();
+		const contentTextarea = document.getElementById("editContent");
+		const sectionsContainer = document.getElementById("sectionsContainer");
+
+		let contentValue = "";
+		if (sectionsContainer && sectionsContainer.style.display !== "none") {
+			contentValue = contentEditorModule.getJSON();
+		} else {
+			contentValue = contentTextarea.value.trim();
+		}
 
 		const formData = {
 			title: document.getElementById("editTitle").value,

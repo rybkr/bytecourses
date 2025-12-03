@@ -215,6 +215,47 @@
                 <div id="courseDescription"
                     style="font-size: 1.1rem; line-height: 1.8; color: var(--color-text-light); margin-bottom: var(--spacing-xl);">
                 </div>
+                <div class="course-actions" id="courseActions" style="display: none;">
+                    <div class="course-actions-primary">
+                        <button id="enrollBtn" class="btn btn-primary" style="display: none;">
+                            Enroll in Course
+                        </button>
+                        <button id="unenrollBtn" class="btn btn-secondary" style="display: none;">
+                            Unenroll
+                        </button>
+                        <span id="enrollmentBadge" class="enrollment-badge" style="display: none;">
+                            ✓ Enrolled
+                        </span>
+                    </div>
+                    <div class="course-actions-meta">
+                        <span id="enrollmentCount" class="enrollment-count" style="display: none;">
+                            <strong id="enrollmentCountNumber">0</strong> students enrolled
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="instructorDashboard" class="instructor-dashboard" style="display: none;">
+                <div class="instructor-dashboard-header">
+                    <h2>Course Management</h2>
+                </div>
+                <div class="instructor-dashboard-content">
+                    <div class="instructor-quick-actions">
+                        <button id="editCourseBtn" class="btn btn-primary">Edit Course</button>
+                        <button id="viewStudentsBtn" class="btn btn-secondary">View Students</button>
+                        <button id="postAnnouncementBtn" class="btn btn-secondary">Post Announcement</button>
+                    </div>
+                    <div class="instructor-stats">
+                        <div class="stat-card">
+                            <div class="stat-value" id="statEnrollmentCount">0</div>
+                            <div class="stat-label">Students Enrolled</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="statCompletionRate">0%</div>
+                            <div class="stat-label">Completion Rate</div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div id="courseSections" class="course-content"></div>

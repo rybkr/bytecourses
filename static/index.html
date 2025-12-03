@@ -474,13 +474,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="editContent">Course Content (JSON)</label>
-                    <textarea id="editContent" name="content" rows="12"
+                    <label>Course Content</label>
+                    <div class="content-editor-toolbar">
+                        <button type="button" id="addSectionBtn" class="btn btn-secondary">+ Add Section</button>
+                        <button type="button" id="toggleJSONViewBtn" class="btn btn-secondary">Show JSON</button>
+                    </div>
+                    <div id="sectionsContainer" class="sections-container"></div>
+                    <textarea id="editContent" name="content" rows="12" style="display: none;"
                         placeholder='{"sections": [{"title": "Section Title", "type": "lesson", "content": "Content here...", "order": 1}]}'></textarea>
                     <small
                         style="color: var(--color-text-light); font-size: 0.875rem; display: block; margin-top: var(--spacing-xs);">
-                        Enter course content as JSON. Structure: {"sections": [{"title": "...", "type":
-                        "lesson|material|assignment", "content": "...", "order": 1}]}
+                        Add sections to build your course content. Each section can be a lesson, material, or assignment.
                     </small>
                 </div>
 
@@ -494,6 +498,7 @@
     <script src="/static/js/auth.js"></script>
     <script src="/static/js/courses.js"></script>
     <script src="/static/js/profile.js"></script>
+    <script src="/static/js/content-editor.js"></script>
     <script src="/static/js/instructor.js"></script>
     <script src="/static/js/admin.js"></script>
     <script src="/static/js/app.js"></script>

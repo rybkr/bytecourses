@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/rybkr/bytecourses/internal/helpers"
+	"github.com/rybkr/bytecourses/internal/middleware"
 	"github.com/rybkr/bytecourses/internal/store"
 )
 
@@ -47,8 +48,49 @@ func (h *CourseHandler) GetCourse(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	enrollmentCount, err := h.store.GetEnrollmentCount(r.Context(), id)
+	if err != nil {
+		log.Printf("failed to get enrollment count: %v", err)
+		enrollmentCount = 0
+	}
+
+	type EnrollmentData struct {
+		IsEnrolled     bool   `json:"is_enrolled"`
+		EnrolledAt     string `json:"enrolled_at,omitempty"`
+		LastAccessedAt string `json:"last_accessed_at,omitempty"`
+	}
+
+	enrollment := EnrollmentData{
+		IsEnrolled: false,
+	}
+
+	isInstructor := false
+	user, ok := middleware.GetUserFromContext(r.Context())
+	if ok && user != nil {
+		if user.ID == course.InstructorID {
+			isInstructor = true
+		}
+
+		enrollmentRecord, err := h.store.GetEnrollment(r.Context(), user.ID, id)
+		if err == nil && enrollmentRecord != nil {
+			enrollment.IsEnrolled = true
+			enrollment.EnrolledAt = enrollmentRecord.EnrolledAt.Format("2006-01-02T15:04:05Z07:00")
+			if enrollmentRecord.LastAccessedAt != nil {
+				enrollment.LastAccessedAt = enrollmentRecord.LastAccessedAt.Format("2006-01-02T15:04:05Z07:00")
+			}
+
+			err = h.store.UpdateLastAccessed(r.Context(), user.ID, id)
+			if err != nil {
+				log.Printf("failed to update last accessed: %v", err)
+			}
+		}
+	}
+
 	type CourseResponse struct {
 		*store.CourseWithInstructor
+		Enrollment      EnrollmentData `json:"enrollment"`
+		EnrollmentCount int            `json:"enrollment_count"`
+		IsInstructor    bool           `json:"is_instructor"`
 	}
 
 	response := &CourseResponse{
@@ -57,6 +99,9 @@ func (h *CourseHandler) GetCourse(w http.ResponseWriter, r *http.Request) {
 			InstructorName:  instructor.Name,
 			InstructorEmail: instructor.Email,
 		},
+		Enrollment:      enrollment,
+		EnrollmentCount: enrollmentCount,
+		IsInstructor:    isInstructor,
 	}
 
 	helpers.Success(w, response)

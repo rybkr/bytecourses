@@ -147,4 +147,17 @@ const api = {
 				method: "PATCH",
 			}),
 	},
+
+	enrollments: {
+		enroll: (courseId) =>
+			request(`/courses/${courseId}/enroll`, {
+				method: "POST",
+			}),
+		unenroll: (courseId) =>
+			request(`/courses/${courseId}/enroll`, {
+				method: "DELETE",
+			}),
+		getStatus: (courseId) => request(`/courses/${courseId}/enrollments`),
+		list: () => request("/students/enrollments"),
+	},
 };

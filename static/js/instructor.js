@@ -18,7 +18,14 @@ const instructorModule = {
 				const courseId = parseInt(e.target.dataset.courseId);
 				const title = e.target.dataset.courseTitle;
 				const description = e.target.dataset.courseDescription;
-				this.openEditModal(courseId, title, description);
+				let content = e.target.dataset.courseContent || "";
+				content = content
+					.replace(/&amp;/g, "&")
+					.replace(/&lt;/g, "<")
+					.replace(/&gt;/g, ">")
+					.replace(/&quot;/g, '"')
+					.replace(/&#39;/g, "'");
+				this.openEditModal(courseId, title, description, content);
 			} else if (e.target.classList.contains("delete-btn-small")) {
 				const courseId = parseInt(e.target.dataset.courseId);
 				this.deleteCourse(courseId);
@@ -46,27 +53,77 @@ const instructorModule = {
 
 		myCoursesList.innerHTML = courses
 			.map(
-				(course) => `
+				(course) => {
+					const content = course.content || "";
+					const escapedContent = content
+						.replace(/&/g, "&amp;")
+						.replace(/</g, "&lt;")
+						.replace(/>/g, "&gt;")
+						.replace(/"/g, "&quot;")
+						.replace(/'/g, "&#39;");
+					return `
             <div class="my-course-card">
                 <h3>${escapeHtml(course.title)}</h3>
                 <p>${escapeHtml(course.description)}</p>
                 <div class="my-course-meta">
                     <span class="status-badge status-${course.status}">${course.status}</span>
                     <div class="my-course-actions">
-                        <button class="edit-btn" data-course-id="${course.id}" data-course-title="${escapeHtml(course.title).replace(/"/g, "&quot;")}" data-course-description="${escapeHtml(course.description).replace(/"/g, "&quot;")}">Edit</button>
+                        <button class="edit-btn" data-course-id="${course.id}" data-course-title="${escapeHtml(course.title).replace(/"/g, "&quot;")}" data-course-description="${escapeHtml(course.description).replace(/"/g, "&quot;")}" data-course-content="${escapedContent}">Edit</button>
                         <button class="delete-btn-small" data-course-id="${course.id}">Delete</button>
                     </div>
                 </div>
             </div>
-        `,
+        `;
+				},
 			)
 			.join("");
 	},
 
-	openEditModal(id, title, description) {
+	openEditModal(id, title, description, content) {
 		document.getElementById("editCourseId").value = id;
 		document.getElementById("editTitle").value = title;
 		document.getElementById("editDescription").value = description;
+
+		const contentTextarea = document.getElementById("editContent");
+		const sectionsContainer = document.getElementById("sectionsContainer");
+		const toggleJSONBtn = document.getElementById("toggleJSONViewBtn");
+		let isJSONView = false;
+
+		if (sectionsContainer && toggleJSONBtn) {
+			contentEditorModule.init(content || "");
+			sectionsContainer.style.display = "block";
+			contentTextarea.style.display = "none";
+			isJSONView = false;
+
+			toggleJSONBtn.textContent = "Show JSON";
+			toggleJSONBtn.onclick = () => {
+				if (isJSONView) {
+					const json = contentEditorModule.getJSON();
+					contentTextarea.value = json;
+					sectionsContainer.style.display = "block";
+					contentTextarea.style.display = "none";
+					toggleJSONBtn.textContent = "Show JSON";
+					isJSONView = false;
+				} else {
+					const json = contentEditorModule.getJSON();
+					contentTextarea.value = json;
+					sectionsContainer.style.display = "none";
+					contentTextarea.style.display = "block";
+					toggleJSONBtn.textContent = "Show Visual Editor";
+					isJSONView = true;
+				}
+			};
+
+			const addSectionBtn = document.getElementById("addSectionBtn");
+			if (addSectionBtn) {
+				addSectionBtn.onclick = () => {
+					contentEditorModule.addSection();
+				};
+			}
+		} else {
+			contentTextarea.value = content || "";
+		}
+
 		document.getElementById("editModal").style.display = "block";
 	},
 
@@ -74,10 +131,30 @@ const instructorModule = {
 		e.preventDefault();
 
 		const courseId = document.getElementById("editCourseId").value;
+		const contentTextarea = document.getElementById("editContent");
+		const sectionsContainer = document.getElementById("sectionsContainer");
+
+		let contentValue = "";
+		if (sectionsContainer && sectionsContainer.style.display !== "none") {
+			contentValue = contentEditorModule.getJSON();
+		} else {
+			contentValue = contentTextarea.value.trim();
+		}
+
 		const formData = {
 			title: document.getElementById("editTitle").value,
 			description: document.getElementById("editDescription").value,
+			content: contentValue,
 		};
+
+		if (contentValue) {
+			try {
+				JSON.parse(contentValue);
+			} catch (jsonError) {
+				this.showMessage("Invalid JSON format in content field. Please check your JSON syntax.", "error");
+				return;
+			}
+		}
 
 		try {
 			await api.instructor.updateCourse(courseId, formData);

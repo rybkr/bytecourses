@@ -338,20 +338,32 @@ const coursesModule = {
 
 		coursesList.innerHTML = courses
 			.map(
-				(course) => `
-            <div class="course-card">
-                <h3>${escapeHtml(course.title)}</h3>
-                <p>${escapeHtml(course.description)}</p>
+				(course) => {
+					const courseId = course.id || course.course?.id;
+					const courseTitle = course.title || course.course?.title;
+					const courseDesc = course.description || course.course?.description;
+					const instructor = course.instructor_name || course.instructor_email || "Unknown";
+					return `
+            <div class="course-card" data-course-id="${courseId}">
+                <h3>${escapeHtml(courseTitle)}</h3>
+                <p>${escapeHtml(courseDesc)}</p>
                 <div class="instructor-info">
-                    <span>By: <span class="instructor-name">${escapeHtml(course.instructor_name || course.instructor_email || "Unknown")}</span></span>
-                </div>
-                <div class="course-meta">
-                    <span class="status-badge status-${course.status}">${course.status}</span>
+                    <span>By: <span class="instructor-name">${escapeHtml(instructor)}</span></span>
                 </div>
             </div>
-        `,
+        `;
+				},
 			)
 			.join("");
+
+		coursesList.querySelectorAll(".course-card").forEach((card) => {
+			card.addEventListener("click", () => {
+				const courseId = card.getAttribute("data-course-id");
+				if (courseId) {
+					window.location.href = `/course/${courseId}/`;
+				}
+			});
+		});
 	},
 
 	async handleSubmit(e) {

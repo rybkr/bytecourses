@@ -69,6 +69,7 @@ func (h *InstructorHandler) UpdateCourse(w http.ResponseWriter, r *http.Request)
 	var updateData struct {
 		Title       string `json:"title"`
 		Description string `json:"description"`
+		Content     string `json:"content"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&updateData); err != nil {
@@ -77,7 +78,7 @@ func (h *InstructorHandler) UpdateCourse(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	if err := h.store.UpdateCourse(r.Context(), id, updateData.Title, updateData.Description); err != nil {
+	if err := h.store.UpdateCourse(r.Context(), id, updateData.Title, updateData.Description, updateData.Content); err != nil {
 		log.Printf("failed to update course: %v", err)
 		helpers.InternalServerError(w, "internal server error")
 		return

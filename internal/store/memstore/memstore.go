@@ -4,65 +4,66 @@ import (
 	"bytecourses/internal/domain"
 	"context"
 	"errors"
-	"sort"
 	"strings"
 	"sync"
 	"time"
 )
 
-type Store struct {
-	mu sync.Mutex
+type UserStore struct {
+	mu sync.RWMutex
 
-	usersByID    map[int64]*domain.User
-	usersByEmail map[string]*domain.User
-	nextUserID   int64
+	byID    map[int64]*domain.User
+	byEmail map[string]*domain.User
+	nextID  int64
 }
 
-func New() *Store {
-	return &Store{
-		usersByID:      make(map[int64]domain.User),
-		userIDsByEmail: make(map[string]int64),
-		proposalsByID:  make(map[int64]domain.CourseProposal),
-		nextUserID:     1,
+func NewUserStore() *UserStore {
+	return &UserStore{
+		byID:    make(map[int64]*domain.User),
+		byEmail: make(map[string]*domain.User),
+		nextID:  1,
 	}
 }
 
-func (s *Store) CreateUser(ctx context.Context, u *domain.User) error {
+// CreateUser persists a new user and assigns a unique ID.
+// The store takes ownership of u. The caller must not mutatue u after calling.
+func (s *UserStore) CreateUser(ctx context.Context, u *domain.User) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	key := strings.ToLower(strings.TrimSpace(u.Email))
-	if key == "" {
+	email := strings.ToLower(strings.TrimSpace(u.Email))
+	if email == "" {
 		return errors.New("email required")
 	}
-	if _, exists := s.userIDsByEmail[key]; exists {
+	if _, exists := s.byEmail[email]; exists {
 		return errors.New("email already exists")
 	}
 
-	u.ID = s.nextUserID
-	u.Email = key
+	u.ID = s.nextID
+	u.Email = email
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now()
 	}
 
-	s.usersByID[u.ID] = u
-	s.userIDsByEmail[u.Email] = u.ID
-	s.nextUserID++
+	s.byID[u.ID] = u
+	s.byEmail[u.Email] = u
+	s.nextID++
 
 	return nil
 }
 
-func (s *Store) GetUserByID(ctx context.Context, id int64) (*domain.User, bool, error) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    u, ok := s.usersByID[id]
-    return u, ok, nil
+// GetUserByID returns the user with the given ID.
+func (s *UserStore) GetUserByID(ctx context.Context, id int64) (*domain.User, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	u, ok := s.byID[id]
+	return u, ok
 }
 
-func (s *Store) GetUserByEmail(ctx context.Context, email string) (*domain.User, bool, error) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    key := strings.ToLower(strings.TrimSpace(email))
-    u, ok := s.usersByEmail[key]
-    return u, ok, nil
+// GetUserByEmail returns the user with the given email.
+func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*domain.User, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+    u, ok := s.byEmail[strings.ToLower(strings.TrimSpace(email))]
+	return u, ok
 }

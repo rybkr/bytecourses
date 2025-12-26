@@ -1,0 +1,37 @@
+{{template "layout" .}}
+
+{{define "title"}}Home - ByteCourses{{end}}
+
+{{define "content"}}
+<div class="hero">
+    <h1>Welcome to ByteCourses</h1>
+    <p class="lead">Create and manage course proposals with ease</p>
+    {{if not .User}}
+        <div class="hero-actions">
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            <a href="/login" class="btn btn-secondary">Login</a>
+        </div>
+    {{else}}
+        <div class="hero-actions">
+            <a href="/proposals/new" class="btn btn-primary">Create Proposal</a>
+            <a href="/proposals" class="btn btn-secondary">View My Proposals</a>
+        </div>
+    {{end}}
+</div>
+
+<div class="features">
+    <div class="feature-card">
+        <h3>Create Proposals</h3>
+        <p>Submit course proposals with detailed summaries</p>
+    </div>
+    <div class="feature-card">
+        <h3>Track Status</h3>
+        <p>Monitor your proposals through the review process</p>
+    </div>
+    <div class="feature-card">
+        <h3>Easy Management</h3>
+        <p>Edit and update your proposals anytime</p>
+    </div>
+</div>
+{{end}}
+

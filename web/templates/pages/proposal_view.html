@@ -1,0 +1,103 @@
+{{template "layout" .}}
+
+{{define "title"}}{{.Proposal.Title}} - ByteCourses{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h1>{{.Proposal.Title}}</h1>
+    <div class="header-actions">
+        <a href="/proposals" class="btn btn-secondary">Back to Proposals</a>
+        <button onclick="handleEdit()" class="btn btn-primary">Edit</button>
+    </div>
+</div>
+
+<div id="view-mode" class="proposal-view">
+    <div class="proposal-meta-bar">
+        <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
+        <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
+        <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
+    </div>
+    <div class="proposal-content">
+        <h2>Summary</h2>
+        <p class="proposal-summary">{{.Proposal.Summary}}</p>
+    </div>
+</div>
+
+<div id="edit-mode" class="form-container" style="display: none;">
+    <form id="proposalForm" onsubmit="handleUpdateProposal(event)">
+        <div class="form-group">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div class="form-group">
+            <label for="summary">Summary</label>
+            <textarea id="summary" name="summary" rows="10" required></textarea>
+        </div>
+        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" onclick="handleCancelEdit()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </form>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+    const proposalId = {{.Proposal.ID}};
+    const proposal = {{.ProposalJSON | safeJS}};
+    
+    function handleEdit() {
+        document.getElementById('view-mode').style.display = 'none';
+        document.getElementById('edit-mode').style.display = 'block';
+        document.getElementById('title').value = proposal.title;
+        document.getElementById('summary').value = proposal.summary;
+    }
+    
+    function handleCancelEdit() {
+        document.getElementById('view-mode').style.display = 'block';
+        document.getElementById('edit-mode').style.display = 'none';
+    }
+    
+    async function handleUpdateProposal(event) {
+        event.preventDefault();
+        const form = event.target;
+        const title = form.title.value;
+        const summary = form.summary.value;
+        
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch(`/api/proposals/${proposalId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    id: proposalId,
+                    title: title,
+                    summary: summary,
+                    author_id: proposal.author_id,
+                    status: proposal.status,
+                    reviewer_id: proposal.reviewer_id,
+                    created_at: proposal.created_at,
+                    updated_at: proposal.updated_at
+                }),
+            });
+            
+            if (response.ok) {
+                window.location.reload();
+            } else {
+                const errorText = await response.text();
+                errorDiv.textContent = errorText || 'Failed to update proposal';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>
+{{end}}
+

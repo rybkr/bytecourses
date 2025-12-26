@@ -12,7 +12,6 @@ import (
 	"log"
 	"net/http"
 	"time"
-    "html/template"
 )
 
 func ensureTestAdmin(users store.UserStore) error {
@@ -28,15 +27,6 @@ func ensureTestAdmin(users store.UserStore) error {
 		PasswordHash: hash,
 		Role:         domain.UserRoleAdmin,
 	})
-}
-
-func render(w http.ResponseWriter, page string) {
-	t := template.Must(template.ParseFiles(
-		"web/layout.html",
-		"web/"+page,
-	))
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	t.Execute(w, nil)
 }
 
 func main() {
@@ -55,9 +45,11 @@ func main() {
 	authHandlers := handlers.NewAuthHandler(userStore, sessionStore)
 	utilHandlers := handlers.NewUtilHandlers()
 	proposalHandlers := handlers.NewProposalHandler(proposalStore, userStore, sessionStore)
+	pageHandlers := handlers.NewPageHandlers(userStore, sessionStore, proposalStore)
 
 	mux := http.NewServeMux()
 
+	// API routes
 	mux.HandleFunc("/api/register", authHandlers.Register)
 	mux.HandleFunc("/api/login", authHandlers.Login)
 	mux.HandleFunc("/api/logout", authHandlers.Logout)
@@ -68,34 +60,20 @@ func main() {
 	mux.HandleFunc("/api/proposals", proposalHandlers.Proposals)
 	mux.HandleFunc("/api/proposals/", proposalHandlers.ProposalByID)
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/" {
-			http.NotFound(w, r)
-			return
-		}
-		render(w, "index.html")
-	})
+	// Page routes
+	mux.HandleFunc("/", pageHandlers.Home)
+	mux.HandleFunc("/login", pageHandlers.Login)
+	mux.HandleFunc("/register", pageHandlers.Register)
+	mux.HandleFunc("/proposals", pageHandlers.ProposalsList)
+	mux.HandleFunc("/proposals/new", pageHandlers.ProposalNew)
+	mux.HandleFunc("/proposals/", pageHandlers.ProposalView)
 
-	mux.HandleFunc("/login", func(w http.ResponseWriter, r *http.Request) {
-		render(w, "login.html")
-	})
-
-	mux.HandleFunc("/courses", func(w http.ResponseWriter, r *http.Request) {
-		render(w, "courses.html")
-	})
-
-	mux.HandleFunc("/proposals/new", func(w http.ResponseWriter, r *http.Request) {
-		render(w, "proposal_form.html")
-	})
-
-	mux.Handle("/styles.css",
-		http.FileServer(http.Dir("web")))
-
-	mux.Handle("/wasm_exec.js",
-		http.FileServer(http.Dir("web")))
-
-	mux.Handle("/app.wasm",
-		http.FileServer(http.Dir("web")))
+	// Static files
+	mux.Handle("/static/",
+		http.StripPrefix("/static/",
+			http.FileServer(http.Dir("web/static")),
+		),
+	)
 
 	log.Printf("listening on %s", *addr)
 	log.Fatal(http.ListenAndServe(*addr, mux))

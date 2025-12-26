@@ -1,0 +1,62 @@
+{{template "layout" .}}
+
+{{define "title"}}Login - ByteCourses{{end}}
+
+{{define "content"}}
+<div class="auth-container">
+    <div class="auth-card">
+        <h2>Login</h2>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div id="error-message" class="error-message" style="display: none;"></div>
+            <button type="submit" class="btn btn-primary btn-block">Login</button>
+        </form>
+        <p class="auth-footer">
+            Don't have an account? <a href="/register">Register here</a>
+        </p>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+    async function handleLogin(event) {
+        event.preventDefault();
+        const form = event.target;
+        const email = form.email.value;
+        const password = form.password.value;
+        
+        const errorDiv = document.getElementById('error-message');
+        errorDiv.style.display = 'none';
+        
+        try {
+            const response = await fetch('/api/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ email, password }),
+            });
+            
+            if (response.ok) {
+                window.location.href = '/';
+            } else {
+                const errorText = await response.text();
+                errorDiv.textContent = errorText || 'Invalid credentials';
+                errorDiv.style.display = 'block';
+            }
+        } catch (error) {
+            errorDiv.textContent = 'An error occurred. Please try again.';
+            errorDiv.style.display = 'block';
+        }
+    }
+</script>
+{{end}}
+

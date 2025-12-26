@@ -24,12 +24,14 @@ func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, s
 }
 
 func (h *ProposalHandlers) Proposals(w http.ResponseWriter, r *http.Request) {
-    switch r.Method {
-    case http.MethodPost:
-        h.postProposals(w, r)
-    default:
-        http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-    }
+	switch r.Method {
+	case http.MethodPost:
+		h.postProposals(w, r)
+    case http.MethodGet:
+        h.getProposals(w, r)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
 }
 
 type newProposalRequest struct {
@@ -38,32 +40,51 @@ type newProposalRequest struct {
 }
 
 func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request) {
-    var request newProposalRequest
-    if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-        http.Error(w, "invalid json", http.StatusBadRequest)
-        return
-    }
+	var request newProposalRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
 
-    p := domain.NewProposal(strings.TrimSpace(request.Title), strings.TrimSpace(request.Summary))
-    if err := h.proposals.InsertProposal(r.Context(), p); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
+	actor, ok := h.actor(r)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    w.WriteHeader(http.StatusOK)
+	p := domain.NewProposal(strings.TrimSpace(request.Title), strings.TrimSpace(request.Summary), actor.ID)
+	if err := h.proposals.InsertProposal(r.Context(), p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) {
+	actor, ok := h.actor(r)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	out := h.proposals.GetProposalsByUserID(r.Context(), actor.ID)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(out)
 }
 
 func (h *ProposalHandlers) actor(r *http.Request) (*domain.User, bool) {
-    c, err := r.Cookie("session")
-    if err != nil {
-        return nil, false
-    }
+	c, err := r.Cookie("session")
+	if err != nil {
+		return nil, false
+	}
 
-    uid, ok := h.sessions.GetUserIDByToken(c.Value)
-    if !ok {
-        return nil, false
-    }
+	uid, ok := h.sessions.GetUserIDByToken(c.Value)
+	if !ok {
+		return nil, false
+	}
 
-    u, ok := h.users.GetUserByID(r.Context(), uid)
-    return u, ok
+	u, ok := h.users.GetUserByID(r.Context(), uid)
+	return u, ok
 }

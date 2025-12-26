@@ -47,9 +47,10 @@ type Proposal struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 }
 
-func NewProposal(title, summary string) *Proposal {
+func NewProposal(title, summary string, authorID int64) *Proposal {
 	return &Proposal{
-		Title:   title,
-		Summary: summary,
+		Title:    title,
+		Summary:  summary,
+		AuthorID: authorID,
 	}
 }

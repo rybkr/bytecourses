@@ -14,4 +14,5 @@ type UserStore interface {
 type ProposalStore interface {
     InsertProposal(context.Context, *domain.Proposal) error
     GetProposalByID(context.Context, int64) (*domain.Proposal, bool)
+    GetProposalsByUserID(context.Context, int64) []*domain.Proposal
 }

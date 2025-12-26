@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytecourses/internal/auth"
-	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"encoding/json"
 	"net/http"
@@ -28,27 +27,27 @@ func (h *PageHandlers) Home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	data := &TemplateData{Page: "pages/home"}
+	data := &TemplateData{Page: "home"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
 func (h *PageHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	// If already logged in, redirect to home
-	if user, ok := actorFromRequest(r, h.sessions, h.users); ok {
+	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "pages/login"}
+	data := &TemplateData{Page: "login"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
 func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 	// If already logged in, redirect to home
-	if user, ok := actorFromRequest(r, h.sessions, h.users); ok {
+	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "pages/register"}
+	data := &TemplateData{Page: "register"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
@@ -60,7 +59,7 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	data := &TemplateData{User: &user, Page: "pages/proposals"}
+	data := &TemplateData{User: &user, Page: "proposals"}
 	Render(w, data)
 }
 
@@ -72,7 +71,7 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	data := &TemplateData{User: &user, Page: "pages/proposal_new"}
+	data := &TemplateData{User: &user, Page: "proposal_new"}
 	Render(w, data)
 }
 
@@ -111,7 +110,7 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		User:         &user,
 		Proposal:     &p,
 		ProposalJSON: string(proposalJSON),
-		Page:         "pages/proposal_view",
+		Page:         "proposal_view",
 	}
 	Render(w, data)
 }

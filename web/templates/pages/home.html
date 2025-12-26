@@ -7,15 +7,15 @@
     <h1>Welcome to ByteCourses</h1>
     <p class="lead">Create and manage course proposals with ease</p>
     {{if not .User}}
-        <div class="hero-actions">
-            <a href="/register" class="btn btn-primary">Get Started</a>
-            <a href="/login" class="btn btn-secondary">Login</a>
-        </div>
+    <div class="hero-actions">
+        <a href="/register" class="btn btn-primary">Get Started</a>
+        <a href="/login" class="btn btn-secondary">Login</a>
+    </div>
     {{else}}
-        <div class="hero-actions">
-            <a href="/proposals/new" class="btn btn-primary">Create Proposal</a>
-            <a href="/proposals" class="btn btn-secondary">View My Proposals</a>
-        </div>
+    <div class="hero-actions">
+        <a href="/proposals/new" class="btn btn-primary">Create Proposal</a>
+        <a href="/proposals" class="btn btn-secondary">View My Proposals</a>
+    </div>
     {{end}}
 </div>
 
@@ -34,4 +34,3 @@
     </div>
 </div>
 {{end}}
-

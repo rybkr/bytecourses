@@ -1,12 +1,12 @@
 {{template "layout" .}}
 
-{{define "title"}}Login - ByteCourses{{end}}
+{{define "title"}}Register - ByteCourses{{end}}
 
 {{define "content"}}
 <div class="auth-container">
     <div class="auth-card">
-        <h2>Login</h2>
-        <form id="loginForm" onsubmit="handleLogin(event)">
+        <h2>Register</h2>
+        <form id="registerForm" onsubmit="handleRegister(event)">
             <div class="form-group">
                 <label for="email">Email</label>
                 <input type="email" id="email" name="email" required>
@@ -16,10 +16,10 @@
                 <input type="password" id="password" name="password" required>
             </div>
             <div id="error-message" class="error-message" style="display: none;"></div>
-            <button type="submit" class="btn btn-primary btn-block">Login</button>
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
         </form>
         <p class="auth-footer">
-            Don't have an account? <a href="/register">Register here</a>
+            Already have an account? <a href="/login">Login here</a>
         </p>
     </div>
 </div>
@@ -27,29 +27,29 @@
 
 {{define "scripts"}}
 <script>
-    async function handleLogin(event) {
+    async function handleRegister(event) {
         event.preventDefault();
         const form = event.target;
         const email = form.email.value;
         const password = form.password.value;
-
+        
         const errorDiv = document.getElementById('error-message');
         errorDiv.style.display = 'none';
-
+        
         try {
-            const response = await fetch('/api/login', {
+            const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ email, password }),
             });
-
+            
             if (response.ok) {
-                window.location.href = '/';
+                window.location.href = '/login';
             } else {
                 const errorText = await response.text();
-                errorDiv.textContent = errorText || 'Invalid credentials';
+                errorDiv.textContent = errorText || 'Registration failed';
                 errorDiv.style.display = 'block';
             }
         } catch (error) {
@@ -59,3 +59,4 @@
     }
 </script>
 {{end}}
+

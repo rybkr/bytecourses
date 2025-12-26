@@ -5,7 +5,7 @@ async function handleLogout() {
         const response = await fetch('/api/logout', {
             method: 'POST',
         });
-        
+
         if (response.ok || response.status === 204) {
             window.location.href = '/';
         }

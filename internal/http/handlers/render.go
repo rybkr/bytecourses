@@ -4,16 +4,19 @@ import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
-	"encoding/json"
 	"html/template"
 	"net/http"
 )
 
-var templates = template.Must(template.ParseGlob("web/templates/**/*.html").Funcs(template.FuncMap{
-	"safeJS": func(s string) template.JS {
-		return template.JS(s)
-	},
-}))
+var templates = template.Must(
+	template.New("").
+		Funcs(template.FuncMap{
+			"safeJS": func(s string) template.JS {
+				return template.JS(s)
+			},
+		}).
+		ParseGlob("web/templates/**/*.html"),
+)
 
 type TemplateData struct {
 	User         *domain.User
@@ -26,12 +29,33 @@ func Render(w http.ResponseWriter, data *TemplateData) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	
 	// Execute the page template, which will include the layout
-	templateName := "pages/home" // default
+	// ParseGlob names templates based on file paths
+	templateName := "home" // default
 	if data != nil && data.Page != "" {
 		templateName = data.Page
 	}
 	
-	if err := templates.ExecuteTemplate(w, templateName, data); err != nil {
+	// Try different possible template name formats
+	// ParseGlob typically uses the file path relative to the pattern
+	possibleNames := []string{
+		"pages/" + templateName,
+		templateName,
+		"web/templates/pages/" + templateName,
+	}
+	
+	var foundName string
+	for _, name := range possibleNames {
+		if templates.Lookup(name) != nil {
+			foundName = name
+			break
+		}
+	}
+	
+	if foundName == "" {
+		foundName = templateName // fallback, will error if not found
+	}
+	
+	if err := templates.ExecuteTemplate(w, foundName, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }

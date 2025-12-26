@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/static/css/style.css">
     {{block "head" .}}{{end}}
 </head>
+
 <body>
     <nav class="navbar">
         <div class="container">
@@ -15,13 +17,13 @@
             </div>
             <div class="nav-links">
                 {{if .User}}
-                    <a href="/proposals">My Proposals</a>
-                    <a href="/proposals/new">New Proposal</a>
-                    <span class="user-info">{{.User.Email}} ({{.User.Role}})</span>
-                    <button onclick="handleLogout()" class="btn btn-secondary">Logout</button>
+                <a href="/proposals">My Proposals</a>
+                <a href="/proposals/new">New Proposal</a>
+                <span class="user-info">{{.User.Email}} ({{.User.Role}})</span>
+                <button onclick="handleLogout()" class="btn btn-secondary">Logout</button>
                 {{else}}
-                    <a href="/login">Login</a>
-                    <a href="/register">Register</a>
+                <a href="/login">Login</a>
+                <a href="/register">Register</a>
                 {{end}}
             </div>
         </div>
@@ -42,5 +44,5 @@
     <script src="/static/js/app.js"></script>
     {{block "scripts" .}}{{end}}
 </body>
-</html>
 
+</html>

@@ -44,30 +44,30 @@
 
 {{define "scripts"}}
 <script>
-    const proposalId = {{.Proposal.ID}};
+    const proposalId = {{.Proposal.ID }};
     const proposal = {{.ProposalJSON | safeJS}};
-    
+
     function handleEdit() {
         document.getElementById('view-mode').style.display = 'none';
         document.getElementById('edit-mode').style.display = 'block';
         document.getElementById('title').value = proposal.title;
         document.getElementById('summary').value = proposal.summary;
     }
-    
+
     function handleCancelEdit() {
         document.getElementById('view-mode').style.display = 'block';
         document.getElementById('edit-mode').style.display = 'none';
     }
-    
+
     async function handleUpdateProposal(event) {
         event.preventDefault();
         const form = event.target;
         const title = form.title.value;
         const summary = form.summary.value;
-        
+
         const errorDiv = document.getElementById('error-message');
         errorDiv.style.display = 'none';
-        
+
         try {
             const response = await fetch(`/api/proposals/${proposalId}`, {
                 method: 'POST',
@@ -85,7 +85,7 @@
                     updated_at: proposal.updated_at
                 }),
             });
-            
+
             if (response.ok) {
                 window.location.reload();
             } else {
@@ -100,4 +100,3 @@
     }
 </script>
 {{end}}
-

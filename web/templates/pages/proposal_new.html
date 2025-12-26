@@ -34,10 +34,10 @@
         const form = event.target;
         const title = form.title.value;
         const summary = form.summary.value;
-        
+
         const errorDiv = document.getElementById('error-message');
         errorDiv.style.display = 'none';
-        
+
         try {
             const response = await fetch('/api/proposals', {
                 method: 'POST',
@@ -46,7 +46,7 @@
                 },
                 body: JSON.stringify({ title, summary }),
             });
-            
+
             if (response.ok) {
                 const data = await response.json();
                 window.location.href = `/proposals/${data.id}`;
@@ -62,4 +62,3 @@
     }
 </script>
 {{end}}
-

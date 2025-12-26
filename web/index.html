@@ -4,34 +4,44 @@
         <h1>Byte Courses</h1>
 
         <h2>Register</h2>
-        <form action="/api/register" method="post">
-            <input name="email" placeholder="email" />
-            <input name="password" type="password" placeholder="password" />
-            <button type="submit">Register</button>
+        <form id="register">
+            <input id="reg-email" placeholder="email" />
+            <input id="reg-password" type="password" placeholder="password" />
+            <button>Register</button>
         </form>
 
         <h2>Login</h2>
-        <form action="/api/login" method="post">
-            <input name="email" placeholder="email" />
-            <input name="password" type="password" placeholder="password" />
-            <button type="submit">Login</button>
+        <form id="login">
+            <input id="login-email" placeholder="email" />
+            <input id="login-password" type="password" placeholder="password" />
+            <button>Login</button>
         </form>
 
-        <h2>Me</h2>
-        <a href="/api/me">Who am I?</a>
-    </body>
-    <script>
-        document.getElementById("login").onsubmit = async (e) => {
-            e.preventDefault();
+        <script>
+            document.getElementById("register").onsubmit = async (e) => {
+                e.preventDefault();
+                await fetch("/api/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: reg - email.value,
+                        password: reg - password.value,
+                        role: reg - role.value,
+                    }),
+                });
+            };
 
-            await fetch("/api/login", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    email: email.value,
-                    password: password.value,
-                }),
-            });
-        };
-    </script>
+            document.getElementById("login").onsubmit = async (e) => {
+                e.preventDefault();
+                await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        email: login - email.value,
+                        password: login - password.value,
+                    }),
+                });
+            };
+        </script>
+    </body>
 </html>

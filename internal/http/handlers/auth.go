@@ -9,13 +9,13 @@ import (
 	"strings"
 )
 
-type AuthHandlers struct {
+type AuthHandler struct {
 	users    store.UserStore
 	sessions auth.SessionStore
 }
 
-func NewAuthHandlers(users store.UserStore, sessions auth.SessionStore) *AuthHandlers {
-	return &AuthHandlers{
+func NewAuthHandler(users store.UserStore, sessions auth.SessionStore) *AuthHandler {
+	return &AuthHandler{
 		users:    users,
 		sessions: sessions,
 	}
@@ -26,7 +26,7 @@ type registerRequest struct {
 	Password string `json:"password"`
 }
 
-func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -63,7 +63,7 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
-func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -104,7 +104,7 @@ func (h *AuthHandlers) Login(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
-func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -124,7 +124,7 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *AuthHandlers) Me(w http.ResponseWriter, r *http.Request) {
+func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	u, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)

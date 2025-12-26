@@ -10,21 +10,21 @@ import (
 	"strings"
 )
 
-type ProposalHandlers struct {
+type ProposalHandler struct {
 	proposals store.ProposalStore
 	users     store.UserStore
 	sessions  auth.SessionStore
 }
 
-func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, sessions auth.SessionStore) *ProposalHandlers {
-	return &ProposalHandlers{
+func NewProposalHandler(proposals store.ProposalStore, users store.UserStore, sessions auth.SessionStore) *ProposalHandler {
+	return &ProposalHandler{
 		proposals: proposals,
 		users:     users,
 		sessions:  sessions,
 	}
 }
 
-func (h *ProposalHandlers) Proposals(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) Proposals(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		h.postProposals(w, r)
@@ -35,7 +35,7 @@ func (h *ProposalHandlers) Proposals(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *ProposalHandlers) ProposalByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) ProposalByID(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		h.getProposalByID(w, r)
@@ -55,7 +55,7 @@ type proposalReturn struct {
 	ID int64 `json:"id"`
 }
 
-func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) postProposals(w http.ResponseWriter, r *http.Request) {
 	var request newProposalRequest
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
@@ -80,7 +80,7 @@ func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request)
 	})
 }
 
-func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) getProposals(w http.ResponseWriter, r *http.Request) {
 	actor, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
@@ -93,7 +93,7 @@ func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) 
 	json.NewEncoder(w).Encode(out)
 }
 
-func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request) {
 	pidStr := r.URL.Path[len("/api/proposals/"):]
 	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
@@ -116,7 +116,7 @@ func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(p)
 }
 
-func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) postProposalByID(w http.ResponseWriter, r *http.Request) {
 	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)

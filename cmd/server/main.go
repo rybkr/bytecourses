@@ -14,9 +14,9 @@ func main() {
 	proposalStore := memstore.NewProposalStore()
 	sessionStore := memsession.New(24 * time.Hour)
 
-	authHandlers := handlers.NewAuthHandlers(userStore, sessionStore)
+	authHandlers := handlers.NewAuthHandler(userStore, sessionStore)
 	utilHandlers := handlers.NewUtilHandlers()
-	proposalHandlers := handlers.NewProposalHandlers(proposalStore, userStore, sessionStore)
+	proposalHandlers := handlers.NewProposalHandler(proposalStore, userStore, sessionStore)
 
 	mux := http.NewServeMux()
 

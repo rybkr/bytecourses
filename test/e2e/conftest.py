@@ -12,7 +12,7 @@ API_ROOT: str = "http://localhost:8080/api"
 @pytest.fixture(scope="session")
 def go_server():
     proc = subprocess.Popen(
-        ["go", "run", "cmd/server/main.go"],
+        ["go", "run", "cmd/server/main.go", "--seed-admin=true"],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,

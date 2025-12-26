@@ -158,27 +158,27 @@ def test_auth_flow(go_server):
     s = requests.Session()
 
     r = s.post(
-        "http://127.0.0.1:8080/api/register",
+        f"{API_ROOT}/register",
         json={"email": "u@example.com", "password": "secret"},
     )
     assert r.status_code == HTTPStatus.OK
 
     r = s.post(
-        "http://127.0.0.1:8080/api/login",
+        f"{API_ROOT}/login",
         json={"email": "u@example.com", "password": "secret"},
     )
     assert r.status_code == HTTPStatus.OK
     assert "session" in s.cookies
 
-    r = s.get("http://127.0.0.1:8080/api/me")
+    r = s.get(f"{API_ROOT}/me")
     assert r.status_code == HTTPStatus.OK
     data = r.json()
     assert data["email"] == "u@example.com"
 
-    r = s.post("http://127.0.0.1:8080/api/logout")
+    r = s.post(f"{API_ROOT}/logout")
     assert r.status_code == HTTPStatus.NO_CONTENT
 
-    r = s.get("http://127.0.0.1:8080/api/me")
+    r = s.get(f"{API_ROOT}/me")
     assert r.status_code == HTTPStatus.UNAUTHORIZED
 
 
@@ -187,3 +187,21 @@ def test_logout_invalid_method():
     assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     r = requests.delete(f"{API_ROOT}/logout")
     assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+
+def test_admin_user():
+    s = requests.Session()
+
+    payload: dict[str, str] = {
+        "email": "admin@local.bytecourses.org",
+        "password": "admin",
+    }
+    r = s.post(f"{API_ROOT}/login", json=payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/me")
+    assert r.status_code == HTTPStatus.OK
+
+    data = r.json()
+    assert "role" in data
+    assert data["role"] == "admin"

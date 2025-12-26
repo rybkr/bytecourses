@@ -50,7 +50,7 @@ def test_get_proposals(go_server):
     r = s.get(f"{API_ROOT}/proposals")
     assert r.status_code == HTTPStatus.OK
 
-    data = r.json()
+    data = sorted(r.json(), key=lambda p: p["id"])
     assert len(data) == 2
     assert "title" in data[0] and "summary" in data[0]
     assert "title" in data[1] and "summary" in data[1]
@@ -130,3 +130,44 @@ def test_get_proposal_nonexistent(go_server):
 
     r = s.get(f"{API_ROOT}/proposals/{2**63 - 1}")
     assert r.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_update_proposal(go_server):
+    s = requests.Session()
+
+    login_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/me")
+    assert r.status_code == HTTPStatus.OK
+    assert "id" in r.json()
+    author_id = r.json()["id"]
+
+    proposal_payload: dict[str, str] = {
+        "title": "Title",
+        "summary": "Summary",
+        "author_id": author_id,
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.OK
+    assert "id" in r.json()
+
+    pid: int = r.json()["id"]
+    r = s.get(f"{API_ROOT}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "title" in r.json() and "summary" in r.json()
+    assert r.json()["title"] == "Title"
+
+    p = r.json()
+    p["title"] = "New Title"
+    r = s.post(f"{API_ROOT}/proposals/{pid}", json=p)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "title" in r.json() and "summary" in r.json()
+    assert r.json()["title"] == "New Title"

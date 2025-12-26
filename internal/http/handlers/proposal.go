@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+    "fmt"
 )
 
 type ProposalHandlers struct {
@@ -39,8 +40,8 @@ func (h *ProposalHandlers) ProposalByID(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodGet:
 		h.getProposalByID(w, r)
-    case http.MethodPost:
-        h.postProposalByID(w, r)
+	case http.MethodPost:
+		h.postProposalByID(w, r)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -49,6 +50,10 @@ func (h *ProposalHandlers) ProposalByID(w http.ResponseWriter, r *http.Request) 
 type newProposalRequest struct {
 	Title   string `json:"title"`
 	Summary string `json:"summary"`
+}
+
+type proposalReturn struct {
+	ID int64 `json:"id"`
 }
 
 func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request) {
@@ -70,7 +75,10 @@ func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(proposalReturn{
+		ID: p.ID,
+	})
 }
 
 func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) {
@@ -99,28 +107,41 @@ func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-    p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-    if !ok {
+	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
+	if !ok {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-    w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)
 }
 
 func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Request) {
+    var p domain.Proposal
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+
 	pidStr := r.URL.Path[len("/api/proposals/"):]
+    fmt.Println(pidStr)
 	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
 	}
 
-	_, err := strconv.ParseInt(pidStr, 10, 64)
+	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
+    p.ID = pid
+
+    if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+        http.Error(w, err.Error(), http.StatusBadRequest)
+        return
+    }
 }
 
 func (h *ProposalHandlers) actor(r *http.Request) (domain.User, bool) {

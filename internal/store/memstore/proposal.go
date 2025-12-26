@@ -48,12 +48,16 @@ func (s *ProposalStore) GetProposalByID(ctx context.Context, id int64) (domain.P
 }
 
 func (s *ProposalStore) GetProposalsByUserID(ctx context.Context, userID int64) []domain.Proposal {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+
 	out := make([]domain.Proposal, 0)
 	for _, p := range s.proposalsByID {
 		if p.AuthorID == userID {
 			out = append(out, p)
 		}
 	}
+
 	return out
 }
 

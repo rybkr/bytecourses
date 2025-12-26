@@ -50,7 +50,7 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 
 	u := domain.NewUser(strings.TrimSpace(request.Email), hash)
 
-	if err := h.users.InsertUser(r.Context(), u); err != nil {
+	if err := h.users.InsertUser(r.Context(), &u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

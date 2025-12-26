@@ -49,27 +49,22 @@ func (s *UserStore) InsertUser(ctx context.Context, u *domain.User) error {
 	return nil
 }
 
-func (s *UserStore) GetUserByID(ctx context.Context, id int64) (*domain.User, bool) {
+func (s *UserStore) GetUserByID(ctx context.Context, id int64) (domain.User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-
 	u, ok := s.usersByID[id]
-    if !ok {
-        return nil, false
-    }
-
-	return &u, true
+	return u, ok
 }
 
-func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (*domain.User, bool) {
+func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (domain.User, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
     uid, ok := s.idsByEmail[email]
     if !ok {
-        return nil, false
+        return domain.User{}, false
     }
-    
+
     return s.GetUserByID(ctx, uid)
 }
 

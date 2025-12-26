@@ -20,8 +20,8 @@ type User struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-func NewUser(email string, passwordHash []byte) *User {
-	return &User{
+func NewUser(email string, passwordHash []byte) User {
+	return User{
 		Email:        email,
 		PasswordHash: passwordHash,
 	}
@@ -47,8 +47,8 @@ type Proposal struct {
 	UpdatedAt  time.Time      `json:"updated_at"`
 }
 
-func NewProposal(title, summary string, authorID int64) *Proposal {
-	return &Proposal{
+func NewProposal(title, summary string, authorID int64) Proposal {
+	return Proposal{
 		Title:    title,
 		Summary:  summary,
 		AuthorID: authorID,

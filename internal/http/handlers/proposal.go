@@ -65,7 +65,7 @@ func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request)
 	}
 
 	p := domain.NewProposal(strings.TrimSpace(request.Title), strings.TrimSpace(request.Summary), actor.ID)
-	if err := h.proposals.InsertProposal(r.Context(), p); err != nil {
+	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -123,15 +123,15 @@ func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Reque
 	}
 }
 
-func (h *ProposalHandlers) actor(r *http.Request) (*domain.User, bool) {
+func (h *ProposalHandlers) actor(r *http.Request) (domain.User, bool) {
 	c, err := r.Cookie("session")
 	if err != nil {
-		return nil, false
+		return domain.User{}, false
 	}
 
 	uid, ok := h.sessions.GetUserIDByToken(c.Value)
 	if !ok {
-		return nil, false
+		return domain.User{}, false
 	}
 
 	u, ok := h.users.GetUserByID(r.Context(), uid)

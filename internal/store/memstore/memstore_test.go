@@ -11,7 +11,7 @@ func TestUserStore_InsertAndGet(t *testing.T) {
 	store := NewUserStore()
 
 	u := domain.NewUser("user@example.com", make([]byte, 20))
-	if err := store.InsertUser(ctx, u); err != nil {
+	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
 
@@ -37,7 +37,7 @@ func TestUserStore_CallerModification(t *testing.T) {
 	store := NewUserStore()
 
 	u := domain.NewUser("user@example.com", make([]byte, 20))
-	if err := store.InsertUser(ctx, u); err != nil {
+	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
 
@@ -65,7 +65,7 @@ func TestUserStore_UpdateUser(t *testing.T) {
 	store := NewUserStore()
 
 	u := domain.NewUser("user@example.com", make([]byte, 20))
-	if err := store.InsertUser(ctx, u); err != nil {
+	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
 
@@ -80,7 +80,7 @@ func TestUserStore_UpdateUser(t *testing.T) {
 		t.Fatalf("UserStore: external pointer modification affected original value")
 	}
 
-	if err := store.UpdateUser(ctx, v); err != nil {
+	if err := store.UpdateUser(ctx, &v); err != nil {
 		t.Fatalf("UpdateUser failed: %v", err)
 	}
 
@@ -93,15 +93,95 @@ func TestUserStore_UpdateUser(t *testing.T) {
 	}
 }
 
+func TestUserStore_GetNonexistentUser(t *testing.T) {
+	ctx := context.Background()
+	store := NewUserStore()
+
+	if _, ok := store.GetUserByID(ctx, 1); ok {
+		t.Fatalf("GetUserByID retuned nonexistent user")
+	}
+	if _, ok := store.GetUserByEmail(ctx, "user@example.com"); ok {
+		t.Fatalf("GetUserByID retuned nonexistent user")
+	}
+}
+
 func TestUserStore_UpdateNonexistentUser(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
 	u := domain.NewUser("user@example.com", make([]byte, 20))
 	u.Email = "new.email@example.com"
-	if err := store.UpdateUser(ctx, u); err == nil {
+	if err := store.UpdateUser(ctx, &u); err == nil {
 		t.Fatal("UpdateUser accepted nonexistent user")
 	}
 }
 
-func TestProposalStore_InsertAndGet(t *testing.T) {}
+func TestProposalStore_InsertAndGet(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.NewProposal("Title", "Summary", 1)
+	if err := store.InsertProposal(ctx, &p); err != nil {
+		t.Fatalf("InsertProposal failed: %v", err)
+	}
+
+	q, ok := store.GetProposalByID(ctx, p.ID)
+	if !ok {
+		t.Fatalf("GetProposalByID failed")
+	}
+	if q.ID != p.ID {
+		t.Fatalf("GetUserByID: proposals p and q differ")
+	}
+}
+
+func TestProposalStore_CallerModification(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.NewProposal("Title", "Summary", 1)
+	if err := store.InsertProposal(ctx, &p); err != nil {
+		t.Fatalf("InsertProposal failed: %v", err)
+	}
+
+	q, ok := store.GetProposalByID(ctx, p.ID)
+	if !ok {
+		t.Fatalf("GetProposalByID failed")
+	}
+
+	q.ID++
+	if p.ID != q.ID-1 {
+		t.Fatalf("ProposalStore: external pointer modification affected original value")
+	}
+
+	r, ok := store.GetProposalByID(ctx, p.ID)
+	if !ok {
+		t.Fatalf("GetProposalByID failed")
+	}
+	if r.ID != q.ID-1 {
+		t.Fatalf("ProposalStore: external pointer modification affected stored value")
+	}
+}
+
+func TestProposalStore_UpdateProposal(t *testing.T) {
+    ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.NewProposal("Title", "Summary", 1)
+	if err := store.InsertProposal(ctx, &p); err != nil {
+		t.Fatalf("InsertProposal failed: %v", err)
+	}
+
+    q := domain.NewProposal("New Title", "New summary", 1)
+    q.ID = p.ID
+    if err := store.UpdateProposal(ctx, &q); err != nil {
+        t.Fatalf("UpdateProposal failed: %v", err)
+    }
+
+    r, ok := store.GetProposalByID(ctx, p.ID)
+	if !ok {
+		t.Fatalf("GetProposalByID failed")
+	}
+	if r.Title != "New Title" || r.Summary != "New summary" {
+		t.Fatalf("ProposalStore: failed to update proposal")
+	}
+}

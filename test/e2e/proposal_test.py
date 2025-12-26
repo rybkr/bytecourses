@@ -61,4 +61,18 @@ def test_get_proposals(go_server):
     assert data[1]["summary"] == "A summary of another course."
 
 
-def test_get
+def test_get_proposals_empty(go_server):
+    s = requests.Session()
+
+    login_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.OK
+
+    data = r.json()
+    assert len(data) == 0

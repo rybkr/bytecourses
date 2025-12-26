@@ -44,7 +44,23 @@ def test_get_proposals(go_server):
         "email": "usr@example.com",
         "password": "password123",
     }
+    r = s.post(f"{API_ROOT}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
     r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload: dict[str, str] = {
+        "title": "Some Course Title",
+        "summary": "A summary of some course.",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload = {
+        "title": "Another Course Title",
+        "summary": "A summary of another course.",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
     assert r.status_code == HTTPStatus.OK
 
     r = s.get(f"{API_ROOT}/proposals")
@@ -68,6 +84,8 @@ def test_get_proposals_empty(go_server):
         "email": "user@example.com",
         "password": "password123",
     }
+    r = s.post(f"{API_ROOT}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
     r = s.post(f"{API_ROOT}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -92,7 +110,23 @@ def test_get_proposals_by_id(go_server):
         "email": "usr@example.com",
         "password": "password123",
     }
+    r = s.post(f"{API_ROOT}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
     r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload: dict[str, str] = {
+        "title": "Some Course Title",
+        "summary": "A summary of some course.",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload = {
+        "title": "Another Course Title",
+        "summary": "A summary of another course.",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
     assert r.status_code == HTTPStatus.OK
 
     r = s.get(f"{API_ROOT}/proposals")
@@ -119,6 +153,8 @@ def test_get_proposal_nonexistent(go_server):
         "email": "user@example.com",
         "password": "password123",
     }
+    r = s.post(f"{API_ROOT}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
     r = s.post(f"{API_ROOT}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -139,6 +175,8 @@ def test_update_proposal(go_server):
         "email": "user@example.com",
         "password": "password123",
     }
+    r = s.post(f"{API_ROOT}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
     r = s.post(f"{API_ROOT}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -171,3 +209,62 @@ def test_update_proposal(go_server):
     assert r.status_code == HTTPStatus.OK
     assert "title" in r.json() and "summary" in r.json()
     assert r.json()["title"] == "New Title"
+
+
+def test_get_proposal_wrong_user(go_server):
+    s = requests.Session()
+    t = requests.Session()
+
+    s_login_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    t_login_payload: dict[str, str] = {
+        "email": "user@example.org",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/register", json=s_login_payload)
+    assert r.status_code == HTTPStatus.OK
+    r = t.post(f"{API_ROOT}/register", json=t_login_payload)
+    assert r.status_code == HTTPStatus.OK
+    r = s.post(f"{API_ROOT}/login", json=s_login_payload)
+    assert r.status_code == HTTPStatus.OK
+    r = t.post(f"{API_ROOT}/login", json=t_login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    s_proposal_payload: dict[str, str] = {
+        "title": "S Title",
+        "summary": "S Summary",
+    }
+    t_proposal_payload: dict[str, str] = {
+        "title": "T Title",
+        "summary": "T Summary",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=s_proposal_payload)
+    assert r.status_code == HTTPStatus.OK
+    assert "id" in r.json()
+    s_id = r.json()["id"]
+
+    r = t.post(f"{API_ROOT}/proposals", json=t_proposal_payload)
+    assert r.status_code == HTTPStatus.OK
+    assert "id" in r.json()
+    t_id = r.json()["id"]
+
+    r = s.get(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.OK
+    assert len(r.json()) == 1
+    assert r.json()[0]["title"] == "S Title"
+
+    r = t.get(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.OK
+    assert len(r.json()) == 1
+    assert r.json()[0]["title"] == "T Title"
+
+    r = s.get(f"{API_ROOT}/proposals/{s_id}")
+    assert r.status_code == HTTPStatus.OK
+    r = t.get(f"{API_ROOT}/proposals/{s_id}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+    r = s.get(f"{API_ROOT}/proposals/{t_id}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+    r = t.get(f"{API_ROOT}/proposals/{t_id}")
+    assert r.status_code == HTTPStatus.OK

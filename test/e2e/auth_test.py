@@ -13,10 +13,6 @@ def test_register(go_server):
     r = requests.post(f"{API_ROOT}/register", json=payload)
     assert r.status_code == HTTPStatus.OK
 
-    payload["email"], payload["password"] = "jane.doe@example.com", "qwerty"
-    r = requests.post(f"{API_ROOT}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
-
 
 def test_register_duplicate(go_server):
     payload: dict[str, str] = {
@@ -24,9 +20,10 @@ def test_register_duplicate(go_server):
         "password": "password123",
     }
     r = requests.post(f"{API_ROOT}/register", json=payload)
-    assert r.status_code == HTTPStatus.BAD_REQUEST
+    assert r.status_code == HTTPStatus.OK
 
-    payload["email"], payload["password"] = "jane.doe@example.com", "qwerty"
+    r = requests.post(f"{API_ROOT}/register", json=payload)
+    assert r.status_code == HTTPStatus.BAD_REQUEST
     r = requests.post(f"{API_ROOT}/register", json=payload)
     assert r.status_code == HTTPStatus.BAD_REQUEST
 
@@ -82,10 +79,9 @@ def test_login(go_server):
         "email": "user@example.com",
         "password": "password123",
     }
-    r = requests.post(f"{API_ROOT}/login", json=payload)
+    r = requests.post(f"{API_ROOT}/register", json=payload)
     assert r.status_code == HTTPStatus.OK
 
-    payload["email"], payload["password"] = "jane.doe@example.com", "qwerty"
     r = requests.post(f"{API_ROOT}/login", json=payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -104,6 +100,13 @@ def test_login_duplicate(go_server):
         "email": "user@example.com",
         "password": "password123",
     }
+    r = requests.post(f"{API_ROOT}/register", json=payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = requests.post(f"{API_ROOT}/login", json=payload)
+    assert r.status_code == HTTPStatus.OK
+    r = requests.post(f"{API_ROOT}/login", json=payload)
+    assert r.status_code == HTTPStatus.OK
     r = requests.post(f"{API_ROOT}/login", json=payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -182,14 +185,14 @@ def test_auth_flow(go_server):
     assert r.status_code == HTTPStatus.UNAUTHORIZED
 
 
-def test_logout_invalid_method():
+def test_logout_invalid_method(go_server):
     r = requests.get(f"{API_ROOT}/logout")
     assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     r = requests.delete(f"{API_ROOT}/logout")
     assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
-def test_admin_user():
+def test_admin_user(go_server):
     s = requests.Session()
 
     payload: dict[str, str] = {

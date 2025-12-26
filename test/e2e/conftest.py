@@ -9,7 +9,7 @@ import signal
 API_ROOT: str = "http://localhost:8080/api"
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture(scope="function")
 def go_server():
     proc = subprocess.Popen(
         ["go", "run", "cmd/server/main.go", "--seed-admin=true"],

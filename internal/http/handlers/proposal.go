@@ -100,6 +100,12 @@ func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+    actor, ok := actorFromRequest(r, h.sessions, h.users)
+    if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+    }
+
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
@@ -107,7 +113,7 @@ func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request
 	}
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok {
+	if !ok || p.AuthorID != actor.ID {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}

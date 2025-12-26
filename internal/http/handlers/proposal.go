@@ -39,6 +39,8 @@ func (h *ProposalHandlers) ProposalByID(w http.ResponseWriter, r *http.Request) 
 	switch r.Method {
 	case http.MethodGet:
 		h.getProposalByID(w, r)
+    case http.MethodPost:
+        h.postProposalByID(w, r)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -105,6 +107,20 @@ func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Reques
 
     w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)
+}
+
+func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Request) {
+	pidStr := r.URL.Path[len("/api/proposals/"):]
+	if pidStr == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+
+	_, err := strconv.ParseInt(pidStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
 }
 
 func (h *ProposalHandlers) actor(r *http.Request) (*domain.User, bool) {

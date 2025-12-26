@@ -9,6 +9,7 @@ type UserStore interface {
 	InsertUser(context.Context, *domain.User) error
 	GetUserByID(context.Context, int64) (*domain.User, bool)
 	GetUserByEmail(context.Context, string) (*domain.User, bool)
+    UpdateUser(context.Context, *domain.User) error
 }
 
 type ProposalStore interface {

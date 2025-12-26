@@ -25,8 +25,7 @@ func New(ttl time.Duration) *Store {
 	}
 }
 
-// Create creates and stores a new session for the given user ID.
-func (s *Store) Create(userID int64) (string, time.Time, error) {
+func (s *Store) InsertSession(userID int64) (string, time.Time, error) {
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
 		return "", time.Time{}, err
@@ -45,8 +44,7 @@ func (s *Store) Create(userID int64) (string, time.Time, error) {
 	return token, exp, nil
 }
 
-// GetUser resolves a token to a user ID if the session is valid.
-func (s *Store) GetUser(token string) (int64, bool) {
+func (s *Store) GetUserIDByToken(token string) (int64, bool) {
     now := time.Now()
     s.mu.Lock()
     defer s.mu.Unlock()
@@ -60,8 +58,7 @@ func (s *Store) GetUser(token string) (int64, bool) {
     return session.userID, true
 }
 
-// Delete invalidates a session token.
-func (s *Store) Delete(token string) {
+func (s *Store) DeleteSession(token string) {
     s.mu.Lock()
     defer s.mu.Unlock()
     delete(s.byToken, token)

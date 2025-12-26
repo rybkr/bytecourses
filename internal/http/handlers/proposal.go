@@ -5,7 +5,6 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -82,7 +81,7 @@ func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) {
-	actor, ok := h.actor(r)
+	actor, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
@@ -125,7 +124,6 @@ func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Reque
 	}
 
 	pidStr := r.URL.Path[len("/api/proposals/"):]
-	fmt.Println(pidStr)
 	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
@@ -137,6 +135,16 @@ func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	p.ID = pid
+
+	actor, ok := actorFromRequest(r, h.sessions, h.users)
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+	if actor.ID != p.AuthorID {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
 
 	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

@@ -28,16 +28,15 @@ func (s *UserStore) InsertUser(ctx context.Context, u *domain.User) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	email := strings.ToLower(strings.TrimSpace(u.Email))
-	if email == "" {
+	u.Email = normalizeEmailAddress(u.Email)
+	if u.Email == "" {
 		return errors.New("email required")
 	}
-	if _, exists := s.idsByEmail[email]; exists {
+	if _, exists := s.idsByEmail[u.Email]; exists {
 		return errors.New("email already exists")
 	}
 
 	u.ID = s.nextID
-	u.Email = email
 	if u.CreatedAt.IsZero() {
 		u.CreatedAt = time.Now()
 	}
@@ -60,7 +59,7 @@ func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (domain.Us
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	uid, ok := s.idsByEmail[email]
+	uid, ok := s.idsByEmail[normalizeEmailAddress(email)]
 	if !ok {
 		return domain.User{}, false
 	}
@@ -72,6 +71,7 @@ func (s *UserStore) UpdateUser(ctx context.Context, u *domain.User) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	u.Email = normalizeEmailAddress(u.Email)
 	if _, exists := s.usersByID[u.ID]; !exists {
 		return errors.New("user does not exist")
 	}
@@ -80,4 +80,8 @@ func (s *UserStore) UpdateUser(ctx context.Context, u *domain.User) error {
 	s.idsByEmail[u.Email] = u.ID
 
 	return nil
+}
+
+func normalizeEmailAddress(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }

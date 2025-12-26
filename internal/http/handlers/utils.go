@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytecourses/internal/auth"
+	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"net/http"
 )

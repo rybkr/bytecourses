@@ -99,6 +99,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+        Secure:   true,
 	})
 
 	w.WriteHeader(http.StatusOK)

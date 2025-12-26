@@ -1,129 +1,48 @@
-<!DOCTYPE html>
-<html lang="en">
+{{ define "content" }}
+<section>
+    <h1>Welcome</h1>
+    <p>Sign in to your account or create a new one.</p>
+</section>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - ByteCourses</title>
-    <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 2rem;
-            line-height: 1.6;
-        }
+<section id="login">
+    <h2>Login</h2>
 
-        h1 {
-            margin-bottom: 1rem;
-        }
-
-        form {
-            margin-bottom: 2rem;
-        }
-
-        input {
-            width: 100%;
-            padding: 0.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            box-sizing: border-box;
-            font-size: 1rem;
-        }
-
-        button {
-            background-color: #0066cc;
-            color: white;
-            padding: 0.5rem 1rem;
-            border: 1px solid #0066cc;
-            border-radius: 4px;
-            font-size: 1rem;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #0052a3;
-        }
-
-        #errorMessage {
-            color: #cc0000;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        #errorMessage.show {
-            display: block;
-        }
-
-        a {
-            color: #0066cc;
-            text-decoration: none;
-            padding: 0.5rem 1rem;
-            border: 1px solid #0066cc;
-            border-radius: 4px;
-            display: inline-block;
-        }
-
-        a:hover {
-            background-color: #0066cc;
-            color: white;
-        }
-    </style>
-</head>
-
-<body>
-    <h1>Login</h1>
-    <div id="errorMessage"></div>
-    <form id="loginForm">
-        <input type="email" name="email" placeholder="Enter your email" required>
-        <input type="password" name="password" placeholder="Enter your password" required>
-        <button type="submit">Login</button>
+    <form>
+        <input id="login-email" type="email" placeholder="Email" required />
+        <input
+            id="login-password"
+            type="password"
+            placeholder="Password"
+            required
+        />
+        <button id="login-btn" type="button">Login</button>
     </form>
-    <a href="/index.html">Back to home</a>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', async function (e) {
-            e.preventDefault();
 
-            const errorMessage = document.getElementById('errorMessage');
-            errorMessage.classList.remove('show');
-            errorMessage.textContent = '';
+    <p class="switch">
+        Don’t have an account?
+        <a href="#" id="to-register">Create one</a>
+    </p>
+</section>
 
-            const email = document.querySelector('input[name="email"]').value;
-            const password = document.querySelector('input[name="password"]').value;
+<section id="register" hidden>
+    <h2>Create account</h2>
 
-            try {
-                const response = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password
-                    })
-                });
+    <form>
+        <input id="reg-email" type="email" placeholder="Email" required />
+        <input
+            id="reg-password"
+            type="password"
+            placeholder="Password"
+            required
+        />
+        <button id="register-btn" type="button">Create account</button>
+    </form>
 
-                if (response.status === 200) {
-                    window.location.href = '/index.html';
-                } else if (response.status === 401) {
-                    const text = await response.text();
-                    errorMessage.textContent = text || 'Invalid credentials';
-                    errorMessage.classList.add('show');
-                } else if (response.status === 400) {
-                    const text = await response.text();
-                    errorMessage.textContent = text || 'Invalid request';
-                    errorMessage.classList.add('show');
-                } else {
-                    errorMessage.textContent = 'An error occurred. Please try again.';
-                    errorMessage.classList.add('show');
-                }
-            } catch (error) {
-                errorMessage.textContent = 'An error occurred. Please try again.';
-                errorMessage.classList.add('show');
-            }
-        });
-    </script>
-</body>
+    <p class="switch">
+        Already have an account?
+        <a href="#" id="to-login">Login</a>
+    </p>
+</section>
 
-</html>
+<p id="error"></p>
+{{ end }}

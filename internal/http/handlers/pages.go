@@ -27,7 +27,7 @@ func (h *PageHandlers) Home(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	data := &TemplateData{Page: "home"}
+	data := &TemplateData{Page: "home.html"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
@@ -37,7 +37,7 @@ func (h *PageHandlers) Login(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "login"}
+	data := &TemplateData{Page: "login.html"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
@@ -47,7 +47,7 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "register"}
+	data := &TemplateData{Page: "register.html"}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
@@ -59,7 +59,7 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	data := &TemplateData{User: &user, Page: "proposals"}
+	data := &TemplateData{User: &user, Page: "proposals.html"}
 	Render(w, data)
 }
 
@@ -71,7 +71,7 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
-	data := &TemplateData{User: &user, Page: "proposal_new"}
+	data := &TemplateData{User: &user, Page: "proposal_new.html"}
 	Render(w, data)
 }
 
@@ -110,7 +110,7 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		User:         &user,
 		Proposal:     &p,
 		ProposalJSON: string(proposalJSON),
-		Page:         "proposal_view",
+		Page:         "proposal_view.html",
 	}
 	Render(w, data)
 }

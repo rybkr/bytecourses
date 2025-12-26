@@ -28,6 +28,7 @@ func main() {
     mux.HandleFunc("/api/health", utilHandlers.Health)
 
     mux.HandleFunc("/api/proposals", proposalHandlers.Proposals)
+    mux.HandleFunc("/api/proposals/", proposalHandlers.ProposalByID)
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

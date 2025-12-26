@@ -6,6 +6,7 @@ import (
 	"bytecourses/internal/store"
 	"encoding/json"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
@@ -27,8 +28,17 @@ func (h *ProposalHandlers) Proposals(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
 		h.postProposals(w, r)
-    case http.MethodGet:
-        h.getProposals(w, r)
+	case http.MethodGet:
+		h.getProposals(w, r)
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *ProposalHandlers) ProposalByID(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		h.getProposalByID(w, r)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -72,6 +82,29 @@ func (h *ProposalHandlers) getProposals(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(out)
+}
+
+func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Request) {
+	pidStr := r.URL.Path[len("/api/proposals/"):]
+	if pidStr == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return
+	}
+
+	pid, err := strconv.ParseInt(pidStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+    p, ok := h.proposals.GetProposalByID(r.Context(), pid)
+    if !ok {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+    w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(p)
 }
 
 func (h *ProposalHandlers) actor(r *http.Request) (*domain.User, bool) {

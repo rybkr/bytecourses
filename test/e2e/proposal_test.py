@@ -76,3 +76,57 @@ def test_get_proposals_empty(go_server):
 
     data = r.json()
     assert len(data) == 0
+
+
+def test_proposals_invalid_method(go_server):
+    r = requests.put(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+    r = requests.delete(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+
+def test_get_proposals_by_id(go_server):
+    s = requests.Session()
+
+    login_payload: dict[str, str] = {
+        "email": "usr@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.OK
+    assert len(r.json()) == 2
+
+    p1, p2 = r.json()[0], r.json()[1]
+    assert "id" in p1 and "id" in p2
+
+    id1, id2 = int(p1["id"]), int(p2["id"])
+    r = s.get(f"{API_ROOT}/proposals/{id1}")
+    assert r.status_code == HTTPStatus.OK
+    assert r.json() == p1
+
+    r = s.get(f"{API_ROOT}/proposals/{id2}")
+    assert r.status_code == HTTPStatus.OK
+    assert r.json() == p2
+
+
+def test_get_proposal_nonexistent(go_server):
+    s = requests.Session()
+
+    login_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/proposals")
+    assert r.status_code == HTTPStatus.OK
+
+    data = r.json()
+    assert len(data) == 0
+
+    r = s.get(f"{API_ROOT}/proposals/{2**63 - 1}")
+    assert r.status_code == HTTPStatus.NOT_FOUND

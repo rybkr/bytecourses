@@ -11,12 +11,12 @@ import (
 
 func main() {
 	userStore := memstore.NewUserStore()
-    proposalStore := memstore.NewProposalStore()
-    sessionStore := memsession.New(24 * time.Hour)
+	proposalStore := memstore.NewProposalStore()
+	sessionStore := memsession.New(24 * time.Hour)
 
-    authHandlers := handlers.NewAuthHandlers(userStore, sessionStore)
-    utilHandlers := handlers.NewUtilHandlers()
-    proposalHandlers := handlers.NewProposalHandlers(proposalStore, userStore, sessionStore)
+	authHandlers := handlers.NewAuthHandlers(userStore, sessionStore)
+	utilHandlers := handlers.NewUtilHandlers()
+	proposalHandlers := handlers.NewProposalHandlers(proposalStore, userStore, sessionStore)
 
 	mux := http.NewServeMux()
 
@@ -25,10 +25,12 @@ func main() {
 	mux.HandleFunc("/api/logout", authHandlers.Logout)
 	mux.HandleFunc("/api/me", authHandlers.Me)
 
-    mux.HandleFunc("/api/health", utilHandlers.Health)
+	mux.HandleFunc("/api/health", utilHandlers.Health)
 
-    mux.HandleFunc("/api/proposals", proposalHandlers.Proposals)
-    mux.HandleFunc("/api/proposals/", proposalHandlers.ProposalByID)
+	mux.HandleFunc("/api/proposals", proposalHandlers.Proposals)
+	mux.HandleFunc("/api/proposals/", proposalHandlers.ProposalByID)
+
+	mux.Handle("/", http.FileServer(http.Dir("web")))
 
 	log.Fatal(http.ListenAndServe(":8080", mux))
 }

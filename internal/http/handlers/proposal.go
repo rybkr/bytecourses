@@ -5,10 +5,10 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
-    "fmt"
 )
 
 type ProposalHandlers struct {
@@ -63,7 +63,7 @@ func (h *ProposalHandlers) postProposals(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	actor, ok := h.actor(r)
+	actor, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
@@ -118,14 +118,14 @@ func (h *ProposalHandlers) getProposalByID(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Request) {
-    var p domain.Proposal
+	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
 
 	pidStr := r.URL.Path[len("/api/proposals/"):]
-    fmt.Println(pidStr)
+	fmt.Println(pidStr)
 	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return
@@ -136,25 +136,10 @@ func (h *ProposalHandlers) postProposalByID(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
-    p.ID = pid
+	p.ID = pid
 
-    if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-        return
-    }
-}
-
-func (h *ProposalHandlers) actor(r *http.Request) (domain.User, bool) {
-	c, err := r.Cookie("session")
-	if err != nil {
-		return domain.User{}, false
+	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
-
-	uid, ok := h.sessions.GetUserIDByToken(c.Value)
-	if !ok {
-		return domain.User{}, false
-	}
-
-	u, ok := h.users.GetUserByID(r.Context(), uid)
-	return u, ok
 }

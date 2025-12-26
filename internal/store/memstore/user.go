@@ -60,24 +60,24 @@ func (s *UserStore) GetUserByEmail(ctx context.Context, email string) (domain.Us
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-    uid, ok := s.idsByEmail[email]
-    if !ok {
-        return domain.User{}, false
-    }
+	uid, ok := s.idsByEmail[email]
+	if !ok {
+		return domain.User{}, false
+	}
 
-    return s.GetUserByID(ctx, uid)
+	return s.GetUserByID(ctx, uid)
 }
 
 func (s *UserStore) UpdateUser(ctx context.Context, u *domain.User) error {
-    s.mu.Lock()
-    defer s.mu.Unlock()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-    if _, exists := s.usersByID[u.ID]; !exists {
-        return errors.New("user does not exist")
-    }
+	if _, exists := s.usersByID[u.ID]; !exists {
+		return errors.New("user does not exist")
+	}
 
-    s.usersByID[u.ID] = *u
-    s.idsByEmail[u.Email] = u.ID
+	s.usersByID[u.ID] = *u
+	s.idsByEmail[u.Email] = u.ID
 
-    return nil
+	return nil
 }

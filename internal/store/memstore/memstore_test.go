@@ -163,7 +163,7 @@ func TestProposalStore_CallerModification(t *testing.T) {
 }
 
 func TestProposalStore_UpdateProposal(t *testing.T) {
-    ctx := context.Background()
+	ctx := context.Background()
 	store := NewProposalStore()
 
 	p := domain.NewProposal("Title", "Summary", 1)
@@ -171,13 +171,13 @@ func TestProposalStore_UpdateProposal(t *testing.T) {
 		t.Fatalf("InsertProposal failed: %v", err)
 	}
 
-    q := domain.NewProposal("New Title", "New summary", 1)
-    q.ID = p.ID
-    if err := store.UpdateProposal(ctx, &q); err != nil {
-        t.Fatalf("UpdateProposal failed: %v", err)
-    }
+	q := domain.NewProposal("New Title", "New summary", 1)
+	q.ID = p.ID
+	if err := store.UpdateProposal(ctx, &q); err != nil {
+		t.Fatalf("UpdateProposal failed: %v", err)
+	}
 
-    r, ok := store.GetProposalByID(ctx, p.ID)
+	r, ok := store.GetProposalByID(ctx, p.ID)
 	if !ok {
 		t.Fatalf("GetProposalByID failed")
 	}

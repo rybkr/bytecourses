@@ -45,21 +45,21 @@ func (s *Store) InsertSession(userID int64) (string, time.Time, error) {
 }
 
 func (s *Store) GetUserIDByToken(token string) (int64, bool) {
-    now := time.Now()
-    s.mu.Lock()
-    defer s.mu.Unlock()
+	now := time.Now()
+	s.mu.Lock()
+	defer s.mu.Unlock()
 
-    session, ok := s.byToken[token]
-    if !ok || now.After(session.expires) {
-        delete(s.byToken, token)
-        return 0, false
-    }
+	session, ok := s.byToken[token]
+	if !ok || now.After(session.expires) {
+		delete(s.byToken, token)
+		return 0, false
+	}
 
-    return session.userID, true
+	return session.userID, true
 }
 
 func (s *Store) DeleteSession(token string) {
-    s.mu.Lock()
-    defer s.mu.Unlock()
-    delete(s.byToken, token)
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.byToken, token)
 }

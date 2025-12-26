@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytecourses/internal/auth"
+	"bytecourses/internal/store"
 	"net/http"
 )
 
@@ -12,4 +14,19 @@ func NewUtilHandlers() *UtilHandlers {
 
 func (h *UtilHandlers) Health(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
+}
+
+func actorFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (domain.User, bool) {
+	c, err := r.Cookie("session")
+	if err != nil {
+		return domain.User{}, false
+	}
+
+	uid, ok := sessions.GetUserIDByToken(c.Value)
+	if !ok {
+		return domain.User{}, false
+	}
+
+	u, ok := users.GetUserByID(r.Context(), uid)
+	return u, ok
 }

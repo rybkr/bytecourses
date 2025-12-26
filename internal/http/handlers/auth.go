@@ -37,10 +37,10 @@ func (h *AuthHandlers) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-    if request.Password == "" || request.Email == "" {
-        http.Error(w, "email and password required", http.StatusBadRequest)
-        return
-    }
+	if request.Password == "" || request.Email == "" {
+		http.Error(w, "email and password required", http.StatusBadRequest)
+		return
+	}
 
 	hash, err := auth.HashPassword(request.Password)
 	if err != nil {
@@ -125,23 +125,10 @@ func (h *AuthHandlers) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandlers) Me(w http.ResponseWriter, r *http.Request) {
-    c, err := r.Cookie("session")
-    if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-    }
-
-    uid, ok := h.sessions.GetUserIDByToken(c.Value)
+	u, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
-
-    u, ok := h.users.GetUserByID(r.Context(), uid)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-
 	json.NewEncoder(w).Encode(u)
 }

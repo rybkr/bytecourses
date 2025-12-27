@@ -22,6 +22,7 @@ func NewAuthHandler(users store.UserStore, sessions auth.SessionStore) *AuthHand
 }
 
 type registerRequest struct {
+    Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
@@ -48,7 +49,11 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u := domain.NewUser(strings.TrimSpace(request.Email), hash)
+	u := domain.User{
+		Email:        request.Email,
+		PasswordHash: hash,
+        Name:         request.Name,
+	}
 
 	if err := h.users.InsertUser(r.Context(), &u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)

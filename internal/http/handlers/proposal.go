@@ -68,7 +68,11 @@ func (h *ProposalHandler) postProposals(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	p := domain.NewProposal(strings.TrimSpace(request.Title), strings.TrimSpace(request.Summary), actor.ID)
+	p := domain.Proposal{
+		Title:    strings.TrimSpace(request.Title),
+		Summary:  strings.TrimSpace(request.Summary),
+		AuthorID: actor.ID,
+	}
 	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -100,11 +104,11 @@ func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-    actor, ok := actorFromRequest(r, h.sessions, h.users)
-    if !ok {
+	actor, ok := actorFromRequest(r, h.sessions, h.users)
+	if !ok {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
-    }
+	}
 
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {

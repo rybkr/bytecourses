@@ -1,62 +1,67 @@
-{{template "layout" .}}
-
-{{define "title"}}Register - ByteCourses{{end}}
-
-{{define "content"}}
+{{template "layout" .}} {{define "title"}}Register - ByteCourses{{end}} {{define
+"content"}}
 <div class="auth-container">
     <div class="auth-card">
         <h2>Register</h2>
         <form id="registerForm" onsubmit="handleRegister(event)">
             <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" id="name" name="name" required />
+            </div>
+            <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required />
             </div>
             <div class="form-group">
                 <label for="password">Password</label>
-                <input type="password" id="password" name="password" required>
+                <input type="password" id="password" name="password" required />
             </div>
-            <div id="error-message" class="error-message" style="display: none;"></div>
-            <button type="submit" class="btn btn-primary btn-block">Register</button>
+            <div
+                id="error-message"
+                class="error-message"
+                style="display: none"
+            ></div>
+            <button type="submit" class="btn btn-primary btn-block">
+                Register
+            </button>
         </form>
         <p class="auth-footer">
             Already have an account? <a href="/login">Login here</a>
         </p>
     </div>
 </div>
-{{end}}
-
-{{define "scripts"}}
+{{end}} {{define "scripts"}}
 <script>
     async function handleRegister(event) {
         event.preventDefault();
         const form = event.target;
+        const name = form.name.value;
         const email = form.email.value;
         const password = form.password.value;
-        
-        const errorDiv = document.getElementById('error-message');
-        errorDiv.style.display = 'none';
-        
+
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.style.display = "none";
+
         try {
-            const response = await fetch('/api/register', {
-                method: 'POST',
+            const response = await fetch("/api/register", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify({ name, email, password }),
             });
-            
+
             if (response.ok) {
-                window.location.href = '/login';
+                window.location.href = "/login";
             } else {
                 const errorText = await response.text();
-                errorDiv.textContent = errorText || 'Registration failed';
-                errorDiv.style.display = 'block';
+                errorDiv.textContent = errorText || "Registration failed";
+                errorDiv.style.display = "block";
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
-            errorDiv.style.display = 'block';
+            errorDiv.textContent = "An error occurred. Please try again.";
+            errorDiv.style.display = "block";
         }
     }
 </script>
 {{end}}
-

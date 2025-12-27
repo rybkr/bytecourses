@@ -10,7 +10,10 @@ func TestUserStore_InsertAndGet(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
-	u := domain.NewUser("user@example.com", make([]byte, 20))
+	u := domain.User{
+		Email:        "user@example.com",
+		PasswordHash: make([]byte, 20),
+	}
 	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
@@ -36,7 +39,10 @@ func TestUserStore_CallerModification(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
-	u := domain.NewUser("user@example.com", make([]byte, 20))
+	u := domain.User{
+		Email:        "user@example.com",
+		PasswordHash: make([]byte, 20),
+	}
 	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
@@ -64,7 +70,10 @@ func TestUserStore_UpdateUser(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
-	u := domain.NewUser("user@example.com", make([]byte, 20))
+	u := domain.User{
+		Email:        "user@example.com",
+		PasswordHash: make([]byte, 20),
+	}
 	if err := store.InsertUser(ctx, &u); err != nil {
 		t.Fatalf("InsertUser failed: %v", err)
 	}
@@ -109,7 +118,10 @@ func TestUserStore_UpdateNonexistentUser(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
-	u := domain.NewUser("user@example.com", make([]byte, 20))
+	u := domain.User{
+		Email:        "user@example.com",
+		PasswordHash: make([]byte, 20),
+	}
 	u.Email = "new.email@example.com"
 	if err := store.UpdateUser(ctx, &u); err == nil {
 		t.Fatal("UpdateUser accepted nonexistent user")
@@ -120,7 +132,11 @@ func TestProposalStore_InsertAndGet(t *testing.T) {
 	ctx := context.Background()
 	store := NewProposalStore()
 
-	p := domain.NewProposal("Title", "Summary", 1)
+	p := domain.Proposal{
+		Title:    "Title",
+		Summary:  "Summary",
+		AuthorID: 1,
+	}
 	if err := store.InsertProposal(ctx, &p); err != nil {
 		t.Fatalf("InsertProposal failed: %v", err)
 	}
@@ -138,7 +154,11 @@ func TestProposalStore_CallerModification(t *testing.T) {
 	ctx := context.Background()
 	store := NewProposalStore()
 
-	p := domain.NewProposal("Title", "Summary", 1)
+	p := domain.Proposal{
+		Title:    "Title",
+		Summary:  "Summary",
+		AuthorID: 1,
+	}
 	if err := store.InsertProposal(ctx, &p); err != nil {
 		t.Fatalf("InsertProposal failed: %v", err)
 	}
@@ -166,12 +186,20 @@ func TestProposalStore_UpdateProposal(t *testing.T) {
 	ctx := context.Background()
 	store := NewProposalStore()
 
-	p := domain.NewProposal("Title", "Summary", 1)
+	p := domain.Proposal{
+		Title:    "Title",
+		Summary:  "Summary",
+		AuthorID: 1,
+	}
 	if err := store.InsertProposal(ctx, &p); err != nil {
 		t.Fatalf("InsertProposal failed: %v", err)
 	}
 
-	q := domain.NewProposal("New Title", "New summary", 1)
+    q := domain.Proposal{
+		Title:    "New Title",
+		Summary:  "New summary",
+		AuthorID: 1,
+	}
 	q.ID = p.ID
 	if err := store.UpdateProposal(ctx, &q); err != nil {
 		t.Fatalf("UpdateProposal failed: %v", err)

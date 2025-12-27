@@ -15,16 +15,10 @@ const (
 type User struct {
 	ID           int64     `json:"id"`
 	Email        string    `json:"email"`
+    Name         string    `json:"name"`
 	PasswordHash []byte    `json:"-"`
 	Role         UserRole  `json:"role"`
 	CreatedAt    time.Time `json:"created_at"`
-}
-
-func NewUser(email string, passwordHash []byte) User {
-	return User{
-		Email:        email,
-		PasswordHash: passwordHash,
-	}
 }
 
 type ProposalStatus string
@@ -45,12 +39,4 @@ type Proposal struct {
 	Status     ProposalStatus `json:"status"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`
-}
-
-func NewProposal(title, summary string, authorID int64) Proposal {
-	return Proposal{
-		Title:    title,
-		Summary:  summary,
-		AuthorID: authorID,
-	}
 }

@@ -208,3 +208,23 @@ def test_admin_user(go_server):
     data = r.json()
     assert "role" in data
     assert data["role"] == "admin"
+
+
+def test_user_name(go_server):
+    s = requests.Session()
+
+    payload: dict[str, str] = {
+        "name": "User Name",
+        "email": "user@example.com",
+        "password": "secret",
+    }
+
+    r = s.post(f"{API_ROOT}/register", json=payload)
+    assert r.status_code == HTTPStatus.OK
+    r = s.post(f"{API_ROOT}/login", json=payload)
+    assert r.status_code == HTTPStatus.OK
+    r = s.get(f"{API_ROOT}/me")
+    assert r.status_code == HTTPStatus.OK
+
+    assert "name" in r.json()
+    assert r.json()["name"] == "User Name"

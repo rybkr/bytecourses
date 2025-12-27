@@ -64,6 +64,7 @@ func main() {
 	mux.HandleFunc("/", pageHandlers.Home)
 	mux.HandleFunc("/login", pageHandlers.Login)
 	mux.HandleFunc("/register", pageHandlers.Register)
+	mux.HandleFunc("/profile", pageHandlers.Profile)
 	mux.HandleFunc("/proposals", pageHandlers.ProposalsList)
 	mux.HandleFunc("/proposals/new", pageHandlers.ProposalNew)
 	mux.HandleFunc("/proposals/", pageHandlers.ProposalView)

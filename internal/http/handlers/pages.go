@@ -9,9 +9,9 @@ import (
 )
 
 type PageHandlers struct {
-	users         store.UserStore
-	sessions      auth.SessionStore
-	proposals     store.ProposalStore
+	users     store.UserStore
+	sessions  auth.SessionStore
+	proposals store.ProposalStore
 }
 
 func NewPageHandlers(users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore) *PageHandlers {
@@ -58,7 +58,7 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	
+
 	data := &TemplateData{User: &user, Page: "proposals.html"}
 	Render(w, data)
 }
@@ -70,7 +70,7 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	
+
 	data := &TemplateData{User: &user, Page: "proposal_new.html"}
 	Render(w, data)
 }
@@ -82,30 +82,30 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
-	
+
 	// Extract proposal ID from path
 	pidStr := r.URL.Path[len("/proposals/"):]
 	if pidStr == "" {
 		http.NotFound(w, r)
 		return
 	}
-	
+
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {
 		http.NotFound(w, r)
 		return
 	}
-	
+
 	// Get proposal
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
 	if !ok || p.AuthorID != user.ID {
 		http.NotFound(w, r)
 		return
 	}
-	
+
 	// Convert proposal to JSON for the template
 	proposalJSON, _ := json.Marshal(p)
-	
+
 	data := &TemplateData{
 		User:         &user,
 		Proposal:     &p,
@@ -115,3 +115,14 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 	Render(w, data)
 }
 
+func (h *PageHandlers) Profile(w http.ResponseWriter, r *http.Request) {
+	// Require authentication
+	user, ok := actorFromRequest(r, h.sessions, h.users)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	data := &TemplateData{User: &user, Page: "profile.html"}
+	Render(w, data)
+}

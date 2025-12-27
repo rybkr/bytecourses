@@ -1,47 +1,48 @@
 <!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>{{block "title" .}}ByteCourses{{end}}</title>
-        <link rel="stylesheet" href="/static/css/styles.css" />
-        {{block "head" .}}{{end}}
-    </head>
 
-    <body>
-        <nav class="navbar">
-            <div class="container">
-                <div class="nav-brand">
-                    <a href="/">Byte Courses</a>
-                </div>
-                <div class="nav-links">
-                    {{if .User}}
-                    <a href="/proposals">My Proposals</a>
-                    <a href="/proposals/new">New Proposal</a>
-                    <span class="user-info"
-                        >{{.User.Email}} ({{.User.Role}})</span
-                    >
-                    <button onclick="handleLogout()" class="btn btn-secondary">
-                        Logout
-                    </button>
-                    {{else}}
-                    <a href="/login">Login</a>
-                    {{end}}
-                </div>
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{block "title" .}}ByteCourses{{end}}</title>
+    <link rel="stylesheet" href="/static/css/styles.css" />
+    {{block "head" .}}{{end}}
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="/">Byte Courses</a>
             </div>
-        </nav>
-
-        <main class="main-content">
-            <div class="container">{{block "content" .}}{{end}}</div>
-        </main>
-
-        <footer class="footer">
-            <div class="container">
-                <p>&copy; 2025 The Byte Course Project. All rights reserved.</p>
+            <div class="nav-links">
+                {{if .User}}
+                <a href="/proposals">My Proposals</a>
+                <a href="/proposals/new">New Proposal</a>
+                <a href="/profile">Profile</a>
+                <span class="user-info">{{.User.Email}} ({{.User.Role}})</span>
+                <button onclick="handleLogout()" class="btn btn-secondary">
+                    Logout
+                </button>
+                {{else}}
+                <a href="/login">Login</a>
+                {{end}}
             </div>
-        </footer>
+        </div>
+    </nav>
 
-        <script src="/static/js/app.js"></script>
-        {{block "scripts" .}}{{end}}
-    </body>
+    <main class="main-content">
+        <div class="container">{{block "content" .}}{{end}}</div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 The Byte Course Project. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="/static/js/app.js"></script>
+    {{block "scripts" .}}{{end}}
+</body>
+
 </html>

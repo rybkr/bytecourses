@@ -268,3 +268,37 @@ def test_get_proposal_wrong_user(go_server):
     assert r.status_code == HTTPStatus.NOT_FOUND
     r = t.get(f"{API_ROOT}/proposals/{t_id}")
     assert r.status_code == HTTPStatus.OK
+
+
+def test_create_proposal_rich(go_server):
+    s = requests.Session()
+
+    register_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/register", json=register_payload)
+    r = s.post(f"{API_ROOT}/login", json=register_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload: dict[str, str] = {
+        "title": "Some Course Title",
+        "summary": "A summary of some course.",
+        "target_audience": "The target audience for some course.",
+        "learning_objectives": "The learning objectives of some course.",
+        "outline": """
+            - item 1
+            - item 2
+        """,
+        "assumed_prerequisites": "Some older course, some other older course, some skill.",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+
+    r = s.get(f"{API_ROOT}/proposals/{r.json()["id"]}")
+    assert r.status_code == HTTPStatus.OK
+
+    for key, value in proposal_payload.items():
+        assert key in r.json()
+        assert r.json()[key] == value

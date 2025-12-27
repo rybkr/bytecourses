@@ -19,7 +19,7 @@
 }
 
 * {
-    margin: 0;
+    margin: 0rem;
     padding: 0;
     box-sizing: border-box;
 }
@@ -153,7 +153,9 @@ body {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+    box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.15),
+        0 4px 10px rgba(0, 0, 0, 0.1);
     min-width: 240px;
     max-width: 280px;
     opacity: 0;
@@ -175,7 +177,11 @@ body {
 .user-dropdown-header {
     padding: 1.25rem 1rem;
     border-bottom: 1px solid var(--border-color);
-    background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-color) 100%);
+    background: linear-gradient(
+        135deg,
+        var(--bg-secondary) 0%,
+        var(--bg-color) 100%
+    );
 }
 
 .user-dropdown-email {
@@ -214,7 +220,7 @@ body {
 }
 
 .user-dropdown-item::before {
-    content: '';
+    content: "";
     position: absolute;
     left: 0;
     top: 0;
@@ -237,7 +243,9 @@ body {
 .user-dropdown-item svg {
     color: var(--text-secondary);
     flex-shrink: 0;
-    transition: color 0.15s ease, transform 0.15s ease;
+    transition:
+        color 0.15s ease,
+        transform 0.15s ease;
 }
 
 .user-dropdown-item:hover svg {
@@ -247,7 +255,12 @@ body {
 
 .user-dropdown-divider {
     height: 1px;
-    background: linear-gradient(to right, transparent, var(--border-color), transparent);
+    background: linear-gradient(
+        to right,
+        transparent,
+        var(--border-color),
+        transparent
+    );
     margin: 0.5rem 0;
 }
 
@@ -406,6 +419,11 @@ body {
     margin-bottom: 0.5rem;
     font-weight: 500;
     color: var(--text-color);
+}
+
+.form-group label small {
+    font-weight: 200;
+    color: var(--muted);
 }
 
 .form-group input,
@@ -697,7 +715,9 @@ body {
     border-radius: 0.5rem;
     text-align: center;
     border: 1px solid var(--border-color);
-    transition: transform 0.2s, box-shadow 0.2s;
+    transition:
+        transform 0.2s,
+        box-shadow 0.2s;
 }
 
 .stat-card:hover {

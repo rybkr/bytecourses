@@ -7,117 +7,107 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
+    "strings"
 )
 
-type ProposalHandler struct {
+type ProposalHandlers struct {
 	proposals store.ProposalStore
 	users     store.UserStore
 	sessions  auth.SessionStore
 }
 
-func NewProposalHandler(proposals store.ProposalStore, users store.UserStore, sessions auth.SessionStore) *ProposalHandler {
-	return &ProposalHandler{
+func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, sessions auth.SessionStore) *ProposalHandlers {
+	return &ProposalHandlers{
 		proposals: proposals,
 		users:     users,
 		sessions:  sessions,
 	}
 }
 
-func (h *ProposalHandler) Proposals(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandlers) Collection(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		h.postProposals(w, r)
+		h.Create(w, r)
 	case http.MethodGet:
-		h.getProposals(w, r)
+		h.ListMine(w, r)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-func (h *ProposalHandler) ProposalByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandlers) Item(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		h.getProposalByID(w, r)
-	case http.MethodPost:
-		h.postProposalByID(w, r)
+		h.Get(w, r)
+	case http.MethodPut:
+		h.Update(w, r)
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
 }
 
-type newProposalRequest struct {
-	Title   string `json:"title"`
-	Summary string `json:"summary"`
-}
-
-type proposalReturn struct {
+type ProposalCreateResponse struct {
 	ID int64 `json:"id"`
 }
 
-func (h *ProposalHandler) postProposals(w http.ResponseWriter, r *http.Request) {
-	var request newProposalRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
-
-	actor, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := requireUser(w, r, h.sessions, h.users)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	p := domain.Proposal{
-		Title:    strings.TrimSpace(request.Title),
-		Summary:  strings.TrimSpace(request.Summary),
-		AuthorID: actor.ID,
+	var p domain.Proposal
+	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
+
+	p.AuthorID = user.ID
 	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(proposalReturn{
+	response := ProposalCreateResponse{
 		ID: p.ID,
-	})
-}
-
-func (h *ProposalHandler) getProposals(w http.ResponseWriter, r *http.Request) {
-	actor, ok := actorFromRequest(r, h.sessions, h.users)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
 	}
-
-	out := h.proposals.GetProposalsByUserID(r.Context(), actor.ID)
-
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(out)
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(response)
 }
 
-func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request) {
-	pidStr := r.URL.Path[len("/api/proposals/"):]
-	if pidStr == "" {
-		http.Error(w, "missing id", http.StatusBadRequest)
+func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
-
-	actor, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := requireUser(w, r, h.sessions, h.users)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	pid, err := strconv.ParseInt(pidStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+	response := h.proposals.GetProposalsByUserID(r.Context(), user.ID)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
+
+func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
+	user, ok := requireUser(w, r, h.sessions, h.users)
+	if !ok {
+		return
+	}
+    pid, ok := h.requireProposalID(w, r)
+    if !ok {
+        return
+    }
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok || p.AuthorID != actor.ID {
+	if !ok || p.AuthorID != user.ID {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -126,32 +116,27 @@ func (h *ProposalHandler) getProposalByID(w http.ResponseWriter, r *http.Request
 	json.NewEncoder(w).Encode(p)
 }
 
-func (h *ProposalHandler) postProposalByID(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPut) {
+		return
+	}
+	user, ok := requireUser(w, r, h.sessions, h.users)
+	if !ok {
+		return
+	}
+    pid, ok := h.requireProposalID(w, r)
+    if !ok {
+        return
+    }
+
 	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
-		return
-	}
-
-	pidStr := r.URL.Path[len("/api/proposals/"):]
-	if pidStr == "" {
-		http.Error(w, "missing id", http.StatusBadRequest)
-		return
-	}
-
-	pid, err := strconv.ParseInt(pidStr, 10, 64)
-	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	p.ID = pid
 
-	actor, ok := actorFromRequest(r, h.sessions, h.users)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	if actor.ID != p.AuthorID {
+	if p.AuthorID != user.ID {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -160,4 +145,20 @@ func (h *ProposalHandler) postProposalByID(w http.ResponseWriter, r *http.Reques
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+}
+
+func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {
+    pidStr := strings.TrimPrefix(r.URL.Path, "/api/proposals/")
+    if pidStr == r.URL.Path || pidStr == "" {
+        http.Error(w, "missing id", http.StatusBadRequest)
+        return 0, false
+    }
+
+    pid, err := strconv.ParseInt(pidStr, 10, 64)
+    if err != nil {
+        http.Error(w, "invalid id", http.StatusBadRequest)
+        return 0, false
+    }
+
+    return pid, true
 }

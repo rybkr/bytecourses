@@ -27,14 +27,14 @@ def test_create_proposal(go_server):
         "summary": "A summary of some course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     proposal_payload = {
         "title": "Another Course Title",
         "summary": "A summary of another course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
 
 def test_get_proposals(go_server):
@@ -54,14 +54,14 @@ def test_get_proposals(go_server):
         "summary": "A summary of some course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     proposal_payload = {
         "title": "Another Course Title",
         "summary": "A summary of another course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = s.get(f"{API_ROOT}/proposals")
     assert r.status_code == HTTPStatus.OK
@@ -120,14 +120,14 @@ def test_get_proposals_by_id(go_server):
         "summary": "A summary of some course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     proposal_payload = {
         "title": "Another Course Title",
         "summary": "A summary of another course.",
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = s.get(f"{API_ROOT}/proposals")
     assert r.status_code == HTTPStatus.OK
@@ -191,7 +191,7 @@ def test_update_proposal(go_server):
         "author_id": author_id,
     }
     r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     assert "id" in r.json()
 
     pid: int = r.json()["id"]
@@ -202,7 +202,7 @@ def test_update_proposal(go_server):
 
     p = r.json()
     p["title"] = "New Title"
-    r = s.post(f"{API_ROOT}/proposals/{pid}", json=p)
+    r = s.put(f"{API_ROOT}/proposals/{pid}", json=p)
     assert r.status_code == HTTPStatus.OK
 
     r = s.get(f"{API_ROOT}/proposals/{pid}")
@@ -241,12 +241,12 @@ def test_get_proposal_wrong_user(go_server):
         "summary": "T Summary",
     }
     r = s.post(f"{API_ROOT}/proposals", json=s_proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     assert "id" in r.json()
     s_id = r.json()["id"]
 
     r = t.post(f"{API_ROOT}/proposals", json=t_proposal_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     assert "id" in r.json()
     t_id = r.json()["id"]
 

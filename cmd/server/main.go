@@ -44,7 +44,7 @@ func main() {
 
 	authHandlers := handlers.NewAuthHandler(userStore, sessionStore)
 	utilHandlers := handlers.NewUtilHandlers()
-	proposalHandlers := handlers.NewProposalHandler(proposalStore, userStore, sessionStore)
+	proposalHandlers := handlers.NewProposalHandlers(proposalStore, userStore, sessionStore)
 	pageHandlers := handlers.NewPageHandlers(userStore, sessionStore, proposalStore)
 
 	mux := http.NewServeMux()
@@ -57,8 +57,8 @@ func main() {
 
 	mux.HandleFunc("/api/health", utilHandlers.Health)
 
-	mux.HandleFunc("/api/proposals", proposalHandlers.Proposals)
-	mux.HandleFunc("/api/proposals/", proposalHandlers.ProposalByID)
+	mux.HandleFunc("/api/proposals", proposalHandlers.Collection)
+	mux.HandleFunc("/api/proposals/", proposalHandlers.Item)
 
 	// Page routes
 	mux.HandleFunc("/", pageHandlers.Home)

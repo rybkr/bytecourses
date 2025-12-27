@@ -1,7 +1,4 @@
-{{template "layout" .}}
-
-{{define "title"}}New Proposal - ByteCourses{{end}}
-
+{{template "layout" .}} {{define "title"}}New Proposal - ByteCourses{{end}}
 {{define "content"}}
 <div class="page-header">
     <h1>Create New Proposal</h1>
@@ -11,23 +8,77 @@
 <div class="form-container">
     <form id="proposalForm" onsubmit="handleCreateProposal(event)">
         <div class="form-group">
-            <label for="title">Title</label>
-            <input type="text" id="title" name="title" required placeholder="Enter proposal title">
+            <label for="title">
+                Title
+                <br />
+                <small>The course title as it will appear to users</small>
+            </label>
+            <input
+                type="text"
+                id="title"
+                name="title"
+                required
+                placeholder="Enter proposal title"
+            />
         </div>
         <div class="form-group">
-            <label for="summary">Summary</label>
-            <textarea id="summary" name="summary" rows="10" required placeholder="Enter proposal summary"></textarea>
+            <label for="summary">
+                Summary
+                <br />
+                <small>1-2 sentences on what the course teaches</small>
+            </label>
+            <textarea
+                id="summary"
+                name="summary"
+                rows="5"
+                required
+                placeholder="Enter proposal summary"
+            ></textarea>
         </div>
-        <div id="error-message" class="error-message" style="display: none;"></div>
+        <div class="form-group">
+            <label for="target_audience">
+                Target Audience
+                <br />
+                <small>Who this course is for (background, level)</small>
+            </label>
+            <textarea
+                id="target_audience"
+                name="target_audience"
+                rows="3"
+                required
+                placeholder="Enter target audience"
+            ></textarea>
+            </label>
+        </div>
+        <div class="form-group">
+            <label for="learning_objectives">
+                Learning Objectives
+                <br />
+                <small>By the end of this course, learners will be able to:</small>
+            </label>
+            <textarea
+                id="learning_objectives"
+                name="learning_objectives"
+                rows="3"
+                required
+                placeholder="Enter learning objectives"
+            ></textarea>
+            </label>
+        </div>
+        <div
+            id="error-message"
+            class="error-message"
+            style="display: none"
+        ></div>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">Create Proposal</button>
+            <button type="submit" class="btn btn-primary">
+                Create Proposal
+            </button>
             <a href="/proposals" class="btn btn-secondary">Cancel</a>
         </div>
     </form>
 </div>
-{{end}}
-
-{{define "scripts"}}
+{{end}} {{define "scripts"}}
 <script>
     async function handleCreateProposal(event) {
         event.preventDefault();
@@ -35,14 +86,14 @@
         const title = form.title.value;
         const summary = form.summary.value;
 
-        const errorDiv = document.getElementById('error-message');
-        errorDiv.style.display = 'none';
+        const errorDiv = document.getElementById("error-message");
+        errorDiv.style.display = "none";
 
         try {
-            const response = await fetch('/api/proposals', {
-                method: 'POST',
+            const response = await fetch("/api/proposals", {
+                method: "POST",
                 headers: {
-                    'Content-Type': 'application/json',
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ title, summary }),
             });
@@ -52,12 +103,12 @@
                 window.location.href = `/proposals/${data.id}`;
             } else {
                 const errorText = await response.text();
-                errorDiv.textContent = errorText || 'Failed to create proposal';
-                errorDiv.style.display = 'block';
+                errorDiv.textContent = errorText || "Failed to create proposal";
+                errorDiv.style.display = "block";
             }
         } catch (error) {
-            errorDiv.textContent = 'An error occurred. Please try again.';
-            errorDiv.style.display = 'block';
+            errorDiv.textContent = "An error occurred. Please try again.";
+            errorDiv.style.display = "block";
         }
     }
 </script>

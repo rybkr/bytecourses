@@ -28,3 +28,71 @@ function formatDate(dateString) {
         day: "numeric",
     });
 }
+
+// Global variable to track the current close handler
+let currentCloseHandler = null;
+
+function toggleUserMenu(event) {
+    event.stopPropagation();
+    const menu = document.getElementById("userDropdownMenu");
+    const button = event.currentTarget;
+    if (!menu || !button) return;
+
+    const isOpen = menu.classList.contains("show");
+
+    // Remove previous close handler if exists
+    if (currentCloseHandler) {
+        document.removeEventListener("click", currentCloseHandler);
+        currentCloseHandler = null;
+    }
+
+    // Close all dropdowns
+    document.querySelectorAll(".user-dropdown-menu").forEach(m => {
+        m.classList.remove("show");
+    });
+    document.querySelectorAll(".user-menu-btn").forEach(btn => {
+        btn.setAttribute("aria-expanded", "false");
+    });
+
+    // Toggle this dropdown
+    if (!isOpen) {
+        menu.classList.add("show");
+        button.setAttribute("aria-expanded", "true");
+
+        // Close on outside click
+        currentCloseHandler = function closeMenu(e) {
+            if (!menu.contains(e.target) && !e.target.closest(".user-menu-btn")) {
+                menu.classList.remove("show");
+                button.setAttribute("aria-expanded", "false");
+                document.removeEventListener("click", currentCloseHandler);
+                currentCloseHandler = null;
+            }
+        };
+
+        // Use setTimeout to avoid immediate closure
+        setTimeout(() => {
+            document.addEventListener("click", currentCloseHandler);
+        }, 10);
+    } else {
+        button.setAttribute("aria-expanded", "false");
+    }
+}
+
+// Close dropdown when clicking on menu items (for better UX)
+document.addEventListener("DOMContentLoaded", function () {
+    const menuItems = document.querySelectorAll(".user-dropdown-item");
+    menuItems.forEach(item => {
+        item.addEventListener("click", function () {
+            const menu = document.getElementById("userDropdownMenu");
+            if (menu) {
+                setTimeout(() => {
+                    menu.classList.remove("show");
+                    if (currentCloseHandler) {
+                        document.removeEventListener("click", currentCloseHandler);
+                        currentCloseHandler = null;
+                    }
+                }, 100);
+            }
+        });
+    });
+});

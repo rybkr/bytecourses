@@ -328,6 +328,54 @@ body {
     width: 100%;
 }
 
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.btn-outline:hover {
+    background-color: var(--bg-secondary);
+    border-color: var(--text-secondary);
+    color: var(--text-color);
+}
+
+.form-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.btn-submit {
+    font-weight: 600;
+    padding: 0.75rem 1.5rem;
+    min-width: 140px;
+}
+
+.btn-draft {
+    padding: 0.75rem 1.5rem;
+    min-width: 140px;
+}
+
+.btn-cancel {
+    padding: 0.75rem 1.5rem;
+    min-width: 100px;
+    text-align: center;
+}
+
+@media (max-width: 768px) {
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+
 .hero {
     text-align: center;
     padding: 4rem 0;
@@ -448,11 +496,7 @@ body {
     font-family: inherit;
 }
 
-.form-actions {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-}
+/* form-actions defined above with enhanced styling */
 
 .error-message {
     background-color: #fee2e2;
@@ -519,12 +563,6 @@ body {
     color: var(--primary-color);
 }
 
-.proposal-summary {
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
-    line-height: 1.6;
-}
-
 .proposal-meta {
     display: flex;
     gap: 1.5rem;
@@ -551,7 +589,13 @@ body {
 }
 
 .proposal-content h2 {
+    margin-top: 1rem;
+}
+
+.proposal-content-value {
+    color: var(--text-secondary);
     margin-bottom: 1rem;
+    line-height: 1.6;
 }
 
 .status-badge {

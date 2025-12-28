@@ -13,7 +13,7 @@
 </div>
 
 <div class="form-container">
-    <form id="proposalForm" onsubmit="handleCreateProposal(event)">
+    <form id="proposalForm" onsubmit="event.preventDefault()">
         <div class="form-group">
             <label for="title">
                 Title
@@ -113,19 +113,28 @@
             style="display: none"
         ></div>
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary">
-                Create Proposal
+            <button
+                type="button"
+                onclick="handleSubmitProposal(event)"
+                class="btn btn-primary btn-submit"
+            >
+                Submit Proposal
             </button>
-            <a href="/proposals" class="btn btn-secondary">Cancel</a>
+            <button
+                type="button"
+                onclick="handleSaveDraft(event)"
+                class="btn btn-secondary btn-draft"
+            >
+                Save as Draft
+            </button>
+            <a href="/proposals" class="btn btn-outline btn-cancel">Cancel</a>
         </div>
     </form>
 </div>
 {{end}} {{define "scripts"}}
 <script>
-    async function handleCreateProposal(event) {
-        event.preventDefault();
-        const form = event.target;
-
+    async function createProposal(status) {
+        const form = document.getElementById("proposalForm");
         const title = form.title.value;
         const summary = form.summary.value;
         const target_audience = form.target_audience.value;
@@ -149,6 +158,7 @@
                     learning_objectives,
                     outline,
                     assumed_prerequisites,
+                    status: status,
                 }),
             });
 
@@ -164,6 +174,16 @@
             errorDiv.textContent = "An error occurred. Please try again.";
             errorDiv.style.display = "block";
         }
+    }
+
+    function handleSubmitProposal(event) {
+        event.preventDefault();
+        createProposal("submitted");
+    }
+
+    function handleSaveDraft(event) {
+        event.preventDefault();
+        createProposal("draft");
     }
 </script>
 {{end}}

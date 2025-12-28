@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-    "strings"
+	"strings"
 )
 
 type ProposalHandlers struct {
@@ -41,6 +41,12 @@ func (h *ProposalHandlers) Item(w http.ResponseWriter, r *http.Request) {
 		h.Get(w, r)
 	case http.MethodPut:
 		h.Update(w, r)
+	case http.MethodPost:
+		if strings.HasSuffix(r.URL.Path, "submit") {
+			h.Submit(w, r)
+		} else {
+			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		}
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
@@ -66,6 +72,10 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.AuthorID = user.ID
+	// Set default status to draft if not provided
+	if p.Status == "" {
+		p.Status = domain.ProposalStatusDraft
+	}
 	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -101,10 +111,10 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-    pid, ok := h.requireProposalID(w, r)
-    if !ok {
-        return
-    }
+	pid, ok := h.requireProposalID(w, r)
+	if !ok {
+		return
+	}
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
 	if !ok || p.AuthorID != user.ID {
@@ -124,22 +134,22 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-    pid, ok := h.requireProposalID(w, r)
-    if !ok {
-        return
-    }
+	pid, ok := h.requireProposalID(w, r)
+	if !ok {
+		return
+	}
 
 	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	p.ID = pid
 
 	if p.AuthorID != user.ID {
 		http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
+	p.ID = pid
 
 	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -147,18 +157,47 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *ProposalHandlers) Submit(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	user, ok := requireUser(w, r, h.sessions, h.users)
+	if !ok {
+		return
+	}
+	pid, ok := h.requireProposalID(w, r)
+	if !ok {
+		return
+	}
+
+	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
+	if !ok || p.AuthorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+	p.ID = pid
+
+	p.Status = domain.ProposalStatusSubmitted
+	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+}
+
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-    pidStr := strings.TrimPrefix(r.URL.Path, "/api/proposals/")
-    if pidStr == r.URL.Path || pidStr == "" {
-        http.Error(w, "missing id", http.StatusBadRequest)
-        return 0, false
-    }
+	pidStr := strings.TrimPrefix(r.URL.Path, "/api/proposals/")
+	if pidStr == r.URL.Path || pidStr == "" {
+		http.Error(w, "missing id", http.StatusBadRequest)
+		return 0, false
+	}
+	pidStr = strings.Split(pidStr, "/")[0]
 
-    pid, err := strconv.ParseInt(pidStr, 10, 64)
-    if err != nil {
-        http.Error(w, "invalid id", http.StatusBadRequest)
-        return 0, false
-    }
+	pid, err := strconv.ParseInt(pidStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return 0, false
+	}
 
-    return pid, true
+	return pid, true
 }

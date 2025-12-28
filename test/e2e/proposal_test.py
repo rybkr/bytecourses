@@ -302,3 +302,31 @@ def test_create_proposal_rich(go_server):
     for key, value in proposal_payload.items():
         assert key in r.json()
         assert r.json()[key] == value
+
+
+def test_submit_proposal(go_server):
+    s = requests.Session()
+
+    register_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{API_ROOT}/register", json=register_payload)
+    r = s.post(f"{API_ROOT}/login", json=register_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload: dict[str, str] = {
+        "title": "S Title",
+        "summary": "S Summary",
+    }
+    r = s.post(f"{API_ROOT}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = s.post(f"{API_ROOT}/proposals/{pid}/submit")
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.get(f"{API_ROOT}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert r.json()["status"] == "submitted"

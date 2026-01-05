@@ -36,7 +36,7 @@ type TemplateData struct {
 	User         *domain.User
 	Proposal     *domain.Proposal
 	ProposalJSON string
-	Page         string // Page template name to use (e.g., "home.html")
+	Page         string
 }
 
 func Render(w http.ResponseWriter, data *TemplateData) {

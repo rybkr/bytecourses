@@ -5,9 +5,9 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 type ProposalHandlers struct {
@@ -39,17 +39,21 @@ func (h *ProposalHandlers) Item(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
 		h.Get(w, r)
-	case http.MethodPut:
+	case http.MethodPatch:
 		h.Update(w, r)
-	case http.MethodPost:
-		if strings.HasSuffix(r.URL.Path, "submit") {
-			h.Submit(w, r)
-		} else {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		}
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
+    action := chi.URLParam(r, "action")
+    switch action {
+    case "submit":
+        h.Submit(w, r)
+    default:
+        http.Error(w, "unknown action", http.StatusBadRequest)
+    }
 }
 
 type ProposalCreateResponse struct {
@@ -111,6 +115,7 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+
 	pid, ok := h.requireProposalID(w, r)
 	if !ok {
 		return
@@ -127,7 +132,7 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPut) {
+	if !requireMethod(w, r, http.MethodPatch) {
 		return
 	}
 	user, ok := requireUser(w, r, h.sessions, h.users)
@@ -186,12 +191,11 @@ func (h *ProposalHandlers) Submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-	pidStr := strings.TrimPrefix(r.URL.Path, "/api/proposals/")
-	if pidStr == r.URL.Path || pidStr == "" {
+    pidStr := chi.URLParam(r, "id")
+	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return 0, false
 	}
-	pidStr = strings.Split(pidStr, "/")[0]
 
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {

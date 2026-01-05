@@ -4,7 +4,13 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-const bcryptCostFactor int = 10
+var bcryptCostFactor = bcrypt.DefaultCost
+
+func SetBcryptCost(cost int) {
+	if cost >= bcrypt.MinCost && cost <= bcrypt.MaxCost {
+		bcryptCostFactor = cost
+	}
+}
 
 func HashPassword(password string) ([]byte, error) {
 	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcryptCostFactor)

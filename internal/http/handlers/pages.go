@@ -53,14 +53,18 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
-	_, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
+	if user.Role != domain.UserRoleAdmin {
+		http.Redirect(w, r, "/proposals/mine", http.StatusSeeOther)
+	    return
+	}
 
-    http.Redirect(w, r, "/proposals/mine", http.StatusSeeOther)
-    return
+	data := &TemplateData{User: &user, Page: "proposals.html"}
+	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request) {

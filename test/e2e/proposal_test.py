@@ -354,3 +354,64 @@ def test_unknown_action(go_server):
 
     r = s.post(f"{go_server}/proposals/{pid}/actions/jump")
     assert r.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_admin_view_proposals(go_server):
+    s = requests.Session()
+    t = requests.Session()
+
+    s_register_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    t_register_payload: dict[str, str] = {
+        "email": "admin@local.bytecourses.org",
+        "password": "admin",
+    }
+    s.post(f"{go_server}/register", json=s_register_payload)
+    s.post(f"{go_server}/login", json=s_register_payload)
+    t.post(f"{go_server}/login", json=t_register_payload)
+
+    s_proposal_payload: dict[str, str] = {
+        "title": "Title",
+        "summary": "Summary",
+    }
+    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+    s_pid_1 = r.json()["id"]
+
+    s_proposal_payload = {
+        "title": "Title 2",
+        "summary": "Summary 2",
+    }
+    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+    s_pid_2 = r.json()["id"]
+
+    t_proposal_payload: dict[str, str] = {
+        "title": "Title 3",
+        "summary": "Summary 3",
+    }
+    r = t.post(f"{go_server}/proposals", json=t_proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+    t_pid_1 = r.json()["id"]
+
+    r = s.post(f"{go_server}/proposals/{s_pid_2}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = t.get(f"{go_server}/proposals")
+    assert r.status_code == HTTPStatus.OK
+    assert len(r.json()) == 1
+    assert "id" in r.json()[0]
+    assert r.json()[0]["id"] == s_pid_2
+
+    r = t.get(f"{go_server}/proposals/mine")
+    assert r.status_code == HTTPStatus.OK
+    assert len(r.json()) == 1
+    assert "id" in r.json()[0]
+    assert r.json()[0]["id"] == t_pid_1
+
+    assert s_pid_1 != s_pid_2 and s_pid_2 != t_pid_1

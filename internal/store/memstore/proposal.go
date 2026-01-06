@@ -61,6 +61,20 @@ func (s *ProposalStore) GetProposalsByUserID(ctx context.Context, userID int64) 
 	return out
 }
 
+func (s *ProposalStore) GetAllSubmittedProposals(ctx context.Context) []domain.Proposal {
+    s.mu.RLock()
+    defer s.mu.RUnlock()
+
+    out := make([]domain.Proposal, 0)
+    for _, p := range s.proposalsByID {
+        if p.Status == domain.ProposalStatusSubmitted {
+            out = append(out, p)
+        }
+    }
+
+    return out
+}
+
 func (s *ProposalStore) UpdateProposal(ctx context.Context, p *domain.Proposal) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

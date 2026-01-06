@@ -156,16 +156,19 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
-    user := userFrom(r)
+	user := userFrom(r)
 
-    switch user.Role {
-    case domain.UserRoleAdmin:
+	switch user.Role {
+	// If the user is an admin, then GET /api/proposals shall return all proposals submitted for review.
+	case domain.UserRoleAdmin:
+		response := h.proposals.GetAllSubmittedProposals(r.Context())
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+
+	// Else, it shall return all proposals owned by the user.
+	default:
 		http.Redirect(w, r, "/api/proposals/mine", http.StatusSeeOther)
-        return
-    default:
-		http.Redirect(w, r, "/api/proposals/mine", http.StatusSeeOther)
-        return
-    }
+	}
 }
 
 func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {

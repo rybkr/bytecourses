@@ -20,11 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             container.innerHTML = proposals
+                .slice()
+                .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
                 .map(
                     (p) => `
                 <div class="proposal-card">
                     <div class="proposal-header" >
-                        <h3><a href="/proposals/${p.id}">${escapeHtml(p.title)}</a></h3>
+                        <h3><a href="/proposals/${p.id}">${escapeHtml(p.title || "Untitled Proposal")}</a></h3>
                         <span class="status-badge status-${p.status}">${p.status}</span>
                     </div>
                     <p class="proposal-summary">${escapeHtml(p.summary)}</p>

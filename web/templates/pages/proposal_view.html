@@ -5,22 +5,49 @@ ByteCourses{{end}} {{define "content"}}
     <div class="header-actions">
         {{if ne .User.Role "admin"}}
         <button id="submitBtn" class="btn btn-primary">Submit</button>
-        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "changes_requested")}}
-        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary">Edit</a>
-        {{end}}
-        {{end}}
+        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status
+        "changes_requested")}}
+        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary"
+            >Edit</a
+        >
+        {{end}} {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
 </div>
-<div id="error-message" class="error-message" style="display: none;"></div>
+<div id="error-message" class="error-message" style="display: none"></div>
 <div class="proposal-meta-bar">
-    <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
+    <span class="status-badge status-{{.Proposal.Status}}"
+        >{{.Proposal.Status}}</span
+    >
     {{if eq .User.Role "admin"}}
     <span>Author ID: {{.Proposal.AuthorID}}</span>
     {{end}}
     <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
     <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
 </div>
+{{if and (eq .User.Role "admin") (eq .Proposal.Status "submitted")}}
+<div class="review-card">
+    <h2>Review Proposal</h2>
+    <div id="review-error" class="error-message" style="display: none"></div>
+    <div class="form-group">
+        <label for="review-notes">Review Notes</label>
+        <textarea
+            id="review-notes"
+            rows="4"
+            placeholder="Add your review notes here..."
+        >
+{{.Proposal.ReviewNotes}}</textarea
+        >
+    </div>
+    <div class="review-actions">
+        <button id="approveBtn" class="btn btn-success">Approve</button>
+        <button id="requestChangesBtn" class="btn btn-warning">
+            Request Changes
+        </button>
+        <button id="rejectBtn" class="btn btn-danger">Reject</button>
+    </div>
+</div>
+{{end}}
 <div class="proposal-content">
     <h2>Summary</h2>
     <p class="proposal-content-value">{{.Proposal.Summary}}</p>
@@ -32,40 +59,95 @@ ByteCourses{{end}} {{define "content"}}
 {{end}} {{define "scripts"}}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const submitBtn = document.getElementById("submitBtn");
-        const errorDiv = document.getElementById("error-message");
-        const proposalId = {{.Proposal.ID }
-    };
+        const proposalId = {{.Proposal.ID }};
+    const submitBtn = document.getElementById("submitBtn");
+    const errorDiv = document.getElementById("error-message");
 
-    async function submit() {
-        errorDiv.style.display = "none";
-        errorDiv.textContent = "";
-        submitBtn.disabled = true;
+    if (submitBtn) {
+        async function submit() {
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+            submitBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/proposals/${proposalId}/actions/submit`, {
+                    method: "POST",
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    errorDiv.textContent = txt || "Submit failed";
+                    errorDiv.style.display = "block";
+                    submitBtn.disabled = false;
+                    return;
+                }
+
+                window.location.reload();
+            } catch (error) {
+                errorDiv.textContent = "Network error. Please try again.";
+                errorDiv.style.display = "block";
+                submitBtn.disabled = false;
+            }
+        }
+
+        submitBtn.addEventListener("click", submit);
+    }
+
+    const approveBtn = document.getElementById("approveBtn");
+    const requestChangesBtn = document.getElementById("requestChangesBtn");
+    const rejectBtn = document.getElementById("rejectBtn");
+    const reviewErrorDiv = document.getElementById("review-error");
+    const reviewNotes = document.getElementById("review-notes");
+
+    async function handleReviewAction(action) {
+        reviewErrorDiv.style.display = "none";
+        reviewErrorDiv.textContent = "";
+
+        const buttons = [approveBtn, requestChangesBtn, rejectBtn];
+        buttons.forEach(btn => {
+            if (btn) btn.disabled = true;
+        });
 
         try {
-            const res = await fetch(`/api/proposals/${proposalId}/actions/submit`, {
+            const res = await fetch(`/api/proposals/${proposalId}/actions/${action}`, {
                 method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    review_notes: reviewNotes ? reviewNotes.value : "",
+                }),
             });
 
             if (!res.ok) {
                 const txt = await res.text();
-                errorDiv.textContent = txt || "Submit failed";
-                errorDiv.style.display = "block";
-                submitBtn.disabled = false;
+                reviewErrorDiv.textContent = txt || "Action failed";
+                reviewErrorDiv.style.display = "block";
+                buttons.forEach(btn => {
+                    if (btn) btn.disabled = false;
+                });
                 return;
             }
 
             window.location.reload();
         } catch (error) {
-            errorDiv.textContent = "Network error. Please try again.";
-            errorDiv.style.display = "block";
-            submitBtn.disabled = false;
+            reviewErrorDiv.textContent = "Network error. Please try again.";
+            reviewErrorDiv.style.display = "block";
+            buttons.forEach(btn => {
+                if (btn) btn.disabled = false;
+            });
         }
     }
 
-    if (submitBtn) {
-        submitBtn.addEventListener("click", submit);
+    if (approveBtn) {
+        approveBtn.addEventListener("click", () => handleReviewAction("approve"));
     }
-});
+    if (requestChangesBtn) {
+        requestChangesBtn.addEventListener("click", () => handleReviewAction("request-changes"));
+    }
+    if (rejectBtn) {
+        rejectBtn.addEventListener("click", () => handleReviewAction("reject"));
+    }
+    });
 </script>
 {{end}}

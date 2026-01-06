@@ -68,10 +68,22 @@ func (h *ProposalHandlers) WithProposal(next http.Handler) http.Handler {
 	})
 }
 
+type ActionRequest struct {
+	ReviewNotes string `json:"review_notes"`
+}
+
 func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 	user := userFrom(r)
 	p := proposalFrom(r)
 	action := chi.URLParam(r, "action")
+
+	var actionReq ActionRequest
+	if r.ContentLength > 0 {
+		if err := json.NewDecoder(r.Body).Decode(&actionReq); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+	}
 
 	switch action {
 	case "submit":
@@ -106,6 +118,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		p.ReviewerID = user.ID
+		p.ReviewNotes = actionReq.ReviewNotes
 		if action == "approve" {
 			p.Status = domain.ProposalStatusApproved
 		} else if action == "reject" {
@@ -192,14 +205,18 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-    if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
+	if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
 		http.Error(w, "not found", http.StatusNotFound)
-        return
-    }
-    if user.Role == domain.UserRoleAdmin && p.Status != domain.ProposalStatusSubmitted {
+		return
+	}
+	if user.Role == domain.UserRoleAdmin &&
+		p.Status != domain.ProposalStatusSubmitted &&
+		p.Status != domain.ProposalStatusApproved &&
+		p.Status != domain.ProposalStatusRejected &&
+		p.Status != domain.ProposalStatusChangesRequested {
 		http.Error(w, "not found", http.StatusNotFound)
-        return
-    }
+		return
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)

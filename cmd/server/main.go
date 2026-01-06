@@ -1,93 +1,64 @@
 package main
 
 import (
+	"bytecourses/internal/app"
 	"bytecourses/internal/auth"
-	"bytecourses/internal/auth/memsession"
 	"bytecourses/internal/domain"
-	"bytecourses/internal/http/handlers"
 	"bytecourses/internal/store"
-	"bytecourses/internal/store/memstore"
 	"context"
 	"flag"
-	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
-	"time"
 )
 
-func ensureTestAdmin(users store.UserStore) error {
+func ensureTestAdmin(ctx context.Context, users store.UserStore) error {
 	email := "admin@local.bytecourses.org"
-	password := "admin"
-	if _, ok := users.GetUserByEmail(context.Background(), email); ok {
+	if _, ok := users.GetUserByEmail(ctx, email); ok {
 		return nil
 	}
 
-	hash, _ := auth.HashPassword(password)
-	return users.InsertUser(context.Background(), &domain.User{
+	hash, err := auth.HashPassword("admin")
+	if err != nil {
+		return err
+	}
+
+	return users.InsertUser(ctx, &domain.User{
 		Email:        email,
 		PasswordHash: hash,
 		Role:         domain.UserRoleAdmin,
+		Name:         "Admin User",
 	})
 }
 
 func main() {
-	addr := flag.String("addr", ":8080", "http listen address")
-	seedAdmin := flag.Bool("seed-admin", false, "seed a test admin user")
+	httpAddr := flag.String("http-addr", ":8080", "http listen address")
+	storage := flag.String("storage", "memory", "storage backend: memory|sql")
+	dbDsn := flag.String("database-dsn", "", "SQL database DSN (required if storage=sql)")
 	bcryptCost := flag.Int("bcrypt-cost", bcrypt.DefaultCost, "bcrypt cost factor")
+	seedAdmin := flag.Bool("seed-admin", false, "seed a test admin user")
 	flag.Parse()
 
-	userStore := memstore.NewUserStore()
-	proposalStore := memstore.NewProposalStore()
-	sessionStore := memsession.New(24 * time.Hour)
-
+	ctx := context.Background()
+	cfg := app.Config{
+		HTTPAddr:    *httpAddr,
+		Storage:     app.StorageBackend(*storage),
+		DatabaseDSN: *dbDsn,
+		BcryptCost:  *bcryptCost,
+		SeedAdmin:   *seedAdmin,
+	}
 	auth.SetBcryptCost(*bcryptCost)
-	if *seedAdmin {
-		ensureTestAdmin(userStore)
+
+	a, err := app.New(ctx, cfg)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if cfg.SeedAdmin {
+		if err := ensureTestAdmin(ctx, a.UserStore); err != nil {
+			log.Fatal(err)
+		}
 	}
 
-	authHandlers := handlers.NewAuthHandler(userStore, sessionStore)
-	utilHandlers := handlers.NewUtilHandlers()
-	proposalHandlers := handlers.NewProposalHandlers(proposalStore, userStore, sessionStore)
-	pageHandlers := handlers.NewPageHandlers(userStore, sessionStore, proposalStore)
-
-	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
-
-	r.Post("/api/register", authHandlers.Register)
-	r.Post("/api/login", authHandlers.Login)
-	r.Post("/api/logout", authHandlers.Logout)
-	r.Get("/api/me", authHandlers.Me)
-	r.Get("/api/health", utilHandlers.Health)
-
-	r.Route("/api/proposals", func(r chi.Router) {
-		r.With(proposalHandlers.WithUser).Post("/", proposalHandlers.Create)
-		r.With(proposalHandlers.WithUser).Get("/", proposalHandlers.ListMine)
-
-		r.Route("/{id}", func(r chi.Router) {
-			r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Get("/", proposalHandlers.Get)
-			r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Patch("/", proposalHandlers.Update)
-
-			r.Route("/actions", func(r chi.Router) {
-				r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Post("/{action}", proposalHandlers.Action)
-			})
-		})
-	})
-
-	r.Get("/", pageHandlers.Home)
-	r.Get("/login", pageHandlers.Login)
-	r.Get("/register", pageHandlers.Register)
-	r.Get("/profile", pageHandlers.Profile)
-
-	r.Get("/proposals/new", pageHandlers.ProposalNew)
-	r.Get("/proposals/{id}", pageHandlers.ProposalView)
-	r.Get("/proposals/{id}/edit", pageHandlers.ProposalEdit)
-	r.Get("/proposals", pageHandlers.ProposalsList)
-
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
-
-	log.Printf("listening on %s", *addr)
-	log.Fatal(http.ListenAndServe(*addr, r))
+    log.Printf("listening on %s", cfg.HTTPAddr)
+	log.Fatal(http.ListenAndServe(cfg.HTTPAddr, a.Router()))
 }

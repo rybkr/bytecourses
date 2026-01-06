@@ -465,3 +465,513 @@ def test_admin_view_submitted_proposal(go_server):
 
     assert "title" in r.json()
     assert r.json()["title"] == "Title"
+
+
+def test_proposal_workflow_happy_path(go_server):
+    u = requests.Session()
+    a = requests.Session()
+
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+    a.post(
+        f"{go_server}/login",
+        json={
+            "email": "admin@local.bytecourses.org",
+            "password": "admin",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+
+def test_proposal_workflow_with_changes_requested(go_server):
+    u = requests.Session()
+    a = requests.Session()
+
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+    a.post(
+        f"{go_server}/login",
+        json={
+            "email": "admin@local.bytecourses.org",
+            "password": "admin",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+    r = a.post(
+        f"{go_server}/proposals/{pid}/actions/request-changes",
+        json={"review_notes": "Changes requested"},
+    )
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "changes_requested"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+    assert (
+        "review_notes" in r.json() and r.json()["review_notes"] == "Changes requested"
+    )
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={"title": "New Title", "summary": "New Summary", "outline": "Outline"},
+    )
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "changes_requested"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+    assert "outline" in r.json() and r.json()["outline"] == "Outline"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "changes_requested"
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "Old Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+
+
+def test_proposal_workflow_with_patch(go_server):
+    u = requests.Session()
+    a = requests.Session()
+
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+    a.post(
+        f"{go_server}/login",
+        json={
+            "email": "admin@local.bytecourses.org",
+            "password": "admin",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+    assert "outline" in r.json() and r.json()["outline"] == "Outline"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "draft"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+    assert "outline" in r.json() and r.json()["outline"] == ""
+    assert "summary" in r.json() and r.json()["summary"] == ""
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+            "summary": "New Summary",
+        },
+    )
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "draft"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+    assert "summary" in r.json() and r.json()["summary"] == "New Summary"
+    assert "outline" in r.json() and r.json()["outline"] == ""
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "Old Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+
+    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "approved"
+    assert "title" in r.json() and r.json()["title"] == "New Title"
+    assert "outline" in r.json() and r.json()["outline"] == ""
+
+
+def test_proposal_workflow_delete_draft(go_server):
+    u = requests.Session()
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+    assert "outline" in r.json() and r.json()["outline"] == "Outline"
+
+    r = u.delete(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+    r = u.patch(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+
+def test_proposal_workflow_reject_submission(go_server):
+    u = requests.Session()
+    a = requests.Session()
+
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+    a.post(
+        f"{go_server}/login",
+        json={
+            "email": "admin@local.bytecourses.org",
+            "password": "admin",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+    r = a.post(f"{go_server}/proposals/{pid}/actions/reject")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "rejected"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "rejected"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "rejected"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+def test_proposal_workflow_withdraw_submission(go_server):
+    u = requests.Session()
+    a = requests.Session()
+
+    u.post(
+        f"{go_server}/login",
+        json={
+            "email": "user@local.bytecourses.org",
+            "password": "user",
+        },
+    )
+    a.post(
+        f"{go_server}/login",
+        json={
+            "email": "admin@local.bytecourses.org",
+            "password": "admin",
+        },
+    )
+
+    r = u.post(
+        f"{go_server}/proposals",
+        json={
+            "title": "Title",
+            "summary": "Summary",
+            "outline": "Outline",
+        },
+    )
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json()
+    assert r.json()["status"] == "draft"
+
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "submitted"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+    r = u.post(f"{go_server}/proposals/{pid}/actions/withdraw")
+    assert r.status_code == HTTPStatus.NO_CONTENT
+    r = a.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.NOT_FOUND
+
+    r = u.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "status" in r.json() and r.json()["status"] == "withdrawn"
+    assert "title" in r.json() and r.json()["title"] == "Title"
+
+    r = u.patch(
+        f"{go_server}/proposals/{pid}",
+        json={
+            "title": "New Title",
+        },
+    )
+    assert r.status_code == HTTPStatus.CONFLICT

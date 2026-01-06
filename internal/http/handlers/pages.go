@@ -2,8 +2,11 @@ package handlers
 
 import (
 	"bytecourses/internal/auth"
+	"bytecourses/internal/domain"
+	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
 	"encoding/json"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 	"strconv"
 )
@@ -32,7 +35,6 @@ func (h *PageHandlers) Home(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) Login(w http.ResponseWriter, r *http.Request) {
-	// If already logged in, redirect to home
 	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -42,7 +44,6 @@ func (h *PageHandlers) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
-	// If already logged in, redirect to home
 	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
@@ -52,7 +53,6 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
-	// Require authentication
 	user, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
@@ -64,26 +64,64 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
-	// Require authentication
-	user, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := middleware.RequireUser(w, r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	data := &TemplateData{User: &user, Page: "proposal_new.html"}
+	p := domain.Proposal{
+		AuthorID: user.ID,
+		Status:   domain.ProposalStatusDraft,
+	}
+	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
+		http.Error(w, "failed to create draft", http.StatusInternalServerError)
+		return
+	}
+
+	http.Redirect(w, r, "/proposals/"+strconv.FormatInt(p.ID, 10)+"/edit", http.StatusSeeOther)
+}
+
+func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.RequireUser(w, r, h.sessions, h.users)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	pid, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
+	if !ok || p.AuthorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	if p.Status != domain.ProposalStatusDraft && p.Status != domain.ProposalStatusChangesRequested {
+		http.Redirect(w, r, "/proposals/"+strconv.FormatInt(pid, 10), http.StatusSeeOther)
+		return
+	}
+
+	data := &TemplateData{
+		User:     &user,
+		Proposal: &p,
+		Page:     "proposal_edit.html",
+	}
 	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
-	// Require authentication
 	user, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	// Extract proposal ID from path
 	pidStr := r.URL.Path[len("/proposals/"):]
 	if pidStr == "" {
 		http.NotFound(w, r)
@@ -96,14 +134,12 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get proposal
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
 	if !ok || p.AuthorID != user.ID {
 		http.NotFound(w, r)
 		return
 	}
 
-	// Convert proposal to JSON for the template
 	proposalJSON, _ := json.Marshal(p)
 
 	data := &TemplateData{
@@ -116,7 +152,6 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) Profile(w http.ResponseWriter, r *http.Request) {
-	// Require authentication
 	user, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)

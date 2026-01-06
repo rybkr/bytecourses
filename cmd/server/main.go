@@ -63,15 +63,15 @@ func main() {
 	r.Get("/api/health", utilHandlers.Health)
 
 	r.Route("/api/proposals", func(r chi.Router) {
-		r.Post("/", proposalHandlers.Create)
-		r.Get("/", proposalHandlers.ListMine)
+		r.With(proposalHandlers.WithUser).Post("/", proposalHandlers.Create)
+		r.With(proposalHandlers.WithUser).Get("/", proposalHandlers.ListMine)
 
 		r.Route("/{id}", func(r chi.Router) {
-			r.Get("/", proposalHandlers.Get)
-			r.Patch("/", proposalHandlers.Update)
+			r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Get("/", proposalHandlers.Get)
+			r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Patch("/", proposalHandlers.Update)
 
 			r.Route("/actions", func(r chi.Router) {
-				r.Post("/{action}", proposalHandlers.Action) // submit/withdraw/etc
+				r.With(proposalHandlers.WithUser, proposalHandlers.WithProposal).Post("/{action}", proposalHandlers.Action)
 			})
 		})
 	})
@@ -80,9 +80,11 @@ func main() {
 	r.Get("/login", pageHandlers.Login)
 	r.Get("/register", pageHandlers.Register)
 	r.Get("/profile", pageHandlers.Profile)
-	r.Get("/proposals", pageHandlers.ProposalsList)
+
 	r.Get("/proposals/new", pageHandlers.ProposalNew)
 	r.Get("/proposals/{id}", pageHandlers.ProposalView)
+	r.Get("/proposals/{id}/edit", pageHandlers.ProposalEdit)
+	r.Get("/proposals", pageHandlers.ProposalsList)
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 

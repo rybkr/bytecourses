@@ -1,0 +1,129 @@
+{{template "layout" .}} {{define "title"}}Edit Proposal - ByteCourses{{end}}
+{{define "content"}}
+<div class="page-header">
+    <h1>Edit Proposal</h1>
+    <a href="/proposals" class="btn btn-secondary">Back to Proposals</a>
+</div>
+
+<div class="form-container">
+    <form
+        id="proposal-form"
+        data-proposal-id="{{.Proposal.ID}}"
+        data-autosave-delay="5000"
+        onsubmit="event.preventDefault()"
+    >
+        <div class="form-group">
+            <label for="title"
+                >Title<br /><small
+                    >Clear, specific, and focused on one topic.</small
+                ></label
+            >
+            <input
+                type="text"
+                id="title"
+                name="title"
+                required
+                value="{{.Proposal.Title}}"
+            />
+        </div>
+
+        <div class="form-group">
+            <label for="summary"
+                >Summary<br /><small
+                    >What learners will gain and why it matters.</small
+                ></label
+            >
+            <textarea id="summary" name="summary" rows="5" required>
+{{.Proposal.Summary}}</textarea
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="target_audience"
+                >Target Audience<br /><small
+                    >Who this course is for.</small
+                ></label
+            >
+            <textarea
+                id="target_audience"
+                name="target_audience"
+                rows="3"
+                required
+            >
+{{.Proposal.TargetAudience}}</textarea
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="learning_objectives"
+                >Learning Objectives<br /><small
+                    >After taking this course, learners will be able
+                    to...</small
+                ></label
+            >
+            <textarea
+                id="learning_objectives"
+                name="learning_objectives"
+                rows="3"
+                required
+            >
+{{.Proposal.LearningObjectives}}</textarea
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="outline"
+                >Course Outline<br /><small>High-level structure.</small></label
+            >
+            <textarea id="outline" name="outline" rows="5" required>
+{{.Proposal.Outline}}</textarea
+            >
+        </div>
+
+        <div class="form-group">
+            <label for="assumed_prerequisites"
+                >Prerequisites<br /><small
+                    >What learners should already know.</small
+                ></label
+            >
+            <textarea
+                id="assumed_prerequisites"
+                name="assumed_prerequisites"
+                rows="3"
+                required
+            >
+{{.Proposal.AssumedPrerequisites}}</textarea
+            >
+        </div>
+
+        <div
+            id="error-message"
+            class="error-message"
+            style="display: none"
+        ></div>
+        <div
+            id="save-status"
+            style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"
+        ></div>
+
+        <div class="form-actions">
+            <button
+                type="button"
+                id="submitBtn"
+                class="btn btn-primary btn-submit"
+            >
+                Submit Proposal
+            </button>
+            <button
+                type="button"
+                id="saveDraftBtn"
+                class="btn btn-secondary btn-draft"
+            >
+                Save Draft
+            </button>
+        </div>
+    </form>
+</div>
+{{end}} {{define "scripts"}}
+<script src="/static/js/proposal_edit.js" defer></script>
+{{end}}

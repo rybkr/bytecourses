@@ -25,23 +25,6 @@ func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 	return true
 }
 
-func requireUser(w http.ResponseWriter, r *http.Request, sessions auth.SessionStore, users store.UserStore) (domain.User, bool) {
-	c, err := r.Cookie("session")
-	if err != nil {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return domain.User{}, false
-	}
-
-	uid, ok := sessions.GetUserIDByToken(c.Value)
-	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return domain.User{}, false
-	}
-
-	u, ok := users.GetUserByID(r.Context(), uid)
-	return u, ok
-}
-
 func actorFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (domain.User, bool) {
 	c, err := r.Cookie("session")
 	if err != nil {

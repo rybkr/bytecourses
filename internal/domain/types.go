@@ -27,10 +27,12 @@ type User struct {
 type ProposalStatus string
 
 const (
-	ProposalStatusDraft     ProposalStatus = "draft"
-	ProposalStatusSubmitted ProposalStatus = "submitted"
-	ProposalStatusApproved  ProposalStatus = "approved"
-	ProposalStatusRejected  ProposalStatus = "rejected"
+	ProposalStatusDraft            ProposalStatus = "draft"
+	ProposalStatusSubmitted        ProposalStatus = "submitted"
+	ProposalStatusWithdrawn        ProposalStatus = "withdrawn"
+	ProposalStatusApproved         ProposalStatus = "approved"
+	ProposalStatusRejected         ProposalStatus = "rejected"
+	ProposalStatusChangesRequested ProposalStatus = "changes_requested"
 )
 
 type Proposal struct {
@@ -42,7 +44,7 @@ type Proposal struct {
 	LearningObjectives   string         `json:"learning_objectives"`
 	Outline              string         `json:"outline"`
 	AssumedPrerequisites string         `json:"assumed_prerequisites"`
-    ReviewNotes          string         `json:"review_notes"`
+	ReviewNotes          string         `json:"review_notes"`
 	ReviewerID           int64          `json:"reviewer_id"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`

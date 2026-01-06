@@ -3,7 +3,9 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
+	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
+	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"net/http"
@@ -24,36 +26,104 @@ func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, s
 	}
 }
 
-func (h *ProposalHandlers) Collection(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodPost:
-		h.Create(w, r)
-	case http.MethodGet:
-		h.ListMine(w, r)
-	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
+func (h *ProposalHandlers) WithUser(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := middleware.RequireUser(w, r, h.sessions, h.users)
+		if !ok {
+			return
+		}
+		ctx := context.WithValue(r.Context(), "user", user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
-func (h *ProposalHandlers) Item(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		h.Get(w, r)
-	case http.MethodPatch:
-		h.Update(w, r)
-	default:
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-	}
+func (h *ProposalHandlers) WithAdmin(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		user, ok := middleware.RequireAdminUser(w, r, h.sessions, h.users)
+		if !ok {
+			return
+		}
+		ctx := context.WithValue(r.Context(), "user", user)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (h *ProposalHandlers) WithProposal(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		pid, ok := h.requireProposalID(w, r)
+		if !ok {
+			return
+		}
+
+		p, ok := h.proposals.GetProposalByID(r.Context(), pid)
+		if !ok {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		// ensure ID if correct in case store doesn't populate it
+		p.ID = pid
+
+		ctx := context.WithValue(r.Context(), "proposal", p)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }
 
 func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
-    action := chi.URLParam(r, "action")
-    switch action {
-    case "submit":
-        h.Submit(w, r)
-    default:
-        http.Error(w, "unknown action", http.StatusBadRequest)
-    }
+	user := userFrom(r)
+	p := proposalFrom(r)
+	action := chi.URLParam(r, "action")
+
+	switch action {
+	case "submit":
+		if p.AuthorID != user.ID {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		if p.Status != domain.ProposalStatusDraft && p.Status != domain.ProposalStatusChangesRequested {
+			http.Error(w, "invalid state", http.StatusConflict)
+			return
+		}
+		p.Status = domain.ProposalStatusSubmitted
+
+	case "withdraw":
+		if p.AuthorID != user.ID {
+			http.Error(w, "not found", http.StatusNotFound)
+			return
+		}
+		if p.Status != domain.ProposalStatusSubmitted {
+			http.Error(w, "invalid state", http.StatusConflict)
+			return
+		}
+		p.Status = domain.ProposalStatusWithdrawn
+
+	case "approve", "reject", "request-changes":
+		if user.Role != domain.UserRoleAdmin {
+			http.Error(w, "forbidden", http.StatusForbidden)
+			return
+		}
+		if p.Status != domain.ProposalStatusSubmitted {
+			http.Error(w, "invalid state", http.StatusConflict)
+			return
+		}
+		p.ReviewerID = user.ID
+		if action == "approve" {
+			p.Status = domain.ProposalStatusApproved
+		} else if action == "reject" {
+			p.Status = domain.ProposalStatusRejected
+		} else {
+			p.Status = domain.ProposalStatusChangesRequested
+		}
+
+	default:
+		http.Error(w, "unknown action", http.StatusNotFound)
+		return
+	}
+
+	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type ProposalCreateResponse struct {
@@ -61,13 +131,7 @@ type ProposalCreateResponse struct {
 }
 
 func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPost) {
-		return
-	}
-	user, ok := requireUser(w, r, h.sessions, h.users)
-	if !ok {
-		return
-	}
+	user := userFrom(r)
 
 	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
@@ -76,10 +140,8 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p.AuthorID = user.ID
-	// Set default status to draft if not provided
-	if p.Status == "" {
-		p.Status = domain.ProposalStatusDraft
-	}
+	p.Status = domain.ProposalStatusDraft
+
 	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -94,13 +156,7 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-	user, ok := requireUser(w, r, h.sessions, h.users)
-	if !ok {
-		return
-	}
+	user := userFrom(r)
 
 	response := h.proposals.GetProposalsByUserID(r.Context(), user.ID)
 	w.Header().Set("Content-Type", "application/json")
@@ -108,13 +164,7 @@ func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodGet) {
-		return
-	}
-	user, ok := requireUser(w, r, h.sessions, h.users)
-	if !ok {
-		return
-	}
+	user := userFrom(r)
 
 	pid, ok := h.requireProposalID(w, r)
 	if !ok {
@@ -132,66 +182,68 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPatch) {
-		return
-	}
-	user, ok := requireUser(w, r, h.sessions, h.users)
-	if !ok {
-		return
-	}
-	pid, ok := h.requireProposalID(w, r)
-	if !ok {
+	user := userFrom(r)
+	p := proposalFrom(r)
+
+	if p.AuthorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
 
-	var p domain.Proposal
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
+	if p.Status != domain.ProposalStatusDraft && p.Status != domain.ProposalStatusChangesRequested {
+		http.Error(w, "invalid state", http.StatusConflict)
+		return
+	}
+
+	var patch domain.Proposal
+	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if p.AuthorID != user.ID {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-		return
-	}
-	p.ID = pid
+	p.Title = patch.Title
+	p.Summary = patch.Summary
+	p.TargetAudience = patch.TargetAudience
+	p.LearningObjectives = patch.LearningObjectives
+	p.Outline = patch.Outline
+	p.AssumedPrerequisites = patch.AssumedPrerequisites
 
 	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ProposalHandlers) Submit(w http.ResponseWriter, r *http.Request) {
-	if !requireMethod(w, r, http.MethodPost) {
-		return
-	}
-	user, ok := requireUser(w, r, h.sessions, h.users)
-	if !ok {
-		return
-	}
+func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
+	user := userFrom(r)
 	pid, ok := h.requireProposalID(w, r)
 	if !ok {
 		return
 	}
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok || p.AuthorID != user.ID {
+	if !ok {
 		http.Error(w, "not found", http.StatusNotFound)
-		return
 	}
 	p.ID = pid
 
-	p.Status = domain.ProposalStatusSubmitted
-	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
+	p.Status = domain.ProposalStatusApproved
+	p.ReviewerID = user.ID
 
 }
 
+func userFrom(r *http.Request) domain.User {
+	return r.Context().Value("user").(domain.User)
+}
+
+func proposalFrom(r *http.Request) domain.Proposal {
+	return r.Context().Value("proposal").(domain.Proposal)
+}
+
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-    pidStr := chi.URLParam(r, "id")
+	pidStr := chi.URLParam(r, "id")
 	if pidStr == "" {
 		http.Error(w, "missing id", http.StatusBadRequest)
 		return 0, false

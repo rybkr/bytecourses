@@ -203,7 +203,7 @@ def test_update_proposal(go_server):
     p = r.json()
     p["title"] = "New Title"
     r = s.patch(f"{go_server}/proposals/{pid}", json=p)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = s.get(f"{go_server}/proposals/{pid}")
     assert r.status_code == HTTPStatus.OK
@@ -296,7 +296,7 @@ def test_create_proposal_rich(go_server):
     assert r.status_code == HTTPStatus.CREATED
     assert "id" in r.json()
 
-    r = s.get(f"{go_server}/proposals/{r.json()["id"]}")
+    r = s.get(f"{go_server}/proposals/{r.json()['id']}")
     assert r.status_code == HTTPStatus.OK
 
     for key, value in proposal_payload.items():
@@ -325,7 +325,7 @@ def test_submit_proposal(go_server):
     pid = r.json()["id"]
 
     r = s.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = s.get(f"{go_server}/proposals/{pid}")
     assert r.status_code == HTTPStatus.OK
@@ -353,4 +353,4 @@ def test_unknown_action(go_server):
     pid = r.json()["id"]
 
     r = s.post(f"{go_server}/proposals/{pid}/actions/jump")
-    assert r.status_code == HTTPStatus.BAD_REQUEST
+    assert r.status_code == HTTPStatus.NOT_FOUND

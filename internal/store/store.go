@@ -17,4 +17,5 @@ type ProposalStore interface {
 	GetProposalByID(context.Context, int64) (domain.Proposal, bool)
 	GetProposalsByUserID(context.Context, int64) []domain.Proposal
 	UpdateProposal(context.Context, *domain.Proposal) error
+	DeleteProposal(context.Context, int64) error
 }

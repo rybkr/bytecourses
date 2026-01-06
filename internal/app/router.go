@@ -30,6 +30,7 @@ func (a *App) Router() http.Handler {
 		r.Route("/{id}", func(r chi.Router) {
 			r.With(propH.WithUser, propH.WithProposal).Get("/", propH.Get)
 			r.With(propH.WithUser, propH.WithProposal).Patch("/", propH.Update)
+			r.With(propH.WithUser, propH.WithProposal).Delete("/", propH.Delete)
 			r.Route("/actions", func(r chi.Router) {
 				r.With(propH.WithUser, propH.WithProposal).
 					Post("/{action}", propH.Action)

@@ -216,6 +216,23 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
+	user := userFrom(r)
+	p := proposalFrom(r)
+
+	if p.AuthorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	if err := h.proposals.DeleteProposal(r.Context(), p.ID); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
 	user := userFrom(r)
 	pid, ok := h.requireProposalID(w, r)

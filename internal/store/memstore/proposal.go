@@ -73,3 +73,15 @@ func (s *ProposalStore) UpdateProposal(ctx context.Context, p *domain.Proposal) 
 
 	return nil
 }
+
+func (s *ProposalStore) DeleteProposal(ctx context.Context, id int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.proposalsByID[id]; !exists {
+		return errors.New("proposal does not exist")
+	}
+
+	delete(s.proposalsByID, id)
+	return nil
+}

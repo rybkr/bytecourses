@@ -570,6 +570,23 @@ body {
     color: var(--text-secondary);
 }
 
+.proposal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #dc2626;
+}
+
 .proposal-meta-bar {
     display: flex;
     gap: 1.5rem;
@@ -815,5 +832,13 @@ body {
     .user-dropdown-menu {
         right: 0;
         left: auto;
+    }
+
+    .proposal-actions {
+        flex-direction: column;
+    }
+
+    .proposal-actions .btn {
+        width: 100%;
     }
 }

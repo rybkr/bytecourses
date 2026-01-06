@@ -150,7 +150,15 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok || p.AuthorID != user.ID {
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+	if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
+		http.NotFound(w, r)
+		return
+	}
+	if user.Role == domain.UserRoleAdmin && p.Status != domain.ProposalStatusSubmitted {
 		http.NotFound(w, r)
 		return
 	}

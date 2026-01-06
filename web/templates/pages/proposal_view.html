@@ -3,16 +3,21 @@ ByteCourses{{end}} {{define "content"}}
 <div class="page-header">
     <h1>{{.Proposal.Title}}</h1>
     <div class="header-actions">
+        {{if ne .User.Role "admin"}}
         <button id="submitBtn" class="btn btn-primary">Submit</button>
+        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "changes_requested")}}
         <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary">Edit</a>
+        {{end}}
+        {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
 </div>
 <div id="error-message" class="error-message" style="display: none;"></div>
 <div class="proposal-meta-bar">
-    <span class="status-badge status-{{.Proposal.Status}}"
-        >{{.Proposal.Status}}</span
-    >
+    <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
+    {{if eq .User.Role "admin"}}
+    <span>Author ID: {{.Proposal.AuthorID}}</span>
+    {{end}}
     <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
     <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
 </div>
@@ -26,10 +31,11 @@ ByteCourses{{end}} {{define "content"}}
 </div>
 {{end}} {{define "scripts"}}
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-    const submitBtn = document.getElementById("submitBtn");
-    const errorDiv = document.getElementById("error-message");
-    const proposalId = {{.Proposal.ID}};
+    document.addEventListener("DOMContentLoaded", () => {
+        const submitBtn = document.getElementById("submitBtn");
+        const errorDiv = document.getElementById("error-message");
+        const proposalId = {{.Proposal.ID }
+    };
 
     async function submit() {
         errorDiv.style.display = "none";
@@ -57,7 +63,9 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    submitBtn.addEventListener("click", submit);
+    if (submitBtn) {
+        submitBtn.addEventListener("click", submit);
+    }
 });
 </script>
 {{end}}

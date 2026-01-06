@@ -12,5 +12,5 @@ type Config struct {
 	Storage     StorageBackend
 	DatabaseDSN string
 	BcryptCost  int
-	SeedAdmin   bool
+	SeedUsers   bool
 }

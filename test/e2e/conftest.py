@@ -24,7 +24,7 @@ def go_server():
             "go",
             "run",
             "cmd/server/main.go",
-            "--seed-admin=true",
+            "--seed-users=true",
             "--bcrypt-cost=5",
             f"--http-addr=:{port}",
         ],

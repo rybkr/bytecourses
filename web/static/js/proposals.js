@@ -1,4 +1,7 @@
 document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("proposals-list");
+    const isAdmin = container.getAttribute("data-is-admin") === "true";
+
     async function loadProposals() {
         try {
             const response = await fetch("/api/proposals");
@@ -11,11 +14,15 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const proposals = await response.json();
-            const container = document.getElementById("proposals-list");
 
             if (proposals.length === 0) {
-                container.innerHTML =
-                    '<div class="empty-state"><p>No proposals yet. <a href="/proposals/new">Create your first proposal</a></p></div>';
+                if (isAdmin) {
+                    container.innerHTML =
+                        '<div class="empty-state"><p>No proposals have been submitted for review.</p></div>';
+                } else {
+                    container.innerHTML =
+                        '<div class="empty-state"><p>No proposals yet. <a href="/proposals/new">Create your first proposal</a></p></div>';
+                }
                 return;
             }
 
@@ -23,29 +30,43 @@ document.addEventListener("DOMContentLoaded", () => {
                 .slice()
                 .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
                 .map(
-                    (p) => `
+                    (p) => {
+                        const actionsHtml = isAdmin
+                            ? ""
+                            : `
+                    <div class="proposal-actions">
+                        <a href="/proposals/${p.id}/edit" class="btn btn-secondary">Edit</a>
+                        <button class="btn btn-danger" data-delete-id="${p.id}">Delete</button>
+                    </div>`;
+
+                        const authorHtml = isAdmin
+                            ? `<div class="proposal-author">Author ID: ${p.author_id}</div>`
+                            : "";
+
+                        return `
                 <div class="proposal-card" data-proposal-id="${p.id}">
                     <div class="proposal-header" >
                         <h3><a href="/proposals/${p.id}">${escapeHtml(p.title || "Untitled Proposal")}</a></h3>
                         <span class="status-badge status-${p.status}">${p.status}</span>
                     </div>
                     <p class="proposal-summary">${escapeHtml(p.summary)}</p>
+                    ${authorHtml}
                     <div class="proposal-meta">
                         <span>Created: ${new Date(p.created_at).toLocaleDateString()}</span>
                         <span>Updated: ${new Date(p.updated_at).toLocaleDateString()}</span>
                     </div>
-                    <div class="proposal-actions">
-                        <a href="/proposals/${p.id}/edit" class="btn btn-secondary">Edit</a>
-                        <button class="btn btn-danger" data-delete-id="${p.id}">Delete</button>
-                    </div>
+                    ${actionsHtml}
                 </div>
-            `,
+            `;
+                    },
                 )
                 .join("");
 
-            attachDeleteHandlers();
+            if (!isAdmin) {
+                attachDeleteHandlers();
+            }
         } catch (error) {
-            document.getElementById("proposals-list").innerHTML =
+            container.innerHTML =
                 '<div class="error-message">Failed to load proposals. Please refresh the page.</div>';
         }
     }

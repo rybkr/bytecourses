@@ -570,6 +570,13 @@ body {
     color: var(--text-secondary);
 }
 
+.proposal-author {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-weight: 500;
+}
+
 .proposal-actions {
     display: flex;
     gap: 1rem;

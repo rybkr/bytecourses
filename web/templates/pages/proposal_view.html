@@ -3,11 +3,12 @@ ByteCourses{{end}} {{define "content"}}
 <div class="page-header">
     <h1>{{.Proposal.Title}}</h1>
     <div class="header-actions">
-        <a href="/api/proposals/{{.Proposal.ID}}/actions/submit" class="btn btn-primary">Submit</a>
+        <button id="submitBtn" class="btn btn-primary">Submit</button>
         <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary">Edit</a>
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
 </div>
+<div id="error-message" class="error-message" style="display: none;"></div>
 <div class="proposal-meta-bar">
     <span class="status-badge status-{{.Proposal.Status}}"
         >{{.Proposal.Status}}</span
@@ -24,4 +25,39 @@ ByteCourses{{end}} {{define "content"}}
     <p class="proposal-content-value">{{.Proposal.LearningObjectives}}</p>
 </div>
 {{end}} {{define "scripts"}}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const submitBtn = document.getElementById("submitBtn");
+    const errorDiv = document.getElementById("error-message");
+    const proposalId = {{.Proposal.ID}};
+
+    async function submit() {
+        errorDiv.style.display = "none";
+        errorDiv.textContent = "";
+        submitBtn.disabled = true;
+
+        try {
+            const res = await fetch(`/api/proposals/${proposalId}/actions/submit`, {
+                method: "POST",
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                errorDiv.textContent = txt || "Submit failed";
+                errorDiv.style.display = "block";
+                submitBtn.disabled = false;
+                return;
+            }
+
+            window.location.reload();
+        } catch (error) {
+            errorDiv.textContent = "Network error. Please try again.";
+            errorDiv.style.display = "block";
+            submitBtn.disabled = false;
+        }
+    }
+
+    submitBtn.addEventListener("click", submit);
+});
+</script>
 {{end}}

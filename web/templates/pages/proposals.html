@@ -1,14 +1,18 @@
 {{template "layout" .}}
 
-{{define "title"}}My Proposals - ByteCourses{{end}}
+{{define "title"}}{{if eq .User.Role "admin"}}Submitted Proposals{{else}}My Proposals{{end}} - ByteCourses{{end}}
 
 {{define "content"}}
 <div class="page-header">
+    {{if eq .User.Role "admin"}}
+    <h1>Submitted Proposals</h1>
+    {{else}}
     <h1>My Proposals</h1>
     <a href="/proposals/new" class="btn btn-primary">New Proposal</a>
+    {{end}}
 </div>
 
-<div id="proposals-list" class="proposals-list">
+<div id="proposals-list" class="proposals-list" data-is-admin="{{if eq .User.Role "admin"}}true{{else}}false{{end}}">
     <div class="loading">Loading proposals...</div>
 </div>
 {{end}}

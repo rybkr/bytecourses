@@ -155,6 +155,19 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
+    user := userFrom(r)
+
+    switch user.Role {
+    case domain.UserRoleAdmin:
+		http.Redirect(w, r, "/api/proposals/mine", http.StatusSeeOther)
+        return
+    default:
+		http.Redirect(w, r, "/api/proposals/mine", http.StatusSeeOther)
+        return
+    }
+}
+
 func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
 	user := userFrom(r)
 

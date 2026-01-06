@@ -53,6 +53,17 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
+	_, ok := actorFromRequest(r, h.sessions, h.users)
+	if !ok {
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
+
+    http.Redirect(w, r, "/proposals/mine", http.StatusSeeOther)
+    return
+}
+
+func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request) {
 	user, ok := actorFromRequest(r, h.sessions, h.users)
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)

@@ -25,7 +25,8 @@ func (a *App) Router() http.Handler {
 
 	r.Route("/api/proposals", func(r chi.Router) {
 		r.With(propH.WithUser).Post("/", propH.Create)
-		r.With(propH.WithUser).Get("/", propH.ListMine)
+		r.With(propH.WithUser).Get("/", propH.List)
+		r.With(propH.WithUser).Get("/mine", propH.ListMine)
 
 		r.Route("/{id}", func(r chi.Router) {
 			r.With(propH.WithUser, propH.WithProposal).Get("/", propH.Get)
@@ -43,6 +44,7 @@ func (a *App) Router() http.Handler {
 	r.Get("/register", pageH.Register)
 	r.Get("/profile", pageH.Profile)
 	r.Get("/proposals", pageH.ProposalsList)
+	r.Get("/proposals/mine", pageH.ProposalsListMine)
 	r.Get("/proposals/new", pageH.ProposalNew)
 	r.Get("/proposals/{id}", pageH.ProposalView)
 	r.Get("/proposals/{id}/edit", pageH.ProposalEdit)

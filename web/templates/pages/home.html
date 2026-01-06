@@ -2,35 +2,132 @@
 
 {{define "content"}}
 <div class="hero">
-    <h1>Welcome to Byte Courses</h1>
-    <p class="lead">Create and manage course proposals with ease</p>
+    <h1>Learn from peers. Teach what you know.</h1>
+    <p class="lead">Short, specialized courses by students, for students</p>
     {{if not .User}}
     <div class="hero-actions">
         <a href="/register" class="btn btn-primary">Get Started</a>
-        <a href="/login" class="btn btn-secondary">Login</a>
-    </div>
-    {{else}}
-    <div class="hero-actions">
-        <a href="/proposals/new" class="btn btn-primary">Create Proposal</a>
-        <a href="/proposals" class="btn btn-secondary">View My Proposals</a>
     </div>
     {{end}}
 </div>
 
-<div class="features">
-    <div class="feature-card">
-        <h3>Create Proposals</h3>
-        <p>Submit course proposals with detailed summaries</p>
+<div class="mission-statement">
+    <p>Byte Courses connects students who want to learn specialized skills with peers who want to teach.
+    Short, focused courses that are relatable, nimble, and practical.</p>
+</div>
+
+<div class="benefits-section">
+    <div class="benefits-tabs">
+        <button class="tab-button active" data-tab="learners" id="learners-tab">For Learners</button>
+        <button class="tab-button" data-tab="instructors" id="instructors-tab">For Instructors</button>
     </div>
-    <div class="feature-card">
-        <h3>Track Status</h3>
-        <p>Monitor your proposals through the review process</p>
-    </div>
-    <div class="feature-card">
-        <h3>Easy Management</h3>
-        <p>Edit and update your proposals anytime</p>
+    <div class="benefits-content">
+        <div class="benefit-tab-pane active" id="learners-pane">
+            <div class="benefit-cards-container">
+                <div class="benefit-card">
+                    <h3>Relatable Content</h3>
+                    <p>Learn from peers who understand your challenges and what actually works.</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Modern Perspective</h3>
+                    <p>Gain insights aligned with today’s tools, trends, and industry needs.</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Practical Skills</h3>
+                    <p>Build real-world skills you can apply immediately, not just theory.</p>
+                </div>
+            </div>
+        </div>
+        <div class="benefit-tab-pane" id="instructors-pane">
+            <div class="benefit-cards-container">
+                <div class="benefit-card">
+                    <h3>Teaching Experience</h3>
+                    <p>Grow your teaching portfolio with hands-on experience.</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Resume Building</h3>
+                    <p>Differentiate yourself with experience employers respect.</p>
+                </div>
+                <div class="benefit-card">
+                    <h3>Share Expertise</h3>
+                    <p>Make an impact while sharpening your own skills and reputation.</p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<div class="how-it-works">
+    <h2>How It Works</h2>
+    <div class="process-steps-learner active" id="learners-process">
+        <div class="process-step">
+            <div class="process-step-number">1</div>
+            <h3>Browse</h3>
+            <p>Discover courses that match your interests and learning goals</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-number">2</div>
+            <h3>Enroll</h3>
+            <p>Join courses and connect with instructors</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-number">3</div>
+            <h3>Learn</h3>
+            <p>Access course content, complete assignments, and build skills</p>
+        </div>
+    </div>
+    <div class="process-steps-instructor" id="instructors-process">
+        <div class="process-step">
+            <div class="process-step-number">1</div>
+            <h3>Submit</h3>
+            <p>Submit your <a href="/proposals">course proposal</a> with details about what you'll teach</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-number">2</div>
+            <h3>Review</h3>
+            <p>Our team reviews your proposal to ensure quality and relevance</p>
+        </div>
+        <div class="process-step">
+            <div class="process-step-number">3</div>
+            <h3>Launch</h3>
+            <p>Once approved, your course can go live for students to discover</p>
+        </div>
+    </div>
+</div>
+{{end}}
+
+{{define "scripts"}}
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const learnersTab = document.getElementById("learners-tab");
+        const instructorsTab = document.getElementById("instructors-tab");
+        const learnersPane = document.getElementById("learners-pane");
+        const instructorsPane = document.getElementById("instructors-pane");
+        const learnersProcess = document.getElementById("learners-process");
+        const instructorsProcess = document.getElementById("instructors-process");
+
+        function switchTab(targetTab) {
+            if (targetTab === "learners") {
+                learnersTab.classList.add("active");
+                instructorsTab.classList.remove("active");
+                learnersPane.classList.add("active");
+                instructorsPane.classList.remove("active");
+                learnersProcess.classList.add("active");
+                instructorsProcess.classList.remove("active");
+            } else {
+                instructorsTab.classList.add("active");
+                learnersTab.classList.remove("active");
+                instructorsPane.classList.add("active");
+                learnersPane.classList.remove("active");
+                instructorsProcess.classList.add("active");
+                learnersProcess.classList.remove("active");
+            }
+        }
+
+        learnersTab.addEventListener("click", () => switchTab("learners"));
+        instructorsTab.addEventListener("click", () => switchTab("instructors"));
+    });
+</script>
 {{end}}
 
 {{template "layout" .}}

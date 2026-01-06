@@ -87,6 +87,10 @@ h3 {
     font-weight: 600;
 }
 
+a {
+    color: var(--primary-color);
+}
+
 .container {
     max-width: 1200px;
     margin: 0 auto;
@@ -481,7 +485,7 @@ h3 {
 
 .hero {
     text-align: center;
-    padding: 6rem 0 5rem;
+    padding: 6rem 2rem;
     background: var(--gradient-hero);
     border-radius: 1rem;
     margin-bottom: 3rem;
@@ -515,7 +519,6 @@ h3 {
 .hero .lead {
     font-size: 1.375rem;
     color: var(--text-secondary);
-    margin-bottom: 2.5rem;
     font-weight: 400;
     max-width: 600px;
     margin-left: auto;
@@ -526,8 +529,12 @@ h3 {
 
 .hero-actions {
     display: flex;
-    gap: 1rem;
+    gap: 1.25rem;
     justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+    margin-top: 2.5rem;
 }
 
 .features {
@@ -580,6 +587,209 @@ h3 {
 .feature-card p {
     color: var(--text-secondary);
     line-height: 1.7;
+}
+
+.mission-statement {
+    text-align: center;
+    max-width: 700px;
+    margin: 0 auto 4rem;
+    padding: 2rem;
+    font-size: 1.125rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    background: var(--bg-color);
+    border-radius: 0.75rem;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+.benefits-section {
+    margin-bottom: 2rem;
+}
+
+.benefits-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+.tab-button {
+    padding: 0.875rem 2rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border: 2px solid var(--border-color);
+    border-radius: 0.5rem;
+    background: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.tab-button:hover:not(.active) {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+    color: var(--primary-color);
+}
+
+.tab-button.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.benefits-content {
+    position: relative;
+}
+
+.benefit-tab-pane {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.benefit-tab-pane.active {
+    display: block;
+    opacity: 1;
+}
+
+.benefit-cards-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.benefit-card {
+    background: var(--bg-color);
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.benefit-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.benefit-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--border-color);
+}
+
+.benefit-card:hover::before {
+    transform: scaleX(1);
+}
+
+.benefit-card h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.01em;
+}
+
+.benefit-card p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.9375rem;
+}
+
+.how-it-works {
+    text-align: center;
+    margin-top: 3rem;
+    padding: 3rem 0;
+    background: var(--bg-secondary);
+    border-radius: 1rem;
+}
+
+.how-it-works h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 3rem;
+    letter-spacing: -0.02em;
+}
+
+.process-steps-learner,
+.process-steps-instructor {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    opacity: 0;
+    display: none;
+    transition: opacity 0.4s ease;
+}
+
+.process-steps-learner.active,
+.process-steps-instructor.active {
+    display: grid;
+    opacity: 1;
+}
+
+.process-step {
+    background: var(--bg-color);
+    padding: 2.5rem 2rem;
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    position: relative;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.process-step:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--accent-color);
+}
+
+.process-step-number {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 auto 1.5rem;
+    box-shadow: var(--shadow-md);
+}
+
+.process-step h3 {
+    font-size: 1.375rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+}
+
+.process-step p {
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.9375rem;
 }
 
 .auth-container {
@@ -1223,6 +1433,55 @@ h3 {
 
     .features {
         grid-template-columns: 1fr;
+    }
+
+    .mission-statement {
+        padding: 1.5rem;
+        font-size: 1rem;
+        margin-bottom: 3rem;
+    }
+
+    .benefits-tabs {
+        flex-direction: row;
+        gap: 0.75rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .tab-button {
+        flex: 1;
+        min-width: 140px;
+        max-width: 200px;
+        padding: 0.875rem 1.25rem;
+    }
+
+    .benefits-content {
+        min-height: auto;
+    }
+
+    .benefit-cards-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .how-it-works {
+        padding: 2rem 0;
+        margin-top: 2rem;
+    }
+
+    .how-it-works h2 {
+        font-size: 1.75rem;
+        margin-bottom: 2rem;
+    }
+
+    .process-steps-learner,
+    .process-steps-instructor {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .process-step {
+        padding: 2rem 1.5rem;
     }
 
     .user-dropdown-menu {

@@ -40,7 +40,7 @@ test-go:
 	$(GO) test $(PKGS)
 
 test-py:
-	pytest -q
+	pytest -vn auto
 
 format:
 	gofmt -w .

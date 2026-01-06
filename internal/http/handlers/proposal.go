@@ -188,10 +188,18 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok || p.AuthorID != user.ID {
+	if !ok {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
+    if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+        return
+    }
+    if user.Role == domain.UserRoleAdmin && p.Status != domain.ProposalStatusSubmitted {
+		http.Error(w, "not found", http.StatusNotFound)
+        return
+    }
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(p)

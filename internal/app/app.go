@@ -38,7 +38,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		}
 	}
 
-    return a, nil
+	return a, nil
 }
 
 func ensureTestUsers(ctx context.Context, users store.UserStore) error {

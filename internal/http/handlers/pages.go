@@ -60,7 +60,7 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 	}
 	if user.Role != domain.UserRoleAdmin {
 		http.Redirect(w, r, "/proposals/mine", http.StatusSeeOther)
-	    return
+		return
 	}
 
 	data := &TemplateData{User: &user, Page: "proposals.html"}

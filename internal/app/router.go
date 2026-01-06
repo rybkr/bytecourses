@@ -8,7 +8,7 @@ import (
 )
 
 func (a *App) Router() http.Handler {
-    authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
+	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
 	utilH := handlers.NewUtilHandlers()
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)

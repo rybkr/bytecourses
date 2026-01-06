@@ -4,21 +4,41 @@ ByteCourses{{end}} {{define "content"}}
     <h1>{{.Proposal.Title}}</h1>
     <div class="header-actions">
         {{if ne .User.Role "admin"}}
+        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "changes_requested")}}
         <button id="submitBtn" class="btn btn-primary">Submit</button>
-        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status
-        "changes_requested")}}
-        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary"
-            >Edit</a
-        >
-        {{end}} {{end}}
+        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary">Edit</a>
+        {{end}}
+        {{if eq .Proposal.Status "submitted"}}
+        <button id="withdrawBtn" class="btn btn-secondary">Withdraw</button>
+        {{end}}
+        {{if eq .Proposal.Status "draft"}}
+        <button id="deleteBtn" class="btn btn-danger">Delete</button>
+        {{end}}
+        {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
 </div>
 <div id="error-message" class="error-message" style="display: none"></div>
 <div class="proposal-meta-bar">
-    <span class="status-badge status-{{.Proposal.Status}}"
-        >{{.Proposal.Status}}</span
-    >
+    <div class="status-container">
+        <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
+        <span class="status-context">
+            {{if eq .User.Role "admin"}}
+            {{if eq .Proposal.Status "submitted"}}Ready for review{{end}}
+            {{if eq .Proposal.Status "approved"}}This proposal has been approved{{end}}
+            {{if eq .Proposal.Status "rejected"}}This proposal has been rejected{{end}}
+            {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to
+            resubmit.{{end}}
+            {{else}}
+            {{if eq .Proposal.Status "draft"}}Ready to submit for review{{end}}
+            {{if eq .Proposal.Status "submitted"}}Awaiting admin review{{end}}
+            {{if eq .Proposal.Status "changes_requested"}}Please make the requested changes{{end}}
+            {{if eq .Proposal.Status "approved"}}This proposal has been approved{{end}}
+            {{if eq .Proposal.Status "rejected"}}This proposal has been rejected{{end}}
+            {{if eq .Proposal.Status "withdrawn"}}This proposal has been withdrawn{{end}}
+            {{end}}
+        </span>
+    </div>
     {{if eq .User.Role "admin"}}
     <span>Author ID: {{.Proposal.AuthorID}}</span>
     {{end}}
@@ -31,13 +51,8 @@ ByteCourses{{end}} {{define "content"}}
     <div id="review-error" class="error-message" style="display: none"></div>
     <div class="form-group">
         <label for="review-notes">Review Notes</label>
-        <textarea
-            id="review-notes"
-            rows="4"
-            placeholder="Add your review notes here..."
-        >
-{{.Proposal.ReviewNotes}}</textarea
-        >
+        <textarea id="review-notes" rows="4" placeholder="Add your review notes here...">
+{{.Proposal.ReviewNotes}}</textarea>
     </div>
     <div class="review-actions">
         <button id="approveBtn" class="btn btn-success">Approve</button>
@@ -48,6 +63,35 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 {{end}}
+{{if .Proposal.ReviewNotes}}
+<div class="review-notes-card {{if eq .Proposal.Status " changes_requested"}}review-notes-highlight{{end}}">
+    <h3>Review Notes</h3>
+    <div class="review-notes-content">{{.Proposal.ReviewNotes}}</div>
+    {{if .Proposal.ReviewerID}}
+    <div class="review-notes-meta">
+        <span>Reviewed by Admin</span>
+        <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
+    </div>
+    {{end}}
+</div>
+{{end}}
+<div class="status-help-text">
+    {{if eq .User.Role "admin"}}
+    {{if eq .Proposal.Status "submitted"}}Review this proposal and provide feedback using the actions below.{{end}}
+    {{if eq .Proposal.Status "approved"}}This proposal has been approved.{{end}}
+    {{if eq .Proposal.Status "rejected"}}This proposal has been rejected.{{end}}
+    {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to resubmit.{{end}}
+    {{else}}
+    {{if eq .Proposal.Status "draft"}}Complete your proposal and click Submit to send it for review.{{end}}
+    {{if eq .Proposal.Status "submitted"}}Your proposal is under review. You'll be notified when an admin reviews
+    it.{{end}}
+    {{if eq .Proposal.Status "changes_requested"}}An admin has requested changes. Please review the feedback above and
+    make the necessary edits, then resubmit.{{end}}
+    {{if eq .Proposal.Status "approved"}}Congratulations! Your proposal has been approved.{{end}}
+    {{if eq .Proposal.Status "rejected"}}This proposal has been rejected. Please review the feedback above.{{end}}
+    {{if eq .Proposal.Status "withdrawn"}}This proposal has been withdrawn from review.{{end}}
+    {{end}}
+</div>
 <div class="proposal-content">
     <h2>Summary</h2>
     <p class="proposal-content-value">{{.Proposal.Summary}}</p>
@@ -61,6 +105,8 @@ ByteCourses{{end}} {{define "content"}}
     document.addEventListener("DOMContentLoaded", () => {
         const proposalId = {{.Proposal.ID }};
     const submitBtn = document.getElementById("submitBtn");
+    const withdrawBtn = document.getElementById("withdrawBtn");
+    const deleteBtn = document.getElementById("deleteBtn");
     const errorDiv = document.getElementById("error-message");
 
     if (submitBtn) {
@@ -91,6 +137,74 @@ ByteCourses{{end}} {{define "content"}}
         }
 
         submitBtn.addEventListener("click", submit);
+    }
+
+    if (withdrawBtn) {
+        async function withdraw() {
+            if (!confirm("Are you sure you want to withdraw this proposal? It will be removed from review.")) {
+                return;
+            }
+
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+            withdrawBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/proposals/${proposalId}/actions/withdraw`, {
+                    method: "POST",
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    errorDiv.textContent = txt || "Withdraw failed";
+                    errorDiv.style.display = "block";
+                    withdrawBtn.disabled = false;
+                    return;
+                }
+
+                window.location.reload();
+            } catch (error) {
+                errorDiv.textContent = "Network error. Please try again.";
+                errorDiv.style.display = "block";
+                withdrawBtn.disabled = false;
+            }
+        }
+
+        withdrawBtn.addEventListener("click", withdraw);
+    }
+
+    if (deleteBtn) {
+        async function deleteProposal() {
+            if (!confirm("Are you sure you want to delete this proposal? This action cannot be undone.")) {
+                return;
+            }
+
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+            deleteBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/proposals/${proposalId}`, {
+                    method: "DELETE",
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    errorDiv.textContent = txt || "Delete failed";
+                    errorDiv.style.display = "block";
+                    deleteBtn.disabled = false;
+                    return;
+                }
+
+                window.location.href = "/proposals";
+            } catch (error) {
+                errorDiv.textContent = "Network error. Please try again.";
+                errorDiv.style.display = "block";
+                deleteBtn.disabled = false;
+            }
+        }
+
+        deleteBtn.addEventListener("click", deleteProposal);
     }
 
     const approveBtn = document.getElementById("approveBtn");

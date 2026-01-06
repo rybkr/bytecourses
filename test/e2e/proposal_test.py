@@ -902,6 +902,7 @@ def test_proposal_workflow_reject_submission(go_server):
     assert "status" in r.json() and r.json()["status"] == "rejected"
     assert "title" in r.json() and r.json()["title"] == "Title"
 
+
 def test_proposal_workflow_withdraw_submission(go_server):
     u = requests.Session()
     a = requests.Session()

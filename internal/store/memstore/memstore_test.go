@@ -195,7 +195,7 @@ func TestProposalStore_UpdateProposal(t *testing.T) {
 		t.Fatalf("InsertProposal failed: %v", err)
 	}
 
-    q := domain.Proposal{
+	q := domain.Proposal{
 		Title:    "New Title",
 		Summary:  "New summary",
 		AuthorID: 1,

@@ -16,7 +16,7 @@ type ProposalStore interface {
 	InsertProposal(context.Context, *domain.Proposal) error
 	GetProposalByID(context.Context, int64) (domain.Proposal, bool)
 	GetProposalsByUserID(context.Context, int64) []domain.Proposal
-    GetAllSubmittedProposals(context.Context) []domain.Proposal
+	GetAllSubmittedProposals(context.Context) []domain.Proposal
 	UpdateProposal(context.Context, *domain.Proposal) error
 	DeleteProposal(context.Context, int64) error
 }

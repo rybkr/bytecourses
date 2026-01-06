@@ -158,7 +158,11 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if user.Role == domain.UserRoleAdmin && p.Status != domain.ProposalStatusSubmitted {
+	if user.Role == domain.UserRoleAdmin &&
+		p.Status != domain.ProposalStatusSubmitted &&
+		p.Status != domain.ProposalStatusApproved &&
+		p.Status != domain.ProposalStatusRejected &&
+		p.Status != domain.ProposalStatusChangesRequested {
 		http.NotFound(w, r)
 		return
 	}

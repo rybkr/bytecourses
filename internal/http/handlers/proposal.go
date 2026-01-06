@@ -57,10 +57,9 @@ func (h *ProposalHandlers) WithProposal(next http.Handler) http.Handler {
 
 		p, ok := h.proposals.GetProposalByID(r.Context(), pid)
 		if !ok {
-			http.Error(w, "not found", http.StatusNotFound)
+			http.Error(w, "proposal not found", http.StatusNotFound)
 			return
 		}
-		// ensure ID if correct in case store doesn't populate it
 		p.ID = pid
 
 		ctx := context.WithValue(r.Context(), "proposal", p)
@@ -74,8 +73,17 @@ type ActionRequest struct {
 
 func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 	user := userFrom(r)
-	p := proposalFrom(r)
+	proposalVal := r.Context().Value("proposal")
+	if proposalVal == nil {
+		http.Error(w, "proposal not found in context", http.StatusInternalServerError)
+		return
+	}
+	p := proposalVal.(domain.Proposal)
 	action := chi.URLParam(r, "action")
+	if action == "" {
+		http.Error(w, "missing action", http.StatusBadRequest)
+		return
+	}
 
 	var actionReq ActionRequest
 	if r.ContentLength > 0 {

@@ -103,8 +103,12 @@ ByteCourses{{end}} {{define "content"}}
 {{end}} {{define "scripts"}}
 <script>
     document.addEventListener("DOMContentLoaded", () => {
-        const proposalId = {{.Proposal.ID }};
-    const submitBtn = document.getElementById("submitBtn");
+        const proposalId = {{.Proposal.ID}};
+        if (!proposalId || proposalId <= 0) {
+            console.error("Invalid proposal ID:", proposalId);
+            return;
+        }
+        const submitBtn = document.getElementById("submitBtn");
     const withdrawBtn = document.getElementById("withdrawBtn");
     const deleteBtn = document.getElementById("deleteBtn");
     const errorDiv = document.getElementById("error-message");
@@ -214,6 +218,12 @@ ByteCourses{{end}} {{define "content"}}
     const reviewNotes = document.getElementById("review-notes");
 
     async function handleReviewAction(action) {
+        if (!proposalId || proposalId <= 0) {
+            reviewErrorDiv.textContent = "Invalid proposal ID";
+            reviewErrorDiv.style.display = "block";
+            return;
+        }
+
         reviewErrorDiv.style.display = "none";
         reviewErrorDiv.textContent = "";
 
@@ -222,8 +232,9 @@ ByteCourses{{end}} {{define "content"}}
             if (btn) btn.disabled = true;
         });
 
+        const url = `/api/proposals/${proposalId}/actions/${action}`;
         try {
-            const res = await fetch(`/api/proposals/${proposalId}/actions/${action}`, {
+            const res = await fetch(url, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -235,7 +246,15 @@ ByteCourses{{end}} {{define "content"}}
 
             if (!res.ok) {
                 const txt = await res.text();
-                reviewErrorDiv.textContent = txt || "Action failed";
+                let errorMsg = txt || "Action failed";
+                if (res.status === 404) {
+                    errorMsg = "Proposal not found. Please refresh the page and try again.";
+                } else if (res.status === 403) {
+                    errorMsg = "You don't have permission to perform this action.";
+                } else if (res.status === 409) {
+                    errorMsg = "Proposal status has changed. Please refresh the page.";
+                }
+                reviewErrorDiv.textContent = errorMsg;
                 reviewErrorDiv.style.display = "block";
                 buttons.forEach(btn => {
                     if (btn) btn.disabled = false;

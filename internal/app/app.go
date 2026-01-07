@@ -51,7 +51,7 @@ func ensureTestUsers(ctx context.Context, users store.UserStore) error {
 		return err
 	}
 
-	if err := users.InsertUser(ctx, &domain.User{
+	if err := users.CreateUser(ctx, &domain.User{
 		Email:        adminEmail,
 		PasswordHash: hash,
 		Role:         domain.UserRoleAdmin,
@@ -69,7 +69,7 @@ func ensureTestUsers(ctx context.Context, users store.UserStore) error {
 		return err
 	}
 
-	if err := users.InsertUser(ctx, &domain.User{
+	if err := users.CreateUser(ctx, &domain.User{
 		Email:        userEmail,
 		PasswordHash: hash,
 		Role:         domain.UserRoleStudent,

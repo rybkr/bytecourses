@@ -21,18 +21,13 @@ func NewProposalStore() *ProposalStore {
 	}
 }
 
-func (s *ProposalStore) InsertProposal(ctx context.Context, p *domain.Proposal) error {
+func (s *ProposalStore) CreateProposal(ctx context.Context, p *domain.Proposal) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	p.ID = s.nextID
-	now := time.Now()
-	if p.CreatedAt.IsZero() {
-		p.CreatedAt = now
-	}
-	if p.UpdatedAt.IsZero() {
-		p.UpdatedAt = now
-	}
+	p.CreatedAt = time.Now()
+	p.UpdatedAt = p.CreatedAt
 
 	s.proposalsByID[p.ID] = *p
 	s.nextID++
@@ -40,28 +35,31 @@ func (s *ProposalStore) InsertProposal(ctx context.Context, p *domain.Proposal) 
 	return nil
 }
 
-func (s *ProposalStore) GetProposalByID(ctx context.Context, id int64) (domain.Proposal, bool) {
+func (s *ProposalStore) GetProposalByID(ctx context.Context, id int64) (*domain.Proposal, bool) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
-	p, ok := s.proposalsByID[id]
-	return p, ok
+
+	if p, ok := s.proposalsByID[id]; ok {
+		return &p, true
+	}
+	return nil, false
 }
 
-func (s *ProposalStore) GetProposalsByUserID(ctx context.Context, userID int64) []domain.Proposal {
+func (s *ProposalStore) ListProposalsByAuthorID(ctx context.Context, uid int64) ([]domain.Proposal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	out := make([]domain.Proposal, 0)
 	for _, p := range s.proposalsByID {
-		if p.AuthorID == userID {
+		if p.AuthorID == uid {
 			out = append(out, p)
 		}
 	}
 
-	return out
+	return out, nil
 }
 
-func (s *ProposalStore) GetAllSubmittedProposals(ctx context.Context) []domain.Proposal {
+func (s *ProposalStore) ListAllSubmittedProposals(ctx context.Context) ([]domain.Proposal, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
@@ -72,7 +70,7 @@ func (s *ProposalStore) GetAllSubmittedProposals(ctx context.Context) []domain.P
 		}
 	}
 
-	return out
+	return out, nil
 }
 
 func (s *ProposalStore) UpdateProposal(ctx context.Context, p *domain.Proposal) error {
@@ -84,11 +82,10 @@ func (s *ProposalStore) UpdateProposal(ctx context.Context, p *domain.Proposal) 
 	}
 
 	s.proposalsByID[p.ID] = *p
-
 	return nil
 }
 
-func (s *ProposalStore) DeleteProposal(ctx context.Context, id int64) error {
+func (s *ProposalStore) DeleteProposalByID(ctx context.Context, id int64) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

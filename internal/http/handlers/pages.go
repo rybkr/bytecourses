@@ -63,7 +63,7 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &TemplateData{User: &user, Page: "proposals.html"}
+	data := &TemplateData{User: user, Page: "proposals.html"}
 	Render(w, data)
 }
 
@@ -74,7 +74,7 @@ func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	data := &TemplateData{User: &user, Page: "proposals.html"}
+	data := &TemplateData{User: user, Page: "proposals.html"}
 	Render(w, data)
 }
 
@@ -89,7 +89,7 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 		AuthorID: user.ID,
 		Status:   domain.ProposalStatusDraft,
 	}
-	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
+	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {
 		http.Error(w, "failed to create draft", http.StatusInternalServerError)
 		return
 	}
@@ -123,8 +123,8 @@ func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := &TemplateData{
-		User:     &user,
-		Proposal: &p,
+		User:     user,
+		Proposal: p,
 		Page:     "proposal_edit.html",
 	}
 	Render(w, data)
@@ -170,8 +170,8 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 	proposalJSON, _ := json.Marshal(p)
 
 	data := &TemplateData{
-		User:         &user,
-		Proposal:     &p,
+		User:         user,
+		Proposal:     p,
 		ProposalJSON: string(proposalJSON),
 		Page:         "proposal_view.html",
 	}
@@ -185,6 +185,6 @@ func (h *PageHandlers) Profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &TemplateData{User: &user, Page: "profile.html"}
+	data := &TemplateData{User: user, Page: "profile.html"}
 	Render(w, data)
 }

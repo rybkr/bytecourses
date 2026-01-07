@@ -76,7 +76,7 @@ func RenderWithUser(w http.ResponseWriter, r *http.Request, sessions auth.Sessio
 
 	// Try to get user from session
 	if user, ok := actorFromRequest(r, sessions, users); ok {
-		data.User = &user
+		data.User = user
 	}
 
 	Render(w, data)

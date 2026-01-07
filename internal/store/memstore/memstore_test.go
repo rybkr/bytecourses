@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestUserStore_InsertAndGet(t *testing.T) {
+func TestUserStore_CreateAndGet(t *testing.T) {
 	ctx := context.Background()
 	store := NewUserStore()
 
@@ -14,8 +14,8 @@ func TestUserStore_InsertAndGet(t *testing.T) {
 		Email:        "user@example.com",
 		PasswordHash: make([]byte, 20),
 	}
-	if err := store.InsertUser(ctx, &u); err != nil {
-		t.Fatalf("InsertUser failed: %v", err)
+	if err := store.CreateUser(ctx, &u); err != nil {
+		t.Fatalf("CreateUser failed: %v", err)
 	}
 
 	v, ok := store.GetUserByID(ctx, u.ID)
@@ -33,6 +33,13 @@ func TestUserStore_InsertAndGet(t *testing.T) {
 	if v.ID != u.ID || u.Email != v.Email {
 		t.Fatalf("GetUserByEmail: users u and v differ")
 	}
+
+	w := domain.User{
+		Email: "user@example.com",
+	}
+    if err := store.CreateUser(ctx, &w); err == nil {
+        t.Fatalf("UserStore: allowed to insert duplicate emails")
+    }
 }
 
 func TestUserStore_CallerModification(t *testing.T) {
@@ -43,8 +50,8 @@ func TestUserStore_CallerModification(t *testing.T) {
 		Email:        "user@example.com",
 		PasswordHash: make([]byte, 20),
 	}
-	if err := store.InsertUser(ctx, &u); err != nil {
-		t.Fatalf("InsertUser failed: %v", err)
+	if err := store.CreateUser(ctx, &u); err != nil {
+		t.Fatalf("CreateUser failed: %v", err)
 	}
 
 	v, ok := store.GetUserByID(ctx, u.ID)
@@ -74,8 +81,8 @@ func TestUserStore_UpdateUser(t *testing.T) {
 		Email:        "user@example.com",
 		PasswordHash: make([]byte, 20),
 	}
-	if err := store.InsertUser(ctx, &u); err != nil {
-		t.Fatalf("InsertUser failed: %v", err)
+	if err := store.CreateUser(ctx, &u); err != nil {
+		t.Fatalf("CreateUser failed: %v", err)
 	}
 
 	uid := u.ID
@@ -89,7 +96,7 @@ func TestUserStore_UpdateUser(t *testing.T) {
 		t.Fatalf("UserStore: external pointer modification affected original value")
 	}
 
-	if err := store.UpdateUser(ctx, &v); err != nil {
+	if err := store.UpdateUser(ctx, v); err != nil {
 		t.Fatalf("UpdateUser failed: %v", err)
 	}
 
@@ -128,7 +135,7 @@ func TestUserStore_UpdateNonexistentUser(t *testing.T) {
 	}
 }
 
-func TestProposalStore_InsertAndGet(t *testing.T) {
+func TestProposalStore_CreateAndGet(t *testing.T) {
 	ctx := context.Background()
 	store := NewProposalStore()
 
@@ -137,8 +144,8 @@ func TestProposalStore_InsertAndGet(t *testing.T) {
 		Summary:  "Summary",
 		AuthorID: 1,
 	}
-	if err := store.InsertProposal(ctx, &p); err != nil {
-		t.Fatalf("InsertProposal failed: %v", err)
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
 	}
 
 	q, ok := store.GetProposalByID(ctx, p.ID)
@@ -159,8 +166,8 @@ func TestProposalStore_CallerModification(t *testing.T) {
 		Summary:  "Summary",
 		AuthorID: 1,
 	}
-	if err := store.InsertProposal(ctx, &p); err != nil {
-		t.Fatalf("InsertProposal failed: %v", err)
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
 	}
 
 	q, ok := store.GetProposalByID(ctx, p.ID)
@@ -191,8 +198,8 @@ func TestProposalStore_UpdateProposal(t *testing.T) {
 		Summary:  "Summary",
 		AuthorID: 1,
 	}
-	if err := store.InsertProposal(ctx, &p); err != nil {
-		t.Fatalf("InsertProposal failed: %v", err)
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
 	}
 
 	q := domain.Proposal{
@@ -211,5 +218,151 @@ func TestProposalStore_UpdateProposal(t *testing.T) {
 	}
 	if r.Title != "New Title" || r.Summary != "New summary" {
 		t.Fatalf("ProposalStore: failed to update proposal")
+	}
+
+	s := domain.Proposal{
+		Title:    "R",
+	}
+    if err := store.UpdateProposal(ctx, &s); err == nil {
+        t.Fatalf("ProposalStore: was allowed to update nonexistent proposal")
+    }
+}
+
+func TestProposalStore_ListProposalsByAuthorID(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.Proposal{
+		Title:    "P",
+		AuthorID: 1,
+	}
+	q := domain.Proposal{
+		Title:    "Q",
+		AuthorID: 2,
+	}
+	r := domain.Proposal{
+		Title:    "R",
+		AuthorID: 1,
+	}
+
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+	if err := store.CreateProposal(ctx, &q); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+	if err := store.CreateProposal(ctx, &r); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+
+	p1, err := store.ListProposalsByAuthorID(ctx, 1)
+	if err != nil {
+		t.Fatalf("ListProposalsByAuthorID failed: %v", err)
+	}
+	if len(p1) != 2 || (p1[0].Title != "P" && p1[0].Title != "R") || (p1[1].Title != "P" && p1[1].Title != "R") || p1[0].Title == p1[1].Title {
+		t.Fatalf("ProposalStore: failed to list proposals by author ID")
+	}
+
+	p2, err := store.ListProposalsByAuthorID(ctx, 2)
+	if err != nil {
+		t.Fatalf("ListProposalsByAuthorID failed: %v", err)
+	}
+	if len(p2) != 1 || p2[0].Title != "Q" {
+		t.Fatalf("ProposalStore: failed to list proposals by author ID")
+	}
+}
+
+func TestProposalStore_ListAllSubmittedProposals(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.Proposal{
+		Title:    "P",
+		AuthorID: 1,
+		Status:   "draft",
+	}
+	q := domain.Proposal{
+		Title:    "Q",
+		AuthorID: 2,
+		Status:   "submitted",
+	}
+
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+	if err := store.CreateProposal(ctx, &q); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+
+	ps, err := store.ListAllSubmittedProposals(ctx)
+	if err != nil {
+		t.Fatalf("ListAllSubmittedProposals failed: %v", err)
+	}
+	if len(ps) != 1 || ps[0].Title != "Q" {
+		t.Fatalf("ProposalStore: failed to list all submitted proposals")
+	}
+}
+
+func TestProposalStore_DeleteProposalByID(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	p := domain.Proposal{
+		Title:    "P",
+		AuthorID: 1,
+	}
+	q := domain.Proposal{
+		Title:    "Q",
+		AuthorID: 1,
+	}
+	r := domain.Proposal{
+		Title:    "R",
+		AuthorID: 1,
+	}
+
+	if err := store.CreateProposal(ctx, &p); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+	if err := store.CreateProposal(ctx, &q); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+	if err := store.CreateProposal(ctx, &r); err != nil {
+		t.Fatalf("CreateProposal failed: %v", err)
+	}
+
+	ps, err := store.ListProposalsByAuthorID(ctx, 1)
+	if err != nil {
+		t.Fatalf("ListProposalsByAuthorID failed: %v", err)
+	}
+	if len(ps) != 3 {
+		t.Fatalf("ProposalStore: failed to list proposals by author ID")
+	}
+
+	if err = store.DeleteProposalByID(ctx, p.ID); err != nil {
+		t.Fatalf("DeleteProposalByID failed: %v", err)
+	}
+	if err = store.DeleteProposalByID(ctx, r.ID); err != nil {
+		t.Fatalf("DeleteProposalByID failed: %v", err)
+	}
+
+	ps, err = store.ListProposalsByAuthorID(ctx, 1)
+	if err != nil {
+		t.Fatalf("ListProposalsByAuthorID failed: %v", err)
+	}
+	if len(ps) != 1 || ps[0].Title != "Q" {
+		t.Fatalf("ProposalStore: failed to delete proposals from store")
+	}
+
+    if err = store.DeleteProposalByID(ctx, p.ID); err == nil {
+        t.Fatalf("ProposalStore: was allowed to delete a nonexistent proposal")
+    }
+}
+
+func TestProposalStore_GetNonexistentProposal(t *testing.T) {
+	ctx := context.Background()
+	store := NewProposalStore()
+
+	if _, ok := store.GetProposalByID(ctx, 1); ok {
+		t.Fatalf("GetProposalByID retuned nonexistent proposal")
 	}
 }

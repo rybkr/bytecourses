@@ -55,7 +55,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		Name:         request.Name,
 	}
 
-	if err := h.users.InsertUser(r.Context(), &u); err != nil {
+	if err := h.users.CreateUser(r.Context(), &u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}

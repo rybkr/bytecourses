@@ -78,7 +78,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "proposal not found in context", http.StatusInternalServerError)
 		return
 	}
-	p := proposalVal.(domain.Proposal)
+	p := proposalVal.(*domain.Proposal)
 	action := chi.URLParam(r, "action")
 	if action == "" {
 		http.Error(w, "missing action", http.StatusBadRequest)
@@ -140,7 +140,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+	if err := h.proposals.UpdateProposal(r.Context(), p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -163,7 +163,7 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 	p.AuthorID = user.ID
 	p.Status = domain.ProposalStatusDraft
 
-	if err := h.proposals.InsertProposal(r.Context(), &p); err != nil {
+	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -182,7 +182,7 @@ func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
 	switch user.Role {
 	// If the user is an admin, then GET /api/proposals shall return all proposals submitted for review.
 	case domain.UserRoleAdmin:
-		response := h.proposals.GetAllSubmittedProposals(r.Context())
+		response, _ := h.proposals.ListAllSubmittedProposals(r.Context())
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(response)
 
@@ -195,7 +195,7 @@ func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
 	user := userFrom(r)
 
-	response := h.proposals.GetProposalsByUserID(r.Context(), user.ID)
+	response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), user.ID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
@@ -257,7 +257,7 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 	p.Outline = patch.Outline
 	p.AssumedPrerequisites = patch.AssumedPrerequisites
 
-	if err := h.proposals.UpdateProposal(r.Context(), &p); err != nil {
+	if err := h.proposals.UpdateProposal(r.Context(), p); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -274,7 +274,7 @@ func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.proposals.DeleteProposal(r.Context(), p.ID); err != nil {
+	if err := h.proposals.DeleteProposalByID(r.Context(), p.ID); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -300,12 +300,12 @@ func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func userFrom(r *http.Request) domain.User {
-	return r.Context().Value("user").(domain.User)
+func userFrom(r *http.Request) *domain.User {
+	return r.Context().Value("user").(*domain.User)
 }
 
-func proposalFrom(r *http.Request) domain.Proposal {
-	return r.Context().Value("proposal").(domain.Proposal)
+func proposalFrom(r *http.Request) *domain.Proposal {
+	return r.Context().Value("proposal").(*domain.Proposal)
 }
 
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {

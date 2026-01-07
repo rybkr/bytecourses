@@ -25,15 +25,15 @@ func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 	return true
 }
 
-func actorFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (domain.User, bool) {
+func actorFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (*domain.User, bool) {
 	c, err := r.Cookie("session")
 	if err != nil {
-		return domain.User{}, false
+		return nil, false
 	}
 
 	uid, ok := sessions.GetUserIDByToken(c.Value)
 	if !ok {
-		return domain.User{}, false
+		return nil, false
 	}
 
 	u, ok := users.GetUserByID(r.Context(), uid)

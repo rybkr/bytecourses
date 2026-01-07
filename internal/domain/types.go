@@ -4,26 +4,6 @@ import (
 	"time"
 )
 
-type UserRole string
-
-const (
-	UserRoleStudent    UserRole = "student"
-	UserRoleInstructor UserRole = "instructor"
-	UserRoleAdmin      UserRole = "admin"
-)
-
-// IDUser vs. NoIDUser
-// Create private IP
-
-type User struct {
-	ID           int64     `json:"id"`
-	Email        string    `json:"email"`
-	Name         string    `json:"name"`
-	PasswordHash []byte    `json:"-"`
-	Role         UserRole  `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
-}
-
 type ProposalStatus string
 
 const (

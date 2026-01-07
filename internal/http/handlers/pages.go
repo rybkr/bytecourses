@@ -57,43 +57,43 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
-	user, ok := userFromRequest(r)
+	u, ok := userFromRequest(r)
 	if !ok {
 		return
 	}
-	if user.Role != domain.UserRoleAdmin {
+	if !u.IsAdmin() {
 		http.Redirect(w, r, "/proposals/mine", http.StatusSeeOther)
 		return
 	}
 
 	data := &TemplateData{
-        User: user,
+        User: u,
         Page: "proposals.html",
     }
 	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request) {
-	user, ok := userFromRequest(r)
+	u, ok := userFromRequest(r)
 	if !ok {
 		return
 	}
 
 	data := &TemplateData{
-        User: user, 
+        User: u, 
         Page: "proposals.html",
     }
 	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
-	user, ok := userFromRequest(r)
+	u, ok := userFromRequest(r)
 	if !ok {
 		return
 	}
 
 	p := domain.Proposal{
-		AuthorID: user.ID,
+		AuthorID: u.ID,
 		Status:   domain.ProposalStatusDraft,
 	}
 	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {

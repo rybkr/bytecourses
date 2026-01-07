@@ -6,6 +6,7 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"bytecourses/internal/store/memstore"
+	"bytecourses/internal/store/sqlstore"
 	"context"
 	"errors"
 	"log"
@@ -16,6 +17,7 @@ type App struct {
 	UserStore     store.UserStore
 	SessionStore  auth.SessionStore
 	ProposalStore store.ProposalStore
+	onClose       func() error
 }
 
 func New(ctx context.Context, cfg Config) (*App, error) {
@@ -26,8 +28,17 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.UserStore = memstore.NewUserStore()
 		a.ProposalStore = memstore.NewProposalStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
+
 	case StorageSQL:
-		return nil, errors.New("sql backend not implemented yet")
+		s, err := sqlstore.Open(ctx, cfg.DatabaseDSN)
+		if err != nil {
+			return nil, err
+		}
+		a.UserStore = s
+		a.ProposalStore = s
+		a.SessionStore = memsession.New(24 * time.Hour)
+        a.onClose = s.Close
+
 	default:
 		return nil, errors.New("unknown storage backend")
 	}
@@ -39,6 +50,13 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	}
 
 	return a, nil
+}
+
+func (a *App) Close() error {
+    if a.onClose != nil {
+        return a.onClose()
+    }
+    return nil
 }
 
 func ensureTestUsers(ctx context.Context, users store.UserStore) error {

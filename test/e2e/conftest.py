@@ -26,6 +26,7 @@ def go_server():
             "cmd/server/main.go",
             "--seed-users=true",
             "--bcrypt-cost=5",
+            "--storage=memory",
             f"--http-addr=:{port}",
         ],
         stdout=subprocess.DEVNULL,

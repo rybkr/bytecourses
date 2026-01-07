@@ -92,7 +92,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, _, err := h.sessions.InsertSession(u.ID)
+	token, err := h.sessions.CreateSession(u.ID)
 	if err != nil {
 		http.Error(w, "session error", http.StatusInternalServerError)
 		return
@@ -116,7 +116,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c, err := r.Cookie("session"); err == nil {
-		h.sessions.DeleteSession(c.Value)
+		h.sessions.DeleteSessionByToken(c.Value)
 	}
 
 	http.SetCookie(w, &http.Cookie{

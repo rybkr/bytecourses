@@ -24,8 +24,8 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	switch cfg.Storage {
 	case StorageMemroy:
 		a.UserStore = memstore.NewUserStore()
-		a.SessionStore = memsession.New(24 * time.Hour)
 		a.ProposalStore = memstore.NewProposalStore()
+		a.SessionStore = memsession.New(24 * time.Hour)
 	case StorageSQL:
 		return nil, errors.New("sql backend not implemented yet")
 	default:

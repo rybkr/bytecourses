@@ -8,12 +8,12 @@ import (
 )
 
 type Session struct {
-	userID  int64
-	expires time.Time
+	userID    int64
+	expiresAt time.Time
 }
 
 type Store struct {
-	mu      sync.Mutex
+	mu      sync.RWMutex
 	ttl     time.Duration
 	byToken map[string]Session
 }
@@ -25,32 +25,35 @@ func New(ttl time.Duration) *Store {
 	}
 }
 
-func (s *Store) InsertSession(userID int64) (string, time.Time, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", time.Time{}, err
+func (s *Store) CreateSession(userID int64) (string, error) {
+	for {
+		b := make([]byte, 32)
+		if _, err := rand.Read(b); err != nil {
+			return "", err
+		}
+
+		token := base64.RawURLEncoding.EncodeToString(b)
+		exp := time.Now().Add(s.ttl)
+
+		s.mu.Lock()
+		if _, exists := s.byToken[token]; !exists {
+			s.byToken[token] = Session{
+				userID:    userID,
+				expiresAt: exp,
+			}
+			s.mu.Unlock()
+			return token, nil
+		}
+		s.mu.Unlock()
 	}
-
-	token := base64.RawURLEncoding.EncodeToString(b)
-	exp := time.Now().Add(s.ttl)
-
-	s.mu.Lock()
-	s.byToken[token] = Session{
-		userID:  userID,
-		expires: exp,
-	}
-	s.mu.Unlock()
-
-	return token, exp, nil
 }
 
 func (s *Store) GetUserIDByToken(token string) (int64, bool) {
-	now := time.Now()
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	session, ok := s.byToken[token]
-	if !ok || now.After(session.expires) {
+	if !ok || time.Now().After(session.expiresAt) {
 		delete(s.byToken, token)
 		return 0, false
 	}
@@ -58,7 +61,7 @@ func (s *Store) GetUserIDByToken(token string) (int64, bool) {
 	return session.userID, true
 }
 
-func (s *Store) DeleteSession(token string) {
+func (s *Store) DeleteSessionByToken(token string) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	delete(s.byToken, token)

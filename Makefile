@@ -37,7 +37,7 @@ run-dev:
 test: test-go test-py
 
 test-go:
-	$(GO) test $(PKGS)
+	$(GO) test $(PKGS) -cover
 
 test-py:
 	pytest -vn auto

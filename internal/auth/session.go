@@ -1,11 +1,7 @@
 package auth
 
-import (
-	"time"
-)
-
 type SessionStore interface {
-	InsertSession(userID int64) (string, time.Time, error)
+	CreateSession(userID int64) (string, error)
 	GetUserIDByToken(token string) (int64, bool)
-	DeleteSession(token string)
+	DeleteSessionByToken(token string)
 }

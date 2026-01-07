@@ -35,7 +35,9 @@ def go_server():
 
     for _ in range(30):
         try:
-            if requests.get(f"{api_root}/health").status_code == HTTPStatus.OK:
+            r = requests.get(f"{api_root}/health")
+            print(r)
+            if r.status_code == HTTPStatus.OK:
                 break
         except requests.exceptions.ConnectionError:
             time.sleep(0.2)

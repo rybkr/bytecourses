@@ -142,9 +142,9 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	u, ok := middleware.UserFromRequest(r, h.sessions, h.users)
+	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-        http.Error(w, "unauthorized", http.StatusUnauthorized)
+        http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	json.NewEncoder(w).Encode(u)

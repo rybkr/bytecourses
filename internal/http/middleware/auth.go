@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-func UserFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (*domain.User, bool) {
+func userFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (*domain.User, bool) {
     c, err := r.Cookie("session")
     if err != nil || c.Value == "" {
         return nil, false
@@ -25,18 +25,12 @@ func UserFromRequest(r *http.Request, sessions auth.SessionStore, users store.Us
     return u, true
 }
 
-func AdminFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (*domain.User, bool) {
-    u, ok := UserFromRequest(r, sessions, users)
-	if !ok || u.Role != domain.UserRoleAdmin {
-		return nil, false
-	}
-	return u, true
-}
-
+// RequireUser is middleware that enforces authentication and injects
+// the resolved user into the request context.
 func RequireUser(sessions auth.SessionStore, users store.UserStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, ok := UserFromRequest(r, sessions, users)
+			u, ok := userFromRequest(r, sessions, users)
 			if !ok {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
@@ -46,10 +40,12 @@ func RequireUser(sessions auth.SessionStore, users store.UserStore) func(http.Ha
 	}
 }
 
+// RequireAdmin is middleware that enforces admin authorization.
+// It assumes authentication and injects the admin user into context.
 func RequireAdmin(sessions auth.SessionStore, users store.UserStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, ok := UserFromRequest(r, sessions, users)
+			u, ok := userFromRequest(r, sessions, users)
 			if !ok {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return

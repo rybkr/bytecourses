@@ -79,7 +79,7 @@ func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.UserFromRequest(r, h.sessions, h.users)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
@@ -98,7 +98,7 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.UserFromRequest(r, h.sessions, h.users)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return

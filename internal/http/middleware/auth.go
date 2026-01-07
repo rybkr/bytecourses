@@ -5,6 +5,7 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/store"
 	"net/http"
+    "net/url"
 )
 
 func userFromRequest(r *http.Request, sessions auth.SessionStore, users store.UserStore) (*domain.User, bool) {
@@ -25,8 +26,6 @@ func userFromRequest(r *http.Request, sessions auth.SessionStore, users store.Us
     return u, true
 }
 
-// RequireUser is middleware that enforces authentication and injects
-// the resolved user into the request context.
 func RequireUser(sessions auth.SessionStore, users store.UserStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -40,8 +39,6 @@ func RequireUser(sessions auth.SessionStore, users store.UserStore) func(http.Ha
 	}
 }
 
-// RequireAdmin is middleware that enforces admin authorization.
-// It assumes authentication and injects the admin user into context.
 func RequireAdmin(sessions auth.SessionStore, users store.UserStore) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -53,6 +50,19 @@ func RequireAdmin(sessions auth.SessionStore, users store.UserStore) func(http.H
 			if u.Role != domain.UserRoleAdmin {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
+			}
+			next.ServeHTTP(w, r.WithContext(withUser(r.Context(), u)))
+		})
+	}
+}
+
+func RequireLogin(sessions auth.SessionStore, users store.UserStore,) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			u, ok := userFromRequest(r, sessions, users)
+            if !ok {
+			    http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+                return
 			}
 			next.ServeHTTP(w, r.WithContext(withUser(r.Context(), u)))
 		})

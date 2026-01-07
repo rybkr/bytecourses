@@ -3,7 +3,6 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
-	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -26,36 +25,40 @@ func NewPageHandlers(users store.UserStore, sessions auth.SessionStore, proposal
 }
 
 func (h *PageHandlers) Home(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+	if !requirePath(w, r, "/") {
 		return
 	}
-	data := &TemplateData{Page: "home.html"}
+	data := &TemplateData{
+		Page: "home.html",
+	}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
 func (h *PageHandlers) Login(w http.ResponseWriter, r *http.Request) {
-	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
+	if _, ok := userFromRequest(r); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "login.html"}
+	data := &TemplateData{
+		Page: "login.html",
+	}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
 func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
-	if _, ok := actorFromRequest(r, h.sessions, h.users); ok {
+	if _, ok := userFromRequest(r); ok {
 		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
-	data := &TemplateData{Page: "register.html"}
+	data := &TemplateData{
+		Page: "register.html",
+	}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
-	user, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 	if user.Role != domain.UserRoleAdmin {
@@ -63,25 +66,29 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &TemplateData{User: user, Page: "proposals.html"}
+	data := &TemplateData{
+        User: user,
+        Page: "proposals.html",
+    }
 	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request) {
-	user, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
-	data := &TemplateData{User: user, Page: "proposals.html"}
+	data := &TemplateData{
+        User: user, 
+        Page: "proposals.html",
+    }
 	Render(w, data)
 }
 
 func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.UserFromContext(r.Context())
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
@@ -98,9 +105,8 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.UserFromContext(r.Context())
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
@@ -131,9 +137,8 @@ func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
-	user, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 
@@ -179,9 +184,8 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) Profile(w http.ResponseWriter, r *http.Request) {
-	user, ok := actorFromRequest(r, h.sessions, h.users)
+	user, ok := userFromRequest(r)
 	if !ok {
-		http.Redirect(w, r, "/login", http.StatusSeeOther)
 		return
 	}
 

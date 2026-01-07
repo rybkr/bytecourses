@@ -3,9 +3,7 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
-	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
-	"encoding/json"
 	"net/http"
 	"strings"
 )
@@ -28,39 +26,39 @@ type registerRequest struct {
 	Password string `json:"password"`
 }
 
+func (r *registerRequest) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
+	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
+	r.Password = strings.TrimSpace(r.Password)
+}
+
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+    if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
-
 	var request registerRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+    if !decodeJSON(w, r, &request) {
 		return
 	}
+    request.Normalize()
 
-	email := strings.TrimSpace(strings.ToLower(request.Email))
-	password := strings.TrimSpace(request.Password)
-	name := strings.TrimSpace(request.Name)
-	if email == "" || password == "" {
+	if request.Email == "" || request.Password == "" {
 		http.Error(w, "email and password required", http.StatusBadRequest)
 		return
 	}
 
-	hash, err := auth.HashPassword(password)
+	hash, err := auth.HashPassword(request.Password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	u := domain.User{
-		Email:        email,
+		Email:        request.Email,
 		PasswordHash: hash,
-		Name:         name,
+		Name:         request.Name,
 		Role:         domain.UserRoleStudent,
 	}
-
 	if err := h.users.CreateUser(r.Context(), &u); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -74,27 +72,31 @@ type loginRequest struct {
 	Password string `json:"password"`
 }
 
+func (r *loginRequest) Normalize() {
+	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
+	r.Password = strings.TrimSpace(r.Password)
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
-
 	var request loginRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+	if !decodeJSON(w, r, &request) {
 		return
 	}
+    request.Normalize()
 
-	email := strings.TrimSpace(strings.ToLower(request.Email))
-	password := strings.TrimSpace(request.Password)
-	u, ok := h.users.GetUserByEmail(r.Context(), email)
+	if request.Email == "" || request.Password == "" {
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+		return
+	}
+	u, ok := h.users.GetUserByEmail(r.Context(), request.Email)
 	if !ok {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
-
-	ok = auth.VerifyPassword(u.PasswordHash, password)
+	ok = auth.VerifyPassword(u.PasswordHash, request.Password)
 	if !ok {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
@@ -113,13 +115,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
 	})
-
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 
@@ -133,19 +133,16 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:   "/",
 		MaxAge: -1,
 	})
-
 	w.WriteHeader(http.StatusNoContent)
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	if !requireMethod(w, r, http.MethodGet) {
 		return
 	}
-	u, ok := middleware.UserFromContext(r.Context())
+	u, ok := requireUser(w, r)
 	if !ok {
-        http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	json.NewEncoder(w).Encode(u)
+    writeJSON(w, http.StatusOK, u)
 }

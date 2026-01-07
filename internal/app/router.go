@@ -58,11 +58,14 @@ func (a *App) Router() http.Handler {
 	r.Get("/register", pageH.Register)
 	r.Get("/profile", pageH.Profile)
 
-	r.Get("/proposals", pageH.ProposalsList)
-	r.Get("/proposals/mine", pageH.ProposalsListMine)
-	r.Get("/proposals/new", pageH.ProposalNew)
-	r.Get("/proposals/{id}", pageH.ProposalView)
-	r.Get("/proposals/{id}/edit", pageH.ProposalEdit)
+    r.Route("/proposals", func(r chi.Router) {
+        r.Use(appmw.RequireLogin(a.SessionStore, a.UserStore))
+	    r.Get("/", pageH.ProposalsList)
+        r.Get("/mine", pageH.ProposalsListMine)
+        r.Get("/new", pageH.ProposalNew)
+        r.Get("/{id}", pageH.ProposalView)
+        r.Get("/{id}/edit", pageH.ProposalEdit)
+    })
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 

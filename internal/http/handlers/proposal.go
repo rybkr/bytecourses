@@ -86,7 +86,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid state", http.StatusConflict)
 			return
 		}
-		p.ReviewerID = u.ID
+		p.ReviewerID = &u.ID
 		p.ReviewNotes = request.ReviewNotes
 		if action == "approve" {
 			p.Status = domain.ProposalStatusApproved
@@ -289,7 +289,7 @@ func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
 	p.ID = pid
 
 	p.Status = domain.ProposalStatusApproved
-	p.ReviewerID = u.ID
+	p.ReviewerID = &u.ID
 
 }
 

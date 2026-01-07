@@ -25,7 +25,7 @@ type Proposal struct {
 	Outline              string         `json:"outline"`
 	AssumedPrerequisites string         `json:"assumed_prerequisites"`
 	ReviewNotes          string         `json:"review_notes"`
-	ReviewerID           int64          `json:"reviewer_id"`
+	ReviewerID           *int64         `json:"reviewer_id"`
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	Status               ProposalStatus `json:"status"`

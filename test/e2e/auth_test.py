@@ -11,7 +11,7 @@ def test_register(go_server):
         "password": "password123",
     }
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
 
 def test_register_duplicate(go_server):
@@ -20,7 +20,7 @@ def test_register_duplicate(go_server):
         "password": "password123",
     }
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = requests.post(f"{go_server}/register", json=payload)
     assert r.status_code == HTTPStatus.BAD_REQUEST
@@ -80,7 +80,7 @@ def test_login(go_server):
         "password": "password123",
     }
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = requests.post(f"{go_server}/login", json=payload)
     assert r.status_code == HTTPStatus.OK
@@ -101,7 +101,7 @@ def test_login_duplicate(go_server):
         "password": "password123",
     }
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = requests.post(f"{go_server}/login", json=payload)
     assert r.status_code == HTTPStatus.OK
@@ -164,7 +164,7 @@ def test_auth_flow(go_server):
         f"{go_server}/register",
         json={"email": "u@example.com", "password": "secret"},
     )
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     r = s.post(
         f"{go_server}/login",
@@ -220,7 +220,7 @@ def test_user_name(go_server):
     }
 
     r = s.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=payload)
     assert r.status_code == HTTPStatus.OK
     r = s.get(f"{go_server}/me")

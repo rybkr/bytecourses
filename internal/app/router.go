@@ -2,10 +2,21 @@ package app
 
 import (
 	"bytecourses/internal/http/handlers"
+	appmw "bytecourses/internal/http/middleware"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"net/http"
+	"strconv"
 )
+
+func proposalID(r *http.Request) (int64, bool) {
+	idStr := chi.URLParam(r, "id")
+	if idStr == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	return id, err == nil
+}
 
 func (a *App) Router() http.Handler {
 	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
@@ -14,8 +25,8 @@ func (a *App) Router() http.Handler {
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
 
 	r := chi.NewRouter()
-	r.Use(middleware.Recoverer)
-	r.Use(middleware.Logger)
+	r.Use(chimw.Recoverer)
+	r.Use(chimw.Logger)
 
 	r.Post("/api/register", authH.Register)
 	r.Post("/api/login", authH.Login)
@@ -24,17 +35,21 @@ func (a *App) Router() http.Handler {
 	r.Get("/api/health", utilH.Health)
 
 	r.Route("/api/proposals", func(r chi.Router) {
-		r.With(propH.WithUser).Post("/", propH.Create)
-		r.With(propH.WithUser).Get("/", propH.List)
-		r.With(propH.WithUser).Get("/mine", propH.ListMine)
+		r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
+
+		r.Post("/", propH.Create)
+		r.Get("/", propH.List)
+		r.Get("/mine", propH.ListMine)
 
 		r.Route("/{id}", func(r chi.Router) {
-			r.With(propH.WithUser, propH.WithProposal).Get("/", propH.Get)
-			r.With(propH.WithUser, propH.WithProposal).Patch("/", propH.Update)
-			r.With(propH.WithUser, propH.WithProposal).Delete("/", propH.Delete)
+			r.Use(appmw.RequireProposal(a.ProposalStore, proposalID))
+
+			r.Get("/", propH.Get)
+			r.Patch("/", propH.Update)
+			r.Delete("/", propH.Delete)
+
 			r.Route("/actions", func(r chi.Router) {
-				r.With(propH.WithUser, propH.WithProposal).
-					Post("/{action}", propH.Action)
+				r.Post("/{action}", propH.Action)
 			})
 		})
 	})

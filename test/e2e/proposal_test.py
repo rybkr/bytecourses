@@ -13,7 +13,7 @@ def test_create_proposal(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=register_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
 
     login_payload: dict[str, str] = {
         "email": "usr@example.com",
@@ -45,7 +45,7 @@ def test_get_proposals(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -85,7 +85,7 @@ def test_get_proposals_empty(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -97,9 +97,21 @@ def test_get_proposals_empty(go_server):
 
 
 def test_proposals_invalid_method(go_server):
-    r = requests.put(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
     r = requests.delete(f"{go_server}/proposals")
+    assert r.status_code == HTTPStatus.UNAUTHORIZED
+    
+    s = requests.Session()
+
+    login_payload: dict[str, str] = {
+        "email": "user@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{go_server}/register", json=login_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    r = s.post(f"{go_server}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    r = s.delete(f"{go_server}/proposals")
     assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
@@ -111,7 +123,7 @@ def test_get_proposals_by_id(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -154,7 +166,7 @@ def test_get_proposal_nonexistent(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -176,7 +188,7 @@ def test_update_proposal(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=login_payload)
     assert r.status_code == HTTPStatus.OK
 
@@ -224,9 +236,9 @@ def test_get_proposal_wrong_user(go_server):
         "password": "password123",
     }
     r = s.post(f"{go_server}/register", json=s_login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = t.post(f"{go_server}/register", json=t_login_payload)
-    assert r.status_code == HTTPStatus.OK
+    assert r.status_code == HTTPStatus.CREATED
     r = s.post(f"{go_server}/login", json=s_login_payload)
     assert r.status_code == HTTPStatus.OK
     r = t.post(f"{go_server}/login", json=t_login_payload)

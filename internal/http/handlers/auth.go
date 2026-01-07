@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
+	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
 	"encoding/json"
 	"net/http"
@@ -38,21 +39,26 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	if request.Password == "" || request.Email == "" {
+
+	email := strings.TrimSpace(strings.ToLower(request.Email))
+	password := strings.TrimSpace(request.Password)
+	name := strings.TrimSpace(request.Name)
+	if email == "" || password == "" {
 		http.Error(w, "email and password required", http.StatusBadRequest)
 		return
 	}
 
-	hash, err := auth.HashPassword(request.Password)
+	hash, err := auth.HashPassword(password)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	u := domain.User{
-		Email:        request.Email,
+		Email:        email,
 		PasswordHash: hash,
-		Name:         request.Name,
+		Name:         name,
+		Role:         domain.UserRoleStudent,
 	}
 
 	if err := h.users.CreateUser(r.Context(), &u); err != nil {
@@ -60,7 +66,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusCreated)
 }
 
 type loginRequest struct {
@@ -80,13 +86,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, ok := h.users.GetUserByEmail(r.Context(), strings.TrimSpace(request.Email))
+	email := strings.TrimSpace(strings.ToLower(request.Email))
+	password := strings.TrimSpace(request.Password)
+	u, ok := h.users.GetUserByEmail(r.Context(), email)
 	if !ok {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
 	}
 
-	ok = auth.VerifyPassword(u.PasswordHash, request.Password)
+	ok = auth.VerifyPassword(u.PasswordHash, password)
 	if !ok {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 		return
@@ -130,9 +138,13 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	u, ok := actorFromRequest(r, h.sessions, h.users)
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	u, ok := middleware.UserFromRequest(r, h.sessions, h.users)
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+        http.Error(w, "unauthorized", http.StatusUnauthorized)
 		return
 	}
 	json.NewEncoder(w).Encode(u)

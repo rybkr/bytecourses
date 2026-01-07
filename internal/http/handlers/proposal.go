@@ -5,9 +5,9 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/http/middleware"
 	"bytecourses/internal/store"
-	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
+	"io"
 	"net/http"
 	"strconv"
 )
@@ -26,76 +26,37 @@ func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, s
 	}
 }
 
-func (h *ProposalHandlers) WithUser(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, ok := middleware.RequireUser(w, r, h.sessions, h.users)
-		if !ok {
-			return
-		}
-		ctx := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (h *ProposalHandlers) WithAdmin(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, ok := middleware.RequireAdminUser(w, r, h.sessions, h.users)
-		if !ok {
-			return
-		}
-		ctx := context.WithValue(r.Context(), "user", user)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
-func (h *ProposalHandlers) WithProposal(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		pid, ok := h.requireProposalID(w, r)
-		if !ok {
-			return
-		}
-
-		p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-		if !ok {
-			http.Error(w, "proposal not found", http.StatusNotFound)
-			return
-		}
-		p.ID = pid
-
-		ctx := context.WithValue(r.Context(), "proposal", p)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
-}
-
 type ActionRequest struct {
 	ReviewNotes string `json:"review_notes"`
 }
 
 func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
-	proposalVal := r.Context().Value("proposal")
-	if proposalVal == nil {
-		http.Error(w, "proposal not found in context", http.StatusInternalServerError)
-		return
-	}
-	p := proposalVal.(*domain.Proposal)
 	action := chi.URLParam(r, "action")
 	if action == "" {
 		http.Error(w, "missing action", http.StatusBadRequest)
 		return
 	}
 
-	var actionReq ActionRequest
-	if r.ContentLength > 0 {
-		if err := json.NewDecoder(r.Body).Decode(&actionReq); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	p, ok := middleware.ProposalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	var request ActionRequest
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil && err != io.EOF {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	switch action {
 	case "submit":
-		if p.AuthorID != user.ID {
+		if p.AuthorID != u.ID {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
@@ -106,7 +67,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		p.Status = domain.ProposalStatusSubmitted
 
 	case "withdraw":
-		if p.AuthorID != user.ID {
+		if p.AuthorID != u.ID {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
@@ -117,7 +78,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		p.Status = domain.ProposalStatusWithdrawn
 
 	case "approve", "reject", "request-changes":
-		if user.Role != domain.UserRoleAdmin {
+		if u.Role != domain.UserRoleAdmin {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
@@ -125,8 +86,8 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid state", http.StatusConflict)
 			return
 		}
-		p.ReviewerID = user.ID
-		p.ReviewNotes = actionReq.ReviewNotes
+		p.ReviewerID = u.ID
+		p.ReviewNotes = request.ReviewNotes
 		if action == "approve" {
 			p.Status = domain.ProposalStatusApproved
 		} else if action == "reject" {
@@ -152,7 +113,11 @@ type ProposalCreateResponse struct {
 }
 
 func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
 	var p domain.Proposal
 	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
@@ -160,7 +125,7 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p.AuthorID = user.ID
+	p.AuthorID = u.ID
 	p.Status = domain.ProposalStatusDraft
 
 	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {
@@ -177,9 +142,13 @@ func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
-	switch user.Role {
+	switch u.Role {
 	// If the user is an admin, then GET /api/proposals shall return all proposals submitted for review.
 	case domain.UserRoleAdmin:
 		response, _ := h.proposals.ListAllSubmittedProposals(r.Context())
@@ -193,31 +162,35 @@ func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
-	response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), user.ID)
+	response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), u.ID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
 
 func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
-
-	pid, ok := h.requireProposalID(w, r)
+	u, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	p, ok := middleware.ProposalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
-	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok {
+	if u.Role != domain.UserRoleAdmin && p.AuthorID != u.ID {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-	if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-	if user.Role == domain.UserRoleAdmin &&
+
+	if u.Role == domain.UserRoleAdmin &&
 		p.Status != domain.ProposalStatusSubmitted &&
 		p.Status != domain.ProposalStatusApproved &&
 		p.Status != domain.ProposalStatusRejected &&
@@ -231,10 +204,18 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
-	p := proposalFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	p, ok := middleware.ProposalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
-	if p.AuthorID != user.ID {
+	if p.AuthorID != u.ID {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -266,10 +247,18 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
-	p := proposalFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	p, ok := middleware.ProposalFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 
-	if p.AuthorID != user.ID {
+	if p.AuthorID != u.ID {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -283,7 +272,11 @@ func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
-	user := userFrom(r)
+	u, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 	pid, ok := h.requireProposalID(w, r)
 	if !ok {
 		return
@@ -296,16 +289,8 @@ func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
 	p.ID = pid
 
 	p.Status = domain.ProposalStatusApproved
-	p.ReviewerID = user.ID
+	p.ReviewerID = u.ID
 
-}
-
-func userFrom(r *http.Request) *domain.User {
-	return r.Context().Value("user").(*domain.User)
-}
-
-func proposalFrom(r *http.Request) *domain.Proposal {
-	return r.Context().Value("proposal").(*domain.Proposal)
 }
 
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {

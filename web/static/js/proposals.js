@@ -31,13 +31,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 .sort((a, b) => new Date(b.updated_at) - new Date(a.updated_at))
                 .map(
                     (p) => {
-                        const actionsHtml = isAdmin
-                            ? ""
-                            : `
-                    <div class="proposal-actions">
-                        <a href="/proposals/${p.id}/edit" class="btn btn-secondary">Edit</a>
-                        <button class="btn btn-danger" data-delete-id="${p.id}">Delete</button>
-                    </div>`;
+                        let actionsHtml = "";
+                        if (!isAdmin) {
+                            const actions = [];
+                            if (p.status === "draft" || p.status === "changes_requested") {
+                                actions.push(`<a href="/proposals/${p.id}/edit" class="btn btn-secondary btn-sm">Edit</a>`);
+                            }
+                            if (p.status === "submitted") {
+                                actions.push(`<button class="btn btn-secondary btn-sm" data-withdraw-id="${p.id}">Withdraw</button>`);
+                            }
+                            if (p.status === "draft" || p.status === "withdrawn" || p.status === "rejected") {
+                                actions.push(`<button class="btn btn-danger btn-sm" data-delete-id="${p.id}">Delete</button>`);
+                            }
+                            if (actions.length > 0) {
+                                actionsHtml = `<div class="proposal-actions">${actions.join("")}</div>`;
+                            }
+                        }
 
                         const authorHtml = isAdmin
                             ? `<div class="proposal-author">Author ID: ${p.author_id}</div>`
@@ -64,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             if (!isAdmin) {
                 attachDeleteHandlers();
+                attachWithdrawHandlers();
             }
         } catch (error) {
             container.innerHTML =
@@ -118,6 +128,54 @@ document.addEventListener("DOMContentLoaded", () => {
                         alert("Network error. Please try again.");
                     } else {
                         alert("Failed to delete proposal. Please try again.");
+                    }
+                }
+            }
+        });
+    }
+
+    function attachWithdrawHandlers() {
+        const container = document.getElementById("proposals-list");
+        container.addEventListener("click", async (e) => {
+            if (e.target.matches("[data-withdraw-id]")) {
+                e.preventDefault();
+                const proposalId = e.target.getAttribute("data-withdraw-id");
+
+                if (!confirm("Are you sure you want to withdraw this proposal? It will be removed from review.")) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/proposals/${proposalId}/actions/withdraw`, {
+                        method: "POST",
+                    });
+
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            window.location.href = "/login";
+                            return;
+                        }
+                        if (response.status === 404) {
+                            alert("Proposal not found");
+                            return;
+                        }
+                        if (response.status === 403) {
+                            alert("You don't have permission to withdraw this proposal");
+                            return;
+                        }
+                        if (response.status === 409) {
+                            alert("Proposal status has changed. Please refresh the page.");
+                            return;
+                        }
+                        throw new Error("Failed to withdraw proposal");
+                    }
+
+                    loadProposals();
+                } catch (error) {
+                    if (error.message === "Failed to fetch") {
+                        alert("Network error. Please try again.");
+                    } else {
+                        alert("Failed to withdraw proposal. Please try again.");
                     }
                 }
             }

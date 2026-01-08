@@ -4,7 +4,18 @@
     <h1>Edit Proposal</h1>
     <a href="/proposals" class="btn btn-secondary">Back to Proposals</a>
 </div>
-
+{{if .Proposal.ReviewNotes}}
+<div class="review-notes-card {{if eq .Proposal.Status "changes_requested"}}review-notes-highlight{{end}}">
+    <h3>Review Feedback</h3>
+    <div class="review-notes-content">{{markdown .Proposal.ReviewNotes}}</div>
+    {{if .Proposal.ReviewerID}}
+    <div class="review-notes-meta">
+        <span>Reviewed by Admin</span>
+        <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
+    </div>
+    {{end}}
+</div>
+{{end}}
 <div class="form-container">
     <form
         id="proposal-form"

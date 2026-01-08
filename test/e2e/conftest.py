@@ -18,6 +18,8 @@ def get_free_port():
 def go_server():
     port = get_free_port()
     api_root = f"http://127.0.0.1:{port}/api"
+    env = os.environ.copy()
+    env["PORT"] = f"{port}"
 
     proc = subprocess.Popen(
         [
@@ -27,8 +29,8 @@ def go_server():
             "--seed-users=true",
             "--bcrypt-cost=5",
             "--storage=memory",
-            f"--http-addr=:{port}",
         ],
+        env=env,
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,

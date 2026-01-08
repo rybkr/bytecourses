@@ -6,13 +6,13 @@ ByteCourses{{end}} {{define "content"}}
         {{if ne .User.Role "admin"}}
         {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "changes_requested")}}
         <button id="submitBtn" class="btn btn-primary">Submit</button>
-        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary">Edit</a>
+        <a href="/proposals/{{.Proposal.ID}}/edit" class="btn btn-secondary btn-sm">Edit</a>
         {{end}}
         {{if eq .Proposal.Status "submitted"}}
-        <button id="withdrawBtn" class="btn btn-secondary">Withdraw</button>
+        <button id="withdrawBtn" class="btn btn-secondary btn-sm">Withdraw</button>
         {{end}}
-        {{if eq .Proposal.Status "draft"}}
-        <button id="deleteBtn" class="btn btn-danger">Delete</button>
+        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "withdrawn") (eq .Proposal.Status "rejected")}}
+        <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
         {{end}}
         {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>

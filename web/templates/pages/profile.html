@@ -9,73 +9,28 @@
     <div class="profile-card">
         <div class="profile-section">
             <h2>Account Information</h2>
-            <div class="profile-field">
-                <label>Email</label>
-                <div class="profile-value">{{.User.Email}}</div>
-            </div>
-            <div class="profile-field">
-                <label>Role</label>
-                <div class="profile-value">
-                    <span class="role-badge role-{{.User.Role}}">{{.User.Role}}</span>
+            <form id="profile-form">
+                <div class="profile-field">
+                    <label for="name">Name</label>
+                    <input type="text" id="name" name="name" value="{{.User.Name}}" placeholder="Enter your name" required />
+                    <div id="name-error" class="error-message" style="display: none;"></div>
                 </div>
-            </div>
-            <div class="profile-field">
-                <label>Member Since</label>
-                <div class="profile-value">{{.User.CreatedAt.Format "January 2, 2006"}}</div>
-            </div>
-        </div>
-
-        <div class="profile-section">
-            <h2>Statistics</h2>
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="proposal-count">-</div>
-                    <div class="stat-label">Total Proposals</div>
+                <div class="profile-field">
+                    <label>Email</label>
+                    <div class="profile-value">{{.User.Email}}</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="draft-count">-</div>
-                    <div class="stat-label">Draft Proposals</div>
+                <div id="profile-status" style="display: none; margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;"></div>
+                <div class="profile-actions">
+                    <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="submitted-count">-</div>
-                    <div class="stat-label">Submitted Proposals</div>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
 {{end}}
 
 {{define "scripts"}}
-<script>
-    async function loadProfileStats() {
-        try {
-            const response = await fetch('/api/proposals');
-            if (!response.ok) {
-                if (response.status === 401) {
-                    window.location.href = '/login';
-                    return;
-                }
-                throw new Error('Failed to load proposals');
-            }
-
-            const proposals = await response.json();
-
-            // Count proposals by status
-            const total = proposals.length;
-            const draft = proposals.filter(p => p.status === 'draft').length;
-            const submitted = proposals.filter(p => p.status === 'submitted').length;
-
-            document.getElementById('proposal-count').textContent = total;
-            document.getElementById('draft-count').textContent = draft;
-            document.getElementById('submitted-count').textContent = submitted;
-        } catch (error) {
-            console.error('Failed to load profile stats:', error);
-        }
-    }
-
-    loadProfileStats();
-</script>
+<script src="/static/js/profile.js" defer></script>
 {{end}}
 
 {{template "layout" .}}

@@ -35,7 +35,7 @@
                     </button>
                     <div class="user-dropdown-menu" id="userDropdownMenu">
                         <div class="user-dropdown-header">
-                            <div class="user-dropdown-email">{{.User.Email}}</div>
+                            <div class="user-dropdown-email">{{if .User.Name}}{{.User.Name}}{{else}}{{.User.Email}}{{end}}</div>
                             <div class="user-dropdown-role">{{.User.Role}}</div>
                         </div>
                         <a href="/profile" class="user-dropdown-item">

@@ -1333,6 +1333,43 @@ a {
     color: var(--text-color);
 }
 
+.profile-field input[type="text"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    color: var(--text-color);
+    background: var(--bg-color);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.profile-field input[type="text"]:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(45, 74, 122, 0.1);
+}
+
+.profile-actions {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.success-message {
+    background: var(--success-color);
+    color: white;
+}
+
+.error-message {
+    background: var(--danger-color);
+    color: white;
+    margin-top: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+
 .role-badge {
     display: inline-block;
     padding: 0.375rem 0.75rem;

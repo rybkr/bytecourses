@@ -77,6 +77,14 @@ func (r *loginRequest) Normalize() {
 	r.Password = strings.TrimSpace(r.Password)
 }
 
+type updateProfileRequest struct {
+	Name string `json:"name"`
+}
+
+func (r *updateProfileRequest) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodPost) {
 		return
@@ -145,6 +153,34 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
+	writeJSON(w, http.StatusOK, u)
+}
+
+func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPatch) {
+		return
+	}
+	u, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	var request updateProfileRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	request.Normalize()
+
+	if request.Name == "" {
+		http.Error(w, "name required", http.StatusBadRequest)
+		return
+	}
+
+	u.Name = request.Name
+	if err := h.users.UpdateUser(r.Context(), u); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	writeJSON(w, http.StatusOK, u)
 }
 

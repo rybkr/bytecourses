@@ -1,57 +1,29 @@
-SHELL := /usr/bin/env bash
+.PHONY: help install lint go-test py-test test migrate ci
 
-GO   := go
-PKGS := ./...
-CMD  := ./cmd/server
+help: # @help Show available targets
+	@grep -E '^[a-zA-Z_-]+:.*?# @help ' $(MAKEFILE_LIST) | \
+	awk 'BEGIN {FS = ":.*?# @help "}; {printf "  %-12s %s\n", $$1, $$2}'
 
-BIN_DIR := bin
-SERVER_BIN := $(BIN_DIR)/server
+install: # @help Install dev tooling
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+	python -m pip install --upgrade pip
+	./scripts/install.sh
 
-.PHONY: help build run dev test test-go test-py fmt vet tidy clean
+lint: # @help Run format and lint checks
+	test -z "$$(gofmt -l .)"
+	go vet ./...
+	ruff format --check .
+	ruff check .
 
-help:
-	@echo "targets:"
-	@echo "  build     build server binary"
-	@echo "  run       run server"
-	@echo "  run-dev   run server in development mode"
-	@echo "  test      run all tests"
-	@echo "  test-go   run go tests"
-	@echo "  test-py   run pytest"
-	@echo "  format    format go code"
-	@echo "  vet       go vet"
-	@echo "  tidy      go mod tidy"
-	@echo "  clean     remove build artifacts"
+go-test: # @help Run go tests
+	go test ./... -count=1 -race -cover
 
-$(BIN_DIR):
-	mkdir -p $(BIN_DIR)
-
-build: $(BIN_DIR)
-	$(GO) build -o $(SERVER_BIN) $(CMD)
-
-run:
-	$(GO) run $(CMD)
-
-run-dev:
-	$(GO) run $(CMD) --seed-users=true --storage=memory
-
-test: test-go test-py
-
-test-go:
-	$(GO) test $(PKGS) -cover
-
-test-py:
+py-test: # @help Run Python tests
 	pytest -vn auto
 
-format:
-	gofmt -w .
-	$(GO) fmt $(PKGS)
-	ruff format .
+test: go-test py-test # @help Run all tests
 
-vet:
-	$(GO) vet $(PKGS)
+migrate: # @help Run DB migrations
+	goose -dir migrations postgres "$$TEST_DATABASE_URL" up
 
-tidy:
-	$(GO) mod tidy
-
-clean:
-	rm -rf $(BIN_DIR)
+ci: install migrate lint test # @help Run full CI pipeline

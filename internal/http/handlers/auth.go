@@ -5,6 +5,8 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/notify"
 	"bytecourses/internal/store"
+	"crypto/sha256"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -98,6 +100,14 @@ func (r *updateProfileRequest) Normalize() {
 
 func isHTTPS(r *http.Request) bool {
 	return r.Header.Get("X-Forwarded-Proto") == "https"
+}
+
+func baseURL(r *http.Request) string {
+	scheme := "http"
+	if isHTTPS(r) {
+		scheme = "https"
+	}
+	return scheme + "://" + r.Host
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
@@ -218,26 +228,41 @@ func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 	request.Normalize()
 	w.WriteHeader(http.StatusAccepted)
 
+	log.Printf("RequestPasswordReset: received request for email=%s", request.Email)
+
 	if request.Email == "" {
+		log.Printf("RequestPasswordReset: email is empty, returning")
 		return
 	}
 	u, ok := h.users.GetUserByEmail(r.Context(), request.Email)
 	if !ok {
+		log.Printf("RequestPasswordReset: user not found for email=%s", request.Email)
 		return
 	}
+
+	log.Printf("RequestPasswordReset: user found, userID=%d", u.ID)
 
 	resetToken, err := auth.GenerateToken(32)
 	if err != nil {
+		log.Printf("RequestPasswordReset: token generation failed: %v", err)
 		return
 	}
-	if err := h.resets.CreateResetToken(r.Context(), u.ID, []byte(resetToken), time.Now().Add(30*time.Minute)); err != nil {
-		return
-	}
+	log.Printf("RequestPasswordReset: token generated successfully")
 
-	resetURL := "http://localhost:8080" + "/reset-password?token=" + resetToken
-	if err := h.email.Send(r.Context(), u.Email, "Reset your password", "Click here "+resetURL, ""); err != nil {
+	tokenHash := sha256.Sum256([]byte(resetToken))
+	if err := h.resets.CreateResetToken(r.Context(), u.ID, tokenHash[:], time.Now().Add(30*time.Minute)); err != nil {
+		log.Printf("RequestPasswordReset: failed to create reset token for userID=%d: %v", u.ID, err)
 		return
 	}
+	log.Printf("RequestPasswordReset: reset token stored for userID=%d", u.ID)
+
+	resetURL := baseURL(r) + "/reset-password?token=" + resetToken
+	log.Printf("RequestPasswordReset: attempting to send email to=%s, url=%s", u.Email, resetURL)
+	if err := h.email.Send(r.Context(), u.Email, "Reset your password", "Click here "+resetURL, ""); err != nil {
+		log.Printf("RequestPasswordReset: email send failed for userID=%d, email=%s: %v", u.ID, u.Email, err)
+		return
+	}
+	log.Printf("RequestPasswordReset: email sent successfully to=%s", u.Email)
 }
 
 type confirmPasswordResetRequest struct {
@@ -261,38 +286,46 @@ func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 	}
 	request.Normalize()
 
+	log.Printf("ConfirmPasswordReset: received confirmation request, token present=%v, password present=%v", request.Token != "", request.NewPassword != "")
+
 	if request.Token == "" || request.NewPassword == "" {
-		http.Error(w, "token and new_password requestuired", http.StatusBadRequest)
+		log.Printf("ConfirmPasswordReset: missing required fields, token present=%v, password present=%v", request.Token != "", request.NewPassword != "")
+		http.Error(w, "token and new_password required", http.StatusBadRequest)
 		return
 	}
 
-	userID, ok := h.resets.ConsumeResetToken(r.Context(), []byte(request.Token), time.Now())
+	tokenHash := sha256.Sum256([]byte(request.Token))
+	userID, ok := h.resets.ConsumeResetToken(r.Context(), tokenHash[:], time.Now())
 	if !ok {
-		http.Error(w, "reset error", http.StatusInternalServerError)
-		return
-	}
-	if !ok {
+		log.Printf("ConfirmPasswordReset: invalid or expired token")
 		http.Error(w, "invalid or expired token", http.StatusBadRequest)
 		return
 	}
+	log.Printf("ConfirmPasswordReset: token validated successfully, userID=%d", userID)
 
 	u, ok := h.users.GetUserByID(r.Context(), userID)
 	if !ok {
+		log.Printf("ConfirmPasswordReset: user not found for userID=%d", userID)
 		http.Error(w, "invalid token", http.StatusBadRequest)
 		return
 	}
+	log.Printf("ConfirmPasswordReset: user found, userID=%d, email=%s", u.ID, u.Email)
 
 	hash, err := auth.HashPassword(request.NewPassword)
 	if err != nil {
+		log.Printf("ConfirmPasswordReset: password hashing failed for userID=%d: %v", u.ID, err)
 		http.Error(w, "password rejected", http.StatusBadRequest)
 		return
 	}
+	log.Printf("ConfirmPasswordReset: password hashed successfully for userID=%d", u.ID)
 
 	u.PasswordHash = hash
 	if err := h.users.UpdateUser(r.Context(), u); err != nil {
+		log.Printf("ConfirmPasswordReset: failed to update password for userID=%d: %v", u.ID, err)
 		http.Error(w, "failed to update password", http.StatusInternalServerError)
 		return
 	}
+	log.Printf("ConfirmPasswordReset: password updated successfully for userID=%d, email=%s", u.ID, u.Email)
 
 	w.WriteHeader(http.StatusNoContent)
 }

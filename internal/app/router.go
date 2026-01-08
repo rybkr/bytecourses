@@ -34,6 +34,7 @@ func (a *App) Router() http.Handler {
 		r.Post("/logout", authH.Logout)
 
 		r.Post("/password-reset/request", authH.RequestPasswordReset)
+		r.Post("/password-reset/confirm", authH.ConfirmPasswordReset)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Patch("/profile", authH.UpdateProfile)
 		r.Get("/health", sysH.Health)
@@ -60,6 +61,8 @@ func (a *App) Router() http.Handler {
 	r.Get("/", pageH.Home)
 	r.Get("/login", pageH.Login)
 	r.Get("/register", pageH.Register)
+	r.Get("/forgot-password", pageH.RequestPasswordReset)
+	r.Get("/reset-password", pageH.ConfirmPasswordReset)
 	r.With(appmw.RequireLogin(a.SessionStore, a.UserStore)).Get("/profile", pageH.Profile)
 
 	r.Route("/proposals", func(r chi.Router) {

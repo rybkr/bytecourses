@@ -38,7 +38,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.ProposalStore = memstore.NewProposalStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.PasswordResetStore = memstore.NewPasswordResetStore()
-		a.EmailSender = resend.New("", "")
+		apiKey := os.Getenv("RESEND_API_KEY")
+		fromEmail := os.Getenv("RESEND_FROM_EMAIL")
+		a.EmailSender = resend.New(apiKey, fromEmail)
 
 	case StorageSQL:
 		dbDsn := os.Getenv("DATABASE_URL")
@@ -55,6 +57,9 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.ProposalStore = db
 		a.PasswordResetStore = db
 		a.SessionStore = memsession.New(24 * time.Hour)
+		apiKey := os.Getenv("RESEND_API_KEY")
+		fromEmail := os.Getenv("RESEND_FROM_EMAIL")
+		a.EmailSender = resend.New(apiKey, fromEmail)
 		a.DB = db
 		a.onClose = db.Close
 

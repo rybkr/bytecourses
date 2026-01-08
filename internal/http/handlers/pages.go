@@ -56,6 +56,28 @@ func (h *PageHandlers) Register(w http.ResponseWriter, r *http.Request) {
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
 
+func (h *PageHandlers) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	if _, ok := userFromRequest(r); ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	data := &TemplateData{
+		Page: "forgot_password.html",
+	}
+	RenderWithUser(w, r, h.sessions, h.users, data)
+}
+
+func (h *PageHandlers) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+	if _, ok := userFromRequest(r); ok {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+	data := &TemplateData{
+		Page: "reset_password.html",
+	}
+	RenderWithUser(w, r, h.sessions, h.users, data)
+}
+
 func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 	u, ok := userFromRequest(r)
 	if !ok {

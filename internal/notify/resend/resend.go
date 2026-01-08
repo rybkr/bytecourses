@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 )
@@ -57,7 +59,24 @@ func (s *Sender) Send(ctx context.Context, to, subject, text, html string) error
 	defer response.Body.Close()
 
 	if response.StatusCode < 200 || response.StatusCode >= 300 {
-		return errors.New("resend: send failed")
+		bodyBytes, err := io.ReadAll(response.Body)
+		if err != nil {
+			return fmt.Errorf("resend: send failed (status %d, body read error: %v)", response.StatusCode, err)
+		}
+
+		var errorResp struct {
+			Message string `json:"message"`
+			Name    string `json:"name"`
+		}
+		if err := json.Unmarshal(bodyBytes, &errorResp); err == nil && errorResp.Message != "" {
+			return fmt.Errorf("resend: send failed (status %d): %s", response.StatusCode, errorResp.Message)
+		}
+
+		bodyStr := string(bodyBytes)
+		if len(bodyStr) > 200 {
+			bodyStr = bodyStr[:200] + "..."
+		}
+		return fmt.Errorf("resend: send failed (status %d): %s", response.StatusCode, bodyStr)
 	}
 	return nil
 }

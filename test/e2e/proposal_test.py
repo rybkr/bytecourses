@@ -99,7 +99,7 @@ def test_get_proposals_empty(go_server):
 def test_proposals_invalid_method(go_server):
     r = requests.delete(f"{go_server}/proposals")
     assert r.status_code == HTTPStatus.UNAUTHORIZED
-    
+
     s = requests.Session()
 
     login_payload: dict[str, str] = {

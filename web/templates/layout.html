@@ -19,6 +19,7 @@
                 <a href="/">Byte Courses</a>
             </div>
             <div class="nav-links">
+                <button class="btn btn-secondary btn-sm" onclick="openTeachModal(event)">Teach a Course</button>
                 {{if .User}}
                 <div class="user-dropdown">
                     <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="User menu"

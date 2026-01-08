@@ -96,3 +96,28 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     });
 });
+
+function openTeachModal(e) {
+    if (e) {
+        e.preventDefault();
+    }
+    const modal = document.getElementById("teach-modal");
+    if (modal) {
+        modal.style.display = "flex";
+        document.body.style.overflow = "hidden";
+    }
+}
+
+function closeTeachModal() {
+    const modal = document.getElementById("teach-modal");
+    if (modal) {
+        modal.style.display = "none";
+        document.body.style.overflow = "";
+    }
+}
+
+document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+        closeTeachModal();
+    }
+});

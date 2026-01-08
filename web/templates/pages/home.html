@@ -4,11 +4,12 @@
 <div class="hero">
     <h1>Learn from peers. Teach what you know.</h1>
     <p class="lead">Short, specialized courses by students, for students</p>
-    {{if not .User}}
     <div class="hero-actions">
+        {{if not .User}}
         <a href="/register" class="btn btn-primary">Get Started</a>
+        {{end}}
+        <button class="btn btn-secondary" onclick="openTeachModal(event)">Teach a Course</button>
     </div>
-    {{end}}
 </div>
 
 <div class="mission-statement">
@@ -59,20 +60,21 @@
 
 <div class="how-it-works">
     <h2>How It Works</h2>
+    <p class="coming-soon-note" id="learners-coming-soon">Courses launching soon!</p>
     <div class="process-steps-learner active" id="learners-process">
         <div class="process-step">
             <div class="process-step-number">1</div>
-            <h3>Browse</h3>
+            <h3>Browse <span class="coming-soon-badge">Coming Soon</span></h3>
             <p>Discover courses that match your interests and learning goals</p>
         </div>
         <div class="process-step">
             <div class="process-step-number">2</div>
-            <h3>Enroll</h3>
+            <h3>Enroll <span class="coming-soon-badge">Coming Soon</span></h3>
             <p>Join courses and connect with instructors</p>
         </div>
         <div class="process-step">
             <div class="process-step-number">3</div>
-            <h3>Learn</h3>
+            <h3>Learn <span class="coming-soon-badge">Coming Soon</span></h3>
             <p>Access course content, complete assignments, and build skills</p>
         </div>
     </div>
@@ -94,6 +96,36 @@
         </div>
     </div>
 </div>
+
+<div id="teach-modal" class="modal" style="display: none;">
+    <div class="modal-overlay" onclick="closeTeachModal()"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Become a Byte Courses Instructor</h2>
+            <button class="modal-close" onclick="closeTeachModal()" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <h3>Why Teach on Byte Courses?</h3>
+            <ul class="instructor-benefits">
+                <li><strong>Build Teaching Experience</strong> - Grow your teaching portfolio with hands-on experience</li>
+                <li><strong>Enhance Your Resume</strong> - Differentiate yourself with experience employers respect</li>
+                <li><strong>Share Your Expertise</strong> - Make an impact while sharpening your own skills and reputation</li>
+            </ul>
+            
+            <h3>How It Works</h3>
+            <ol class="instructor-process">
+                <li><strong>Submit Your Proposal</strong> - Share your course idea with details about what you'll teach</li>
+                <li><strong>Our Team Reviews</strong> - We review your proposal to ensure quality and relevance</li>
+                <li><strong>Launch Your Course</strong> - Once approved, your course can go live for students to discover</li>
+            </ol>
+            
+            <div class="modal-actions">
+                <a href="/proposals/new" class="btn btn-primary" onclick="closeTeachModal()">Submit Your Proposal</a>
+                <button class="btn btn-outline" onclick="closeTeachModal()">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {{end}}
 
 {{define "scripts"}}
@@ -107,6 +139,7 @@
         const instructorsProcess = document.getElementById("instructors-process");
 
         function switchTab(targetTab) {
+            const comingSoonNote = document.getElementById("learners-coming-soon");
             if (targetTab === "learners") {
                 learnersTab.classList.add("active");
                 instructorsTab.classList.remove("active");
@@ -114,6 +147,9 @@
                 instructorsPane.classList.remove("active");
                 learnersProcess.classList.add("active");
                 instructorsProcess.classList.remove("active");
+                if (comingSoonNote) {
+                    comingSoonNote.style.display = "block";
+                }
             } else {
                 instructorsTab.classList.add("active");
                 learnersTab.classList.remove("active");
@@ -121,11 +157,20 @@
                 learnersPane.classList.remove("active");
                 instructorsProcess.classList.add("active");
                 learnersProcess.classList.remove("active");
+                if (comingSoonNote) {
+                    comingSoonNote.style.display = "none";
+                }
             }
         }
 
         learnersTab.addEventListener("click", () => switchTab("learners"));
         instructorsTab.addEventListener("click", () => switchTab("instructors"));
+
+        // Show coming soon note initially if learners tab is active
+        const comingSoonNote = document.getElementById("learners-coming-soon");
+        if (comingSoonNote && learnersTab.classList.contains("active")) {
+            comingSoonNote.style.display = "block";
+        }
     });
 </script>
 {{end}}

@@ -686,6 +686,11 @@ a {
     color: var(--text-color);
     margin-bottom: 1rem;
     letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
 }
 
 .process-step p {
@@ -1534,6 +1539,207 @@ a {
     }
 
     .review-actions .btn {
+        width: 100%;
+    }
+}
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    position: relative;
+    background: var(--bg-color);
+    border-radius: 0.75rem;
+    box-shadow: var(--shadow-md);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    z-index: 1001;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+}
+
+.modal-close:hover {
+    background: var(--bg-secondary);
+    color: var(--text-color);
+}
+
+.modal-body {
+    padding: 2rem;
+}
+
+.modal-body h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-top: 0;
+    margin-bottom: 1rem;
+}
+
+.modal-body h3:not(:first-child) {
+    margin-top: 2rem;
+}
+
+.instructor-benefits,
+.instructor-process {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+}
+
+.instructor-benefits li,
+.instructor-process li {
+    padding: 0.75rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.instructor-benefits li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.instructor-process li {
+    counter-increment: step-counter;
+}
+
+.instructor-process {
+    counter-reset: step-counter;
+}
+
+.instructor-process li::before {
+    content: counter(step-counter) ".";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: 600;
+}
+
+.instructor-benefits strong,
+.instructor-process strong {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
+}
+
+.coming-soon-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 0.25rem;
+    margin-left: 0.5rem;
+}
+
+.coming-soon-note {
+    text-align: center;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-bottom: 2rem;
+    padding: 0.75rem;
+    background: var(--bg-secondary);
+    border-radius: 0.5rem;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+@media (max-width: 768px) {
+    .modal {
+        padding: 0;
+    }
+
+    .modal-content {
+        max-width: 100%;
+        max-height: 100vh;
+        border-radius: 0;
+    }
+
+    .modal-header {
+        padding: 1rem 1.5rem;
+    }
+
+    .modal-header h2 {
+        font-size: 1.5rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .modal-actions .btn {
         width: 100%;
     }
 }

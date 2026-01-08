@@ -79,8 +79,13 @@ func RenderWithUser(w http.ResponseWriter, r *http.Request, sessions auth.Sessio
 		data = &TemplateData{}
 	}
 
-	if user, ok := userFromRequest(r); ok {
-		data.User = user
+	c, err := r.Cookie("session")
+	if err == nil && c.Value != "" {
+		if uid, ok := sessions.GetUserIDByToken(c.Value); ok {
+			if user, ok := users.GetUserByID(r.Context(), uid); ok {
+				data.User = user
+			}
+		}
 	}
 
 	Render(w, data)

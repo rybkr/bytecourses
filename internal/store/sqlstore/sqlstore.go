@@ -30,6 +30,10 @@ func (s *Store) Close() error {
 	return s.db.Close()
 }
 
+func (s *Store) Ping(ctx context.Context) error {
+	return s.db.PingContext(ctx)
+}
+
 func (s *Store) Stats() *store.DBStats {
 	stats := s.db.Stats()
 	return &store.DBStats{

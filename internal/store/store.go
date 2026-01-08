@@ -21,10 +21,6 @@ type ProposalStore interface {
 	DeleteProposalByID(context.Context, int64) error
 }
 
-type StatsProvider interface {
-	Stats() *DBStats
-}
-
 type DBStats struct {
 	MaxOpenConnections int   `json:"max_open_connections"`
 	OpenConnections    int   `json:"open_connections"`

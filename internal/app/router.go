@@ -24,7 +24,7 @@ func (a *App) Router() http.Handler {
 	r.Use(chimw.Logger)
 
 	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
-	sysH := handlers.NewSystemHandlers(a.UserStore)
+	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
 

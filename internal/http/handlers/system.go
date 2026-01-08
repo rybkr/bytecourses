@@ -7,36 +7,42 @@ import (
 	"time"
 )
 
-type SystemHandlers struct {
-	users store.UserStore
+type DBStatser interface {
+	Stats() *store.DBStats
+	Ping(ctx context.Context) error
 }
 
-func NewSystemHandlers(users store.UserStore) *SystemHandlers {
+type SystemHandlers struct {
+	db DBStatser
+}
+
+func NewSystemHandlers(db DBStatser) *SystemHandlers {
 	return &SystemHandlers{
-		users: users,
+		db: db,
 	}
 }
 
 func (h *SystemHandlers) Health(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
-	defer cancel()
-
-	if p, ok := h.users.(interface{ Ping(context.Context) error }); ok {
-		if err := p.Ping(ctx); err != nil {
-			http.Error(w, "storage unavailable", http.StatusServiceUnavailable)
-			return
-		}
+	if h.db == nil {
+		w.WriteHeader(http.StatusOK)
+		return
 	}
 
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+	if err := h.db.Ping(ctx); err != nil {
+		http.Error(w, "storage unavailable", http.StatusServiceUnavailable)
+		return
+	}
 	w.WriteHeader(http.StatusOK)
 }
 
 func (h *SystemHandlers) Diagnostics(w http.ResponseWriter, r *http.Request) {
 	out := map[string]any{"storage": "memory"}
 
-	if sp, ok := h.users.(store.StatsProvider); ok {
+	if h.db != nil {
 		out["storage"] = "sql"
-		out["db"] = sp.Stats()
+		out["db"] = h.db.Stats()
 	}
 
 	writeJSON(w, http.StatusOK, out)

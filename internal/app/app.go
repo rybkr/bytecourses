@@ -18,7 +18,11 @@ type App struct {
 	UserStore     store.UserStore
 	SessionStore  auth.SessionStore
 	ProposalStore store.ProposalStore
-	onClose       func() error
+	DB            interface {
+		Ping(context.Context) error
+		Stats() *store.DBStats
+	}
+	onClose func() error
 }
 
 func New(ctx context.Context, cfg Config) (*App, error) {
@@ -36,15 +40,16 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 			log.Fatal("DATABASE_URL not set")
 		}
 
-		s, err := sqlstore.Open(ctx, dbDsn)
+		db, err := sqlstore.Open(ctx, dbDsn)
 		if err != nil {
 			return nil, err
 		}
 
-		a.UserStore = s
-		a.ProposalStore = s
+		a.UserStore = db
+		a.ProposalStore = db
 		a.SessionStore = memsession.New(24 * time.Hour)
-		a.onClose = s.Close
+		a.DB = db
+		a.onClose = db.Close
 
 	default:
 		return nil, errors.New("unknown storage backend")

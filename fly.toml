@@ -27,4 +27,4 @@ primary_region = 'ord'
   cpus = 1
 
 [processes]
-  app = "run-app --storage=sql"
+  app = "--storage=sql"

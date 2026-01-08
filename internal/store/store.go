@@ -20,3 +20,19 @@ type ProposalStore interface {
 	UpdateProposal(context.Context, *domain.Proposal) error
 	DeleteProposalByID(context.Context, int64) error
 }
+
+type StatsProvider interface {
+	Stats() *DBStats
+}
+
+type DBStats struct {
+	MaxOpenConnections int   `json:"max_open_connections"`
+	OpenConnections    int   `json:"open_connections"`
+	InUse              int   `json:"in_use"`
+	Idle               int   `json:"idle"`
+	WaitCount          int64 `json:"wait_count"`
+	WaitDurationMS     int64 `json:"wait_duration_ms"`
+	MaxIdleClosed      int64 `json:"max_idle_closed"`
+	MaxIdleTimeClosed  int64 `json:"max_idle_time_closed"`
+	MaxLifetimeClosed  int64 `json:"max_lifetime_closed"`
+}

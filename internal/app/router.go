@@ -35,6 +35,7 @@ func (a *App) Router() http.Handler {
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Patch("/profile", authH.UpdateProfile)
 		r.Get("/health", sysH.Health)
+		r.Get("/diagnostics", sysH.Diagnostics)
 
 		r.Route("/proposals", func(r chi.Router) {
 			r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))

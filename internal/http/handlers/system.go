@@ -30,3 +30,14 @@ func (h *SystemHandlers) Health(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *SystemHandlers) Diagnostics(w http.ResponseWriter, r *http.Request) {
+	out := map[string]any{"storage": "memory"}
+
+	if sp, ok := h.users.(store.StatsProvider); ok {
+		out["storage"] = "sql"
+		out["db"] = sp.Stats()
+	}
+
+	writeJSON(w, http.StatusOK, out)
+}

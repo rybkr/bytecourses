@@ -4,6 +4,8 @@ import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/auth/memsession"
 	"bytecourses/internal/domain"
+	"bytecourses/internal/notify"
+	"bytecourses/internal/notify/resend"
 	"bytecourses/internal/store"
 	"bytecourses/internal/store/memstore"
 	"bytecourses/internal/store/sqlstore"
@@ -15,10 +17,12 @@ import (
 )
 
 type App struct {
-	UserStore     store.UserStore
-	SessionStore  auth.SessionStore
-	ProposalStore store.ProposalStore
-	DB            interface {
+	UserStore          store.UserStore
+	SessionStore       auth.SessionStore
+	ProposalStore      store.ProposalStore
+	PasswordResetStore store.PasswordResetStore
+	EmailSender        notify.EmailSender
+	DB                 interface {
 		Ping(context.Context) error
 		Stats() *store.DBStats
 	}
@@ -33,6 +37,8 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.UserStore = memstore.NewUserStore()
 		a.ProposalStore = memstore.NewProposalStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
+		a.PasswordResetStore = memstore.NewPasswordResetStore()
+		a.EmailSender = resend.New("", "")
 
 	case StorageSQL:
 		dbDsn := os.Getenv("DATABASE_URL")
@@ -47,6 +53,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 
 		a.UserStore = db
 		a.ProposalStore = db
+		a.PasswordResetStore = db
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.DB = db
 		a.onClose = db.Close

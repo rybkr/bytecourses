@@ -23,7 +23,7 @@ func (a *App) Router() http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
 
-	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
+	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore, a.PasswordResetStore, a.EmailSender)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
@@ -32,6 +32,8 @@ func (a *App) Router() http.Handler {
 		r.Post("/register", authH.Register)
 		r.Post("/login", authH.Login)
 		r.Post("/logout", authH.Logout)
+
+		r.Post("/password-reset/request", authH.RequestPasswordReset)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Patch("/profile", authH.UpdateProfile)
 		r.Get("/health", sysH.Health)

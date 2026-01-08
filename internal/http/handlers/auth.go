@@ -3,20 +3,31 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
+	"bytecourses/internal/notify"
 	"bytecourses/internal/store"
 	"net/http"
 	"strings"
+	"time"
 )
 
 type AuthHandler struct {
 	users    store.UserStore
 	sessions auth.SessionStore
+	resets   store.PasswordResetStore
+	email    notify.EmailSender
 }
 
-func NewAuthHandler(users store.UserStore, sessions auth.SessionStore) *AuthHandler {
+func NewAuthHandler(
+	users store.UserStore,
+	sessions auth.SessionStore,
+	resets store.PasswordResetStore,
+	email notify.EmailSender,
+) *AuthHandler {
 	return &AuthHandler{
 		users:    users,
 		sessions: sessions,
+		resets:   resets,
+		email:    email,
 	}
 }
 
@@ -186,4 +197,102 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, u)
+}
+
+type requestPasswordResetRequest struct {
+	Email string `json:"email"`
+}
+
+func (r *requestPasswordResetRequest) Normalize() {
+	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
+}
+
+func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+	var request requestPasswordResetRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	request.Normalize()
+	w.WriteHeader(http.StatusAccepted)
+
+	if request.Email == "" {
+		return
+	}
+	u, ok := h.users.GetUserByEmail(r.Context(), request.Email)
+	if !ok {
+		return
+	}
+
+	resetToken, err := auth.GenerateToken(32)
+	if err != nil {
+		return
+	}
+	if err := h.resets.CreateResetToken(r.Context(), u.ID, []byte(resetToken), time.Now().Add(30*time.Minute)); err != nil {
+		return
+	}
+
+	resetURL := "http://localhost:8080" + "/reset-password?token=" + resetToken
+	if err := h.email.Send(r.Context(), u.Email, "Reset your password", "Click here "+resetURL, ""); err != nil {
+		return
+	}
+}
+
+type confirmPasswordResetRequest struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+func (r *confirmPasswordResetRequest) Normalize() {
+	r.Token = strings.TrimSpace(r.Token)
+	r.NewPassword = strings.TrimSpace(r.NewPassword)
+}
+
+func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+
+	var request confirmPasswordResetRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	request.Normalize()
+
+	if request.Token == "" || request.NewPassword == "" {
+		http.Error(w, "token and new_password requestuired", http.StatusBadRequest)
+		return
+	}
+
+	userID, ok := h.resets.ConsumeResetToken(r.Context(), []byte(request.Token), time.Now())
+	if !ok {
+		http.Error(w, "reset error", http.StatusInternalServerError)
+		return
+	}
+	if !ok {
+		http.Error(w, "invalid or expired token", http.StatusBadRequest)
+		return
+	}
+
+	u, ok := h.users.GetUserByID(r.Context(), userID)
+	if !ok {
+		http.Error(w, "invalid token", http.StatusBadRequest)
+		return
+	}
+
+	hash, err := auth.HashPassword(request.NewPassword)
+	if err != nil {
+		http.Error(w, "password rejected", http.StatusBadRequest)
+		return
+	}
+
+	u.PasswordHash = hash
+	if err := h.users.UpdateUser(r.Context(), u); err != nil {
+		http.Error(w, "failed to update password", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }

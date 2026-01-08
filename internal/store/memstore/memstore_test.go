@@ -17,3 +17,9 @@ func TestProposalStore(t *testing.T) {
 		return NewUserStore(), NewProposalStore()
 	})
 }
+
+func TestPasswordResetStore(t *testing.T) {
+	storetest.TestPasswordResetStore(t, func(t *testing.T) (store.UserStore, store.PasswordResetStore) {
+		return NewUserStore(), NewPasswordResetStore()
+	})
+}

@@ -33,14 +33,14 @@ func (r *registerRequest) Normalize() {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-    if !requireMethod(w, r, http.MethodPost) {
+	if !requireMethod(w, r, http.MethodPost) {
 		return
 	}
 	var request registerRequest
-    if !decodeJSON(w, r, &request) {
+	if !decodeJSON(w, r, &request) {
 		return
 	}
-    request.Normalize()
+	request.Normalize()
 
 	if request.Email == "" || request.Password == "" {
 		http.Error(w, "email and password required", http.StatusBadRequest)
@@ -85,7 +85,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if !decodeJSON(w, r, &request) {
 		return
 	}
-    request.Normalize()
+	request.Normalize()
 
 	if request.Email == "" || request.Password == "" {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
@@ -114,6 +114,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		HttpOnly: true,
 		SameSite: http.SameSiteLaxMode,
+		Secure:   isHTTPS(r),
 	})
 	w.WriteHeader(http.StatusOK)
 }
@@ -144,5 +145,9 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-    writeJSON(w, http.StatusOK, u)
+	writeJSON(w, http.StatusOK, u)
+}
+
+func isHTTPS(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-Proto") == "https"
 }

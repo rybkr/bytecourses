@@ -8,7 +8,6 @@ const (
 )
 
 type Config struct {
-	HTTPAddr    string
 	Storage     StorageBackend
 	DatabaseDSN string
 	BcryptCost  int

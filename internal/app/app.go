@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 	"time"
 )
 
@@ -37,7 +38,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.UserStore = s
 		a.ProposalStore = s
 		a.SessionStore = memsession.New(24 * time.Hour)
-        a.onClose = s.Close
+		a.onClose = s.Close
 
 	default:
 		return nil, errors.New("unknown storage backend")
@@ -48,15 +49,41 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 			log.Fatal(err)
 		}
 	}
+	if err := seedAdmin(ctx, a.UserStore); err != nil {
+		return nil, err
+	}
 
 	return a, nil
 }
 
 func (a *App) Close() error {
-    if a.onClose != nil {
-        return a.onClose()
-    }
-    return nil
+	if a.onClose != nil {
+		return a.onClose()
+	}
+	return nil
+}
+
+func seedAdmin(ctx context.Context, users store.UserStore) error {
+	email := os.Getenv("ADMIN_EMAIL")
+	password := os.Getenv("ADMIN_PASSWORD")
+	if email == "" || password == "" {
+		return nil
+	}
+
+	if _, ok := users.GetUserByEmail(ctx, email); ok {
+		return nil
+	}
+	hash, err := auth.HashPassword(password)
+	if err != nil {
+		return err
+	}
+
+	return users.CreateUser(ctx, &domain.User{
+		Email:        email,
+		PasswordHash: hash,
+		Role:         domain.UserRoleAdmin,
+		Name:         "Admin",
+	})
 }
 
 func ensureTestUsers(ctx context.Context, users store.UserStore) error {

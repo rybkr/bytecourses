@@ -22,5 +22,5 @@ type User struct {
 }
 
 func (u *User) IsAdmin() bool {
-    return u.Role == UserRoleAdmin
+	return u.Role == UserRoleAdmin
 }

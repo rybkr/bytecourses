@@ -8,21 +8,24 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
-	httpAddr := flag.String("http-addr", ":8080", "http listen address")
 	storage := flag.String("storage", "memory", "storage backend: memory|sql")
-	dbDsn := flag.String("database-dsn", "", "SQL database DSN (required if storage=sql)")
 	bcryptCost := flag.Int("bcrypt-cost", bcrypt.DefaultCost, "bcrypt cost factor")
 	seedUsers := flag.Bool("seed-users", false, "seed system test users")
 	flag.Parse()
 
+	dbDsn := os.Getenv("DATABASE_URL")
+	if dbDsn == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
+
 	ctx := context.Background()
 	cfg := app.Config{
-		HTTPAddr:    *httpAddr,
 		Storage:     app.StorageBackend(*storage),
-		DatabaseDSN: *dbDsn,
+		DatabaseDSN: dbDsn,
 		BcryptCost:  *bcryptCost,
 		SeedUsers:   *seedUsers,
 	}
@@ -32,8 +35,12 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-    defer a.Close()
+	defer a.Close()
 
-	log.Printf("listening on %s", cfg.HTTPAddr)
-	log.Fatal(http.ListenAndServe(cfg.HTTPAddr, a.Router()))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := "0.0.0.0:" + port
+	log.Fatal(http.ListenAndServe(addr, a.Router()))
 }

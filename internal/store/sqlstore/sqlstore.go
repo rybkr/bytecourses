@@ -26,5 +26,5 @@ func Open(ctx context.Context, dsn string) (*Store, error) {
 }
 
 func (s *Store) Close() error {
-    return s.db.Close()
+	return s.db.Close()
 }

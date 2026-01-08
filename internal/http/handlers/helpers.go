@@ -30,11 +30,11 @@ func requireMethod(w http.ResponseWriter, r *http.Request, method string) bool {
 }
 
 func requirePath(w http.ResponseWriter, r *http.Request, path string) bool {
-    if r.URL.Path != path {
-        http.NotFound(w, r)
-        return false
-    }
-    return true
+	if r.URL.Path != path {
+		http.NotFound(w, r)
+		return false
+	}
+	return true
 }
 
 func userFromRequest(r *http.Request) (*domain.User, bool) {

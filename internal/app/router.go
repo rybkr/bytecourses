@@ -28,21 +28,21 @@ func (a *App) Router() http.Handler {
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
 
-    r.Route("/api", func(r chi.Router) {
-        r.Post("/register", authH.Register)
-        r.Post("/login", authH.Login)
-        r.Post("/logout", authH.Logout)
-        r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
-        r.Get("/health", utilH.Health)
+	r.Route("/api", func(r chi.Router) {
+		r.Post("/register", authH.Register)
+		r.Post("/login", authH.Login)
+		r.Post("/logout", authH.Logout)
+		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
+		r.Get("/health", utilH.Health)
 
-        r.Route("/proposals", func(r chi.Router) {
-            r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
+		r.Route("/proposals", func(r chi.Router) {
+			r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
 
-            r.Post("/", propH.Create)
-            r.Get("/", propH.List)
-            r.Get("/mine", propH.ListMine)
+			r.Post("/", propH.Create)
+			r.Get("/", propH.List)
+			r.Get("/mine", propH.ListMine)
 
-            r.Route("/{id}", func(r chi.Router) {
+			r.Route("/{id}", func(r chi.Router) {
 				r.Use(appmw.RequireProposal(a.ProposalStore, proposalID))
 
 				r.Get("/", propH.Get)
@@ -50,22 +50,22 @@ func (a *App) Router() http.Handler {
 				r.Delete("/", propH.Delete)
 				r.Post("/actions/{action}", propH.Action)
 			})
-        })
-    })
+		})
+	})
 
 	r.Get("/", pageH.Home)
 	r.Get("/login", pageH.Login)
 	r.Get("/register", pageH.Register)
 	r.Get("/profile", pageH.Profile)
 
-    r.Route("/proposals", func(r chi.Router) {
-        r.Use(appmw.RequireLogin(a.SessionStore, a.UserStore))
-	    r.Get("/", pageH.ProposalsList)
-        r.Get("/mine", pageH.ProposalsListMine)
-        r.Get("/new", pageH.ProposalNew)
-        r.Get("/{id}", pageH.ProposalView)
-        r.Get("/{id}/edit", pageH.ProposalEdit)
-    })
+	r.Route("/proposals", func(r chi.Router) {
+		r.Use(appmw.RequireLogin(a.SessionStore, a.UserStore))
+		r.Get("/", pageH.ProposalsList)
+		r.Get("/mine", pageH.ProposalsListMine)
+		r.Get("/new", pageH.ProposalNew)
+		r.Get("/{id}", pageH.ProposalView)
+		r.Get("/{id}/edit", pageH.ProposalEdit)
+	})
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 

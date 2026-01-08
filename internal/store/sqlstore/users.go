@@ -10,10 +10,10 @@ import (
 
 func (s *Store) CreateUser(ctx context.Context, u *domain.User) error {
 	createdAt := time.Now().UTC()
-    role := u.Role
-    if role == "" {
-        role = domain.UserRoleStudent
-    }
+	role := u.Role
+	if role == "" {
+		role = domain.UserRoleStudent
+	}
 
 	if err := s.db.QueryRowContext(ctx, `
         INSERT INTO users (name, email, password_hash, role, created_at)

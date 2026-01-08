@@ -67,9 +67,9 @@ func (h *PageHandlers) ProposalsList(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := &TemplateData{
-        User: u,
-        Page: "proposals.html",
-    }
+		User: u,
+		Page: "proposals.html",
+	}
 	Render(w, data)
 }
 
@@ -80,9 +80,9 @@ func (h *PageHandlers) ProposalsListMine(w http.ResponseWriter, r *http.Request)
 	}
 
 	data := &TemplateData{
-        User: u, 
-        Page: "proposals.html",
-    }
+		User: u,
+		Page: "proposals.html",
+	}
 	Render(w, data)
 }
 

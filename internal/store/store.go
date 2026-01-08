@@ -3,6 +3,7 @@ package store
 import (
 	"bytecourses/internal/domain"
 	"context"
+    "time"
 )
 
 type UserStore interface {
@@ -19,6 +20,11 @@ type ProposalStore interface {
 	ListAllSubmittedProposals(context.Context) ([]domain.Proposal, error)
 	UpdateProposal(context.Context, *domain.Proposal) error
 	DeleteProposalByID(context.Context, int64) error
+}
+
+type PasswordResetStore interface {
+    CreateResetToken(ctx context.Context, userID int64, tokenHash []byte, expiresAt time.Time) error
+    ConsumeResetToken(ctx context.Context, tokenHash []byte, now time.Time) (userID int64, ok bool, err error)
 }
 
 type DBStats struct {

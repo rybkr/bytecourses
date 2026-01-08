@@ -17,17 +17,11 @@ func main() {
 	seedUsers := flag.Bool("seed-users", false, "seed system test users")
 	flag.Parse()
 
-	dbDsn := os.Getenv("DATABASE_URL")
-	if dbDsn == "" {
-		log.Fatal("DATABASE_URL not set")
-	}
-
 	ctx := context.Background()
 	cfg := app.Config{
-		Storage:     app.StorageBackend(*storage),
-		DatabaseDSN: dbDsn,
-		BcryptCost:  *bcryptCost,
-		SeedUsers:   *seedUsers,
+		Storage:    app.StorageBackend(*storage),
+		BcryptCost: *bcryptCost,
+		SeedUsers:  *seedUsers,
 	}
 	auth.SetBcryptCost(*bcryptCost)
 

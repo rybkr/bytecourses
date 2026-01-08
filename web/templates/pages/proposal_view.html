@@ -66,7 +66,7 @@ ByteCourses{{end}} {{define "content"}}
 {{if .Proposal.ReviewNotes}}
 <div class="review-notes-card {{if eq .Proposal.Status " changes_requested"}}review-notes-highlight{{end}}">
     <h3>Review Notes</h3>
-    <div class="review-notes-content">{{.Proposal.ReviewNotes}}</div>
+    <div class="review-notes-content">{{markdown .Proposal.ReviewNotes}}</div>
     {{if .Proposal.ReviewerID}}
     <div class="review-notes-meta">
         <span>Reviewed by Admin</span>
@@ -94,11 +94,15 @@ ByteCourses{{end}} {{define "content"}}
 </div>
 <div class="proposal-content">
     <h2>Summary</h2>
-    <p class="proposal-content-value">{{.Proposal.Summary}}</p>
+    <div class="proposal-content-value">{{markdown .Proposal.Summary}}</div>
     <h2>Target Audience</h2>
-    <p class="proposal-content-value">{{.Proposal.TargetAudience}}</p>
+    <div class="proposal-content-value">{{markdown .Proposal.TargetAudience}}</div>
     <h2>Learning Objectives</h2>
-    <p class="proposal-content-value">{{.Proposal.LearningObjectives}}</p>
+    <div class="proposal-content-value">{{markdown .Proposal.LearningObjectives}}</div>
+    <h2>Course Outline</h2>
+    <div class="proposal-content-value">{{markdown .Proposal.Outline}}</div>
+    <h2>Prerequisites</h2>
+    <div class="proposal-content-value">{{markdown .Proposal.AssumedPrerequisites}}</div>
 </div>
 {{end}} {{define "scripts"}}
 <script>

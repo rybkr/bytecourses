@@ -31,10 +31,16 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.SessionStore = memsession.New(24 * time.Hour)
 
 	case StorageSQL:
-		s, err := sqlstore.Open(ctx, cfg.DatabaseDSN)
+        dbDsn := os.Getenv("DATABASE_URL")
+        if dbDsn == "" {
+            log.Fatal("DATABASE_URL not set")
+        }
+
+		s, err := sqlstore.Open(ctx, dbDsn)
 		if err != nil {
 			return nil, err
 		}
+
 		a.UserStore = s
 		a.ProposalStore = s
 		a.SessionStore = memsession.New(24 * time.Hour)

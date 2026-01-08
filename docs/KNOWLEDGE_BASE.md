@@ -13,8 +13,8 @@
 - **Web Framework**: Chi router (v5.2.3)
 - **Authentication**: Custom session-based auth with bcrypt password hashing
 - **Storage**: 
-  - Current: In-memory store (for development)
-  - Planned: SQL database backend (not yet implemented)
+  - In-memory store (default, for development)
+  - SQL database backend (PostgreSQL via pgx/v5) - implemented
 
 ### Frontend
 - **Approach**: Vanilla JavaScript, HTML, CSS
@@ -80,7 +80,6 @@ bytecourses/
 - Basic page rendering with layout templates
 
 **Not Yet Implemented:**
-- SQL database backend
 - Course entity (currently only proposals exist)
 - Course browsing and filtering
 - Course content delivery
@@ -111,15 +110,18 @@ bytecourses/
 
 ### Running the Application
 - Server entry point: `cmd/server/main.go`
-- Default HTTP address: `:8080`
-- Storage backend: `memory` (default) or `sql` (planned)
-- Admin seeding: Use `-seed-admin` flag to create test admin user
+- Default HTTP address: `:8080` (configurable via `PORT` env var)
+- Storage backend: `memory` (default) or `sql`
+- Environment variables:
+  - `DATABASE_URL` (required) - PostgreSQL connection string
+  - `PORT` (optional, default: 8080) - HTTP listen port
+  - `ADMIN_EMAIL` (optional) - Auto-creates admin user on startup
+  - `ADMIN_PASSWORD` (optional) - Password for auto-created admin user
 
-### Configuration
-- HTTP listen address: `-http-addr` flag
-- Storage backend: `-storage` flag (memory|sql)
-- Database DSN: `-database-dsn` flag (required for SQL backend)
-- Bcrypt cost: `-bcrypt-cost` flag
+### Configuration Flags
+- `-storage` (memory|sql) - Storage backend selection
+- `-bcrypt-cost` - Bcrypt cost factor (default: bcrypt.DefaultCost)
+- `-seed-users` - Seed test users (admin@local.bytecourses.org / admin, user@local.bytecourses.org / user)
 
 ## API Endpoints
 
@@ -168,7 +170,7 @@ bytecourses/
    - Are there certificates or credentials upon completion?
 
 4. **Technical Decisions**
-   - Which SQL database will be used? (PostgreSQL, MySQL, SQLite?)
+   - SQL database: PostgreSQL (via pgx/v5)
    - Are there plans for file uploads (course materials, images)?
    - Will there be real-time features (chat, notifications)?
    - Deployment strategy and hosting preferences?
@@ -200,4 +202,6 @@ bytecourses/
 - All code changes must follow explicit mode transitions
 - Current focus appears to be on the proposal submission workflow
 - The transition from proposals to courses is not yet defined in the codebase
+- SQL store implementation exists in `internal/store/sqlstore/` with PostgreSQL migrations in `migrations/`
+- Sessions are in-memory only (not persisted to database)
 

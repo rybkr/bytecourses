@@ -1032,10 +1032,126 @@ a {
     line-height: 1.8;
     font-size: 1rem;
     margin-bottom: 1.5rem;
-    padding: 1rem 1.25rem;
-    background: var(--bg-secondary);
+}
+
+.proposal-content-value h1,
+.proposal-content-value h2,
+.proposal-content-value h3,
+.proposal-content-value h4,
+.proposal-content-value h5,
+.proposal-content-value h6 {
+    color: var(--text-color);
+    font-weight: 600;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.proposal-content-value h1 {
+    font-size: 1.25rem;
+}
+
+.proposal-content-value h2 {
+    font-size: 1.125rem;
+}
+
+.proposal-content-value h3 {
+    font-size: 1rem;
+}
+
+.proposal-content-value h4 {
+    font-size: 0.9375rem;
+}
+
+.proposal-content-value h5,
+.proposal-content-value h6 {
+    font-size: 0.875rem;
+}
+
+.proposal-content-value h1:first-child,
+.proposal-content-value h2:first-child,
+.proposal-content-value h3:first-child,
+.proposal-content-value h4:first-child,
+.proposal-content-value h5:first-child,
+.proposal-content-value h6:first-child {
+    margin-top: 0;
+}
+
+.proposal-content-value p {
+    margin-bottom: 1rem;
+}
+
+.proposal-content-value p:last-child {
+    margin-bottom: 0;
+}
+
+.proposal-content-value ul,
+.proposal-content-value ol {
+    margin: 1rem 0;
+    padding-left: 2rem;
+}
+
+.proposal-content-value li {
+    margin-bottom: 0.5rem;
+}
+
+.proposal-content-value ul li {
+    list-style-type: disc;
+}
+
+.proposal-content-value ol li {
+    list-style-type: decimal;
+}
+
+.proposal-content-value code {
+    background: var(--bg-color);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.25rem;
+    font-size: 0.9em;
+    font-family: "Courier New", Courier, monospace;
+    color: var(--primary-color);
+}
+
+.proposal-content-value pre {
+    background: var(--bg-color);
+    padding: 1rem;
     border-radius: 0.5rem;
-    border-left: 3px solid var(--accent-color);
+    overflow-x: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+}
+
+.proposal-content-value pre code {
+    background: transparent;
+    padding: 0;
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+.proposal-content-value a {
+    color: var(--accent-color);
+    text-decoration: underline;
+}
+
+.proposal-content-value a:hover {
+    color: var(--accent-hover);
+}
+
+.proposal-content-value em {
+    font-style: italic;
+}
+
+.proposal-content-value strong {
+    font-weight: 600;
+    color: var(--text-color);
+}
+
+.proposal-content-value blockquote {
+    border-left: 3px solid var(--border-color);
+    padding-left: 1rem;
+    margin: 1rem 0;
+    color: var(--text-secondary);
+    font-style: italic;
 }
 
 .proposal-summary {

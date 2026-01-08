@@ -9,14 +9,24 @@ import (
 	"net/http"
 	"os"
 	"sync"
+
+	"github.com/yuin/goldmark"
 )
 
 var (
 	layoutContent []byte
 	layoutOnce    sync.Once
+	markdown      = goldmark.New()
 	funcMap       = template.FuncMap{
 		"safeJS": func(s string) template.JS {
 			return template.JS(s)
+		},
+		"markdown": func(s string) template.HTML {
+			var buf bytes.Buffer
+			if err := markdown.Convert([]byte(s), &buf); err != nil {
+				return template.HTML("")
+			}
+			return template.HTML(buf.String())
 		},
 	}
 )

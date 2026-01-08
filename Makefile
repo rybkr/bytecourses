@@ -32,7 +32,7 @@ run:
 	$(GO) run $(CMD)
 
 run-dev:
-	$(GO) run $(CMD) --seed-users=true
+	$(GO) run $(CMD) --seed-users=true --storage=memory
 
 test: test-go test-py
 

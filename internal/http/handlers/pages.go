@@ -142,12 +142,7 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pidStr := r.URL.Path[len("/proposals/"):]
-	if pidStr == "" {
-		http.NotFound(w, r)
-		return
-	}
-
+	pidStr := chi.URLParam(r, "id")
 	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {
 		http.NotFound(w, r)
@@ -159,15 +154,7 @@ func (h *PageHandlers) ProposalView(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	if user.Role != domain.UserRoleAdmin && p.AuthorID != user.ID {
-		http.NotFound(w, r)
-		return
-	}
-	if user.Role == domain.UserRoleAdmin &&
-		p.Status != domain.ProposalStatusSubmitted &&
-		p.Status != domain.ProposalStatusApproved &&
-		p.Status != domain.ProposalStatusRejected &&
-		p.Status != domain.ProposalStatusChangesRequested {
+	if !p.IsViewableBy(user) {
 		http.NotFound(w, r)
 		return
 	}

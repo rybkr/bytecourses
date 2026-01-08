@@ -85,6 +85,10 @@ func (r *updateProfileRequest) Normalize() {
 	r.Name = strings.TrimSpace(r.Name)
 }
 
+func isHTTPS(r *http.Request) bool {
+	return r.Header.Get("X-Forwarded-Proto") == "https"
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if !requireMethod(w, r, http.MethodPost) {
 		return
@@ -182,8 +186,4 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, u)
-}
-
-func isHTTPS(r *http.Request) bool {
-	return r.Header.Get("X-Forwarded-Proto") == "https"
 }

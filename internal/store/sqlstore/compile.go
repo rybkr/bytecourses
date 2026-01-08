@@ -5,3 +5,4 @@ import (
 )
 
 var _ store.UserStore = (*Store)(nil)
+var _ store.ProposalStore = (*Store)(nil)

@@ -50,10 +50,8 @@ type TemplateData struct {
 }
 
 func Render(w http.ResponseWriter, data *TemplateData) {
-	// Execute the page template, which will include the layout
-	templateName := "home.html" // default
+	templateName := "home.html"
 	if data != nil && data.Page != "" {
-		// Add .html extension if not present
 		if len(data.Page) < 5 || data.Page[len(data.Page)-5:] != ".html" {
 			templateName = data.Page + ".html"
 		} else {
@@ -61,19 +59,16 @@ func Render(w http.ResponseWriter, data *TemplateData) {
 		}
 	}
 
-	// Parse layout and page template together so blocks are scoped correctly
 	layoutContent := getLayoutContent()
 	templates := template.Must(template.New("layout").Funcs(funcMap).Parse(string(layoutContent)))
 	templates = template.Must(templates.ParseFiles("web/templates/pages/" + templateName))
 
-	// Execute template to a buffer first to catch errors before writing headers
 	var buf bytes.Buffer
 	if err := templates.ExecuteTemplate(&buf, templateName, data); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	// Set headers and write the rendered template
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
 	buf.WriteTo(w)
@@ -84,8 +79,7 @@ func RenderWithUser(w http.ResponseWriter, r *http.Request, sessions auth.Sessio
 		data = &TemplateData{}
 	}
 
-	// Try to get user from session
-	if user, ok := actorFromRequest(r, sessions, users); ok {
+	if user, ok := userFromRequest(r); ok {
 		data.User = user
 	}
 

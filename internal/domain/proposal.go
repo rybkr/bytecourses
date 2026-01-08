@@ -30,3 +30,23 @@ type Proposal struct {
 	UpdatedAt            time.Time      `json:"updated_at"`
 	Status               ProposalStatus `json:"status"`
 }
+
+func (p *Proposal) WasSubmitted() bool {
+	return p.Status == ProposalStatusSubmitted ||
+		p.Status == ProposalStatusApproved ||
+		p.Status == ProposalStatusRejected ||
+		p.Status == ProposalStatusChangesRequested
+}
+
+func (p *Proposal) IsOwnedBy(u *User) bool {
+	return p.AuthorID == u.ID
+}
+
+func (p *Proposal) IsViewableBy(u *User) bool {
+	return p.IsOwnedBy(u) || (u.IsAdmin() && p.WasSubmitted())
+}
+
+func (p *Proposal) IsAmendable() bool {
+	return p.Status == ProposalStatusDraft ||
+		p.Status == ProposalStatusChangesRequested
+}

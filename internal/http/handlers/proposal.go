@@ -56,18 +56,18 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 
 	switch action {
 	case "submit":
-		if p.AuthorID != u.ID {
+		if !p.IsOwnedBy(u) {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
-		if p.Status != domain.ProposalStatusDraft && p.Status != domain.ProposalStatusChangesRequested {
+		if !p.IsAmendable() {
 			http.Error(w, "invalid state", http.StatusConflict)
 			return
 		}
 		p.Status = domain.ProposalStatusSubmitted
 
 	case "withdraw":
-		if p.AuthorID != u.ID {
+		if !p.IsOwnedBy(u) {
 			http.Error(w, "not found", http.StatusNotFound)
 			return
 		}
@@ -78,7 +78,7 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		p.Status = domain.ProposalStatusWithdrawn
 
 	case "approve", "reject", "request-changes":
-		if u.Role != domain.UserRoleAdmin {
+		if !u.IsAdmin() {
 			http.Error(w, "forbidden", http.StatusForbidden)
 			return
 		}
@@ -157,7 +157,9 @@ func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
 
 	// Else, it shall return all proposals owned by the user.
 	default:
-		http.Redirect(w, r, "/api/proposals/mine", http.StatusSeeOther)
+		response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), u.ID)
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
 	}
 }
 
@@ -185,16 +187,7 @@ func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if u.Role != domain.UserRoleAdmin && p.AuthorID != u.ID {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-
-	if u.Role == domain.UserRoleAdmin &&
-		p.Status != domain.ProposalStatusSubmitted &&
-		p.Status != domain.ProposalStatusApproved &&
-		p.Status != domain.ProposalStatusRejected &&
-		p.Status != domain.ProposalStatusChangesRequested {
+	if !p.IsViewableBy(u) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -215,12 +208,11 @@ func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if p.AuthorID != u.ID {
+	if !p.IsOwnedBy(u) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
-
-	if p.Status != domain.ProposalStatusDraft && p.Status != domain.ProposalStatusChangesRequested {
+	if !p.IsAmendable() {
 		http.Error(w, "invalid state", http.StatusConflict)
 		return
 	}
@@ -258,7 +250,7 @@ func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if p.AuthorID != u.ID {
+	if !p.IsOwnedBy(u) {
 		http.Error(w, "not found", http.StatusNotFound)
 		return
 	}
@@ -269,28 +261,6 @@ func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *ProposalHandlers) Approve(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	pid, ok := h.requireProposalID(w, r)
-	if !ok {
-		return
-	}
-
-	p, ok := h.proposals.GetProposalByID(r.Context(), pid)
-	if !ok {
-		http.Error(w, "not found", http.StatusNotFound)
-	}
-	p.ID = pid
-
-	p.Status = domain.ProposalStatusApproved
-	p.ReviewerID = &u.ID
-
 }
 
 func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {

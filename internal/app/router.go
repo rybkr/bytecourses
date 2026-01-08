@@ -3,11 +3,10 @@ package app
 import (
 	"bytecourses/internal/http/handlers"
 	appmw "bytecourses/internal/http/middleware"
-	"net/http"
-	"strconv"
-
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
+	"net/http"
+	"strconv"
 )
 
 func proposalID(r *http.Request) (int64, bool) {
@@ -25,7 +24,7 @@ func (a *App) Router() http.Handler {
 	r.Use(chimw.Logger)
 
 	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore)
-	utilH := handlers.NewUtilHandlers()
+	sysH := handlers.NewSystemHandlers(a.UserStore)
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
 
@@ -35,7 +34,7 @@ func (a *App) Router() http.Handler {
 		r.Post("/logout", authH.Logout)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Get("/me", authH.Me)
 		r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Patch("/profile", authH.UpdateProfile)
-		r.Get("/health", utilH.Health)
+		r.Get("/health", sysH.Health)
 
 		r.Route("/proposals", func(r chi.Router) {
 			r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))

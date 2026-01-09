@@ -3,7 +3,9 @@ package handlers
 import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/http/middleware"
+	"bytecourses/internal/services"
 	"encoding/json"
+	"errors"
 	"net/http"
 )
 
@@ -48,4 +50,31 @@ func requireUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
 		return nil, false
 	}
 	return u, true
+}
+
+func handleServiceError(w http.ResponseWriter, err error) {
+	if err == nil {
+		return
+	}
+
+	switch {
+	case errors.Is(err, services.ErrNotFound):
+		http.Error(w, "not found", http.StatusNotFound)
+	case errors.Is(err, services.ErrUnauthorized):
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+	case errors.Is(err, services.ErrForbidden):
+		http.Error(w, "forbidden", http.StatusForbidden)
+	case errors.Is(err, services.ErrConflict):
+		http.Error(w, "conflict", http.StatusConflict)
+	case errors.Is(err, services.ErrInvalidInput):
+		http.Error(w, "invalid input", http.StatusBadRequest)
+	case errors.Is(err, services.ErrInvalidCredentials):
+		http.Error(w, "invalid credentials", http.StatusUnauthorized)
+	case errors.Is(err, services.ErrInvalidToken):
+		http.Error(w, "invalid or expired token", http.StatusBadRequest)
+	case errors.Is(err, services.ErrInvalidStatusTransition):
+		http.Error(w, "invalid status transition", http.StatusBadRequest)
+	default:
+		http.Error(w, "internal error", http.StatusInternalServerError)
+	}
 }

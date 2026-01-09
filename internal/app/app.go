@@ -6,6 +6,7 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/notify"
 	"bytecourses/internal/notify/resend"
+	"bytecourses/internal/services"
 	"bytecourses/internal/store"
 	"bytecourses/internal/store/memstore"
 	"bytecourses/internal/store/sqlstore"
@@ -17,6 +18,7 @@ import (
 )
 
 type App struct {
+	Services           *services.Services
 	UserStore          store.UserStore
 	SessionStore       auth.SessionStore
 	ProposalStore      store.ProposalStore
@@ -66,6 +68,15 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	default:
 		return nil, errors.New("unknown storage backend")
 	}
+
+	// Create services layer with all dependencies
+	a.Services = services.New(services.Dependencies{
+		UserStore:          a.UserStore,
+		ProposalStore:      a.ProposalStore,
+		PasswordResetStore: a.PasswordResetStore,
+		SessionStore:       a.SessionStore,
+		EmailSender:        a.EmailSender,
+	})
 
 	if cfg.SeedUsers {
 		if err := ensureTestUsers(ctx, a.UserStore); err != nil {

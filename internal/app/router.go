@@ -3,6 +3,7 @@ package app
 import (
 	"bytecourses/internal/http/handlers"
 	appmw "bytecourses/internal/http/middleware"
+	"bytecourses/internal/services"
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"net/http"
@@ -23,7 +24,16 @@ func (a *App) Router() http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
 
-	authH := handlers.NewAuthHandler(a.UserStore, a.SessionStore, a.PasswordResetStore, a.EmailSender)
+	serviceDependencies := services.Dependencies{
+		UserStore:          a.UserStore,
+		ProposalStore:      a.ProposalStore,
+		PasswordResetStore: a.PasswordResetStore,
+		SessionStore:       a.SessionStore,
+		EmailSender:        a.EmailSender,
+	}
+	appServices := services.New(serviceDependencies)
+
+	authH := handlers.NewAuthHandler(appServices)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
 	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)

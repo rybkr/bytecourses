@@ -7,7 +7,7 @@ import (
 	"bytecourses/internal/store"
 	"context"
 	"crypto/sha256"
-	"log"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -33,79 +33,90 @@ func NewAuthService(
 	}
 }
 
-// RegisterRequest represents user registration input
 type RegisterRequest struct {
-	Name     string
-	Email    string
-	Password string
+	Name     string `json:"name"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-// Normalize trims whitespace and normalizes email
 func (r *RegisterRequest) Normalize() {
 	r.Name = strings.TrimSpace(r.Name)
+	if r.Name == "" {
+		r.Name = "Guest User"
+	}
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
 	r.Password = strings.TrimSpace(r.Password)
 }
 
-// Register creates a new user account
-func (s *AuthService) Register(ctx context.Context, req RegisterRequest) (*domain.User, error) {
-	req.Normalize()
+func (r *RegisterRequest) IsValid() bool {
+	return r.Name != "" && r.Email != "" && r.Password != ""
+}
 
-	if req.Email == "" || req.Password == "" {
+func (s *AuthService) Register(ctx context.Context, request RegisterRequest) (*domain.User, error) {
+	start := time.Now()
+	slog.Info("auth.register.attempt")
+
+	request.Normalize()
+	if !request.IsValid() {
+		slog.Warn("auth.register.invalid_input")
 		return nil, ErrInvalidInput
 	}
 
-	hash, err := auth.HashPassword(req.Password)
+	hash, err := auth.HashPassword(request.Password)
 	if err != nil {
+		slog.Error("auth.register.hash_error", "err", err)
 		return nil, err
 	}
 
 	user := &domain.User{
-		Email:        req.Email,
+		Email:        request.Email,
 		PasswordHash: hash,
-		Name:         req.Name,
+		Name:         request.Name,
 		Role:         domain.UserRoleStudent,
 	}
-
 	if err := s.users.CreateUser(ctx, user); err != nil {
+		slog.Error("auth.register.store_error", "err", err)
 		return nil, err
 	}
+
+	slog.Info("auth.register.success",
+		"user_id", user.ID,
+		"duration_ms", time.Since(start).Milliseconds(),
+	)
 
 	return user, nil
 }
 
-// LoginRequest represents login input
 type LoginRequest struct {
-	Email    string
-	Password string
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-// Normalize trims whitespace and normalizes email
 func (r *LoginRequest) Normalize() {
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
 	r.Password = strings.TrimSpace(r.Password)
 }
 
-// LoginResult contains the session token for successful login
+func (r *LoginRequest) IsValid() bool {
+	return r.Email != "" && r.Password != ""
+}
+
 type LoginResult struct {
 	UserID int64
 	Token  string
 }
 
-// Login authenticates a user and creates a session
-func (s *AuthService) Login(ctx context.Context, req LoginRequest) (*LoginResult, error) {
-	req.Normalize()
-
-	if req.Email == "" || req.Password == "" {
+func (s *AuthService) Login(ctx context.Context, request LoginRequest) (*LoginResult, error) {
+	request.Normalize()
+	if !request.IsValid() {
 		return nil, ErrInvalidCredentials
 	}
 
-	user, ok := s.users.GetUserByEmail(ctx, req.Email)
+	user, ok := s.users.GetUserByEmail(ctx, request.Email)
 	if !ok {
 		return nil, ErrInvalidCredentials
 	}
-
-	if !auth.VerifyPassword(user.PasswordHash, req.Password) {
+	if !auth.VerifyPassword(user.PasswordHash, request.Password) {
 		return nil, ErrInvalidCredentials
 	}
 
@@ -120,117 +131,124 @@ func (s *AuthService) Login(ctx context.Context, req LoginRequest) (*LoginResult
 	}, nil
 }
 
-// Logout invalidates a session
 func (s *AuthService) Logout(token string) {
 	s.sessions.DeleteSessionByToken(token)
 }
 
-// RequestPasswordResetRequest represents password reset request input
-type RequestPasswordResetRequest struct {
-	Email   string
-	BaseURL string // For constructing reset link
+type UpdateProfileRequest struct {
+	UserID int64  `json:"-"`
+	Name   string `json:"name"`
 }
 
-// Normalize trims whitespace and normalizes email
+func (r *UpdateProfileRequest) Normalize() {
+	r.Name = strings.TrimSpace(r.Name)
+}
+
+func (r *UpdateProfileRequest) IsValid() bool {
+	return r.Name != ""
+}
+
+func (s *AuthService) UpdateProfile(ctx context.Context, request UpdateProfileRequest) (*domain.User, error) {
+	request.Normalize()
+	if !request.IsValid() {
+		return nil, ErrInvalidInput
+	}
+
+	user, ok := s.users.GetUserByID(ctx, request.UserID)
+	if !ok {
+		return nil, ErrNotFound
+	}
+
+	user.Name = request.Name
+
+	if err := s.users.UpdateUser(ctx, user); err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+type RequestPasswordResetRequest struct {
+	Email   string `json:"email"`
+	BaseURL string `json:"-"`
+}
+
 func (r *RequestPasswordResetRequest) Normalize() {
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
+	r.BaseURL = strings.TrimSpace(r.BaseURL)
 }
 
-// RequestPasswordReset initiates a password reset flow
-func (s *AuthService) RequestPasswordReset(ctx context.Context, req RequestPasswordResetRequest) error {
-	req.Normalize()
+func (r *RequestPasswordResetRequest) IsValid() bool {
+	return r.Email != ""
+}
 
-	log.Printf("RequestPasswordReset: received request for email=%s", req.Email)
-
-	if req.Email == "" {
-		log.Printf("RequestPasswordReset: email is empty, returning")
-		return nil // Return nil for security (don't reveal if email exists)
+func (s *AuthService) RequestPasswordReset(ctx context.Context, request RequestPasswordResetRequest) error {
+	request.Normalize()
+	if !request.IsValid() {
+		return ErrInvalidInput
 	}
 
-	user, ok := s.users.GetUserByEmail(ctx, req.Email)
+	user, ok := s.users.GetUserByEmail(ctx, request.Email)
 	if !ok {
-		log.Printf("RequestPasswordReset: user not found for email=%s", req.Email)
-		return nil // Return nil for security
+		return ErrNotFound
 	}
-
-	log.Printf("RequestPasswordReset: user found, userID=%d", user.ID)
 
 	resetToken, err := auth.GenerateToken(32)
 	if err != nil {
-		log.Printf("RequestPasswordReset: token generation failed: %v", err)
 		return err
 	}
-	log.Printf("RequestPasswordReset: token generated successfully")
-
 	tokenHash := sha256.Sum256([]byte(resetToken))
 	if err := s.resets.CreateResetToken(ctx, user.ID, tokenHash[:], time.Now().Add(30*time.Minute)); err != nil {
-		log.Printf("RequestPasswordReset: failed to create reset token for userID=%d: %v", user.ID, err)
 		return err
 	}
-	log.Printf("RequestPasswordReset: reset token stored for userID=%d", user.ID)
 
-	resetURL := req.BaseURL + "/reset-password?token=" + resetToken
-	log.Printf("RequestPasswordReset: attempting to send email to=%s, url=%s", user.Email, resetURL)
+	resetURL := request.BaseURL + "/reset-password?token=" + resetToken
 	if err := s.email.Send(ctx, user.Email, "Reset your password", "Click here "+resetURL, ""); err != nil {
-		log.Printf("RequestPasswordReset: email send failed for userID=%d, email=%s: %v", user.ID, user.Email, err)
 		return err
 	}
-	log.Printf("RequestPasswordReset: email sent successfully to=%s", user.Email)
 
 	return nil
 }
 
-// ConfirmPasswordResetRequest represents password reset confirmation input
 type ConfirmPasswordResetRequest struct {
 	Token       string
 	NewPassword string
 }
 
-// Normalize trims whitespace
 func (r *ConfirmPasswordResetRequest) Normalize() {
 	r.Token = strings.TrimSpace(r.Token)
 	r.NewPassword = strings.TrimSpace(r.NewPassword)
 }
 
-// ConfirmPasswordReset completes the password reset flow
-func (s *AuthService) ConfirmPasswordReset(ctx context.Context, req ConfirmPasswordResetRequest) error {
-	req.Normalize()
+func (r *ConfirmPasswordResetRequest) IsValid() bool {
+	return r.Token != "" && r.NewPassword != ""
+}
 
-	log.Printf("ConfirmPasswordReset: received confirmation request, token present=%v, password present=%v", req.Token != "", req.NewPassword != "")
-
-	if req.Token == "" || req.NewPassword == "" {
-		log.Printf("ConfirmPasswordReset: missing required fields, token present=%v, password present=%v", req.Token != "", req.NewPassword != "")
+func (s *AuthService) ConfirmPasswordReset(ctx context.Context, request ConfirmPasswordResetRequest) error {
+	request.Normalize()
+	if !request.IsValid() {
 		return ErrInvalidInput
 	}
 
-	tokenHash := sha256.Sum256([]byte(req.Token))
+	tokenHash := sha256.Sum256([]byte(request.Token))
 	userID, ok := s.resets.ConsumeResetToken(ctx, tokenHash[:], time.Now())
 	if !ok {
-		log.Printf("ConfirmPasswordReset: invalid or expired token")
 		return ErrInvalidToken
 	}
-	log.Printf("ConfirmPasswordReset: token validated successfully, userID=%d", userID)
 
 	user, ok := s.users.GetUserByID(ctx, userID)
 	if !ok {
-		log.Printf("ConfirmPasswordReset: user not found for userID=%d", userID)
 		return ErrNotFound
 	}
-	log.Printf("ConfirmPasswordReset: user found, userID=%d, email=%s", user.ID, user.Email)
 
-	hash, err := auth.HashPassword(req.NewPassword)
+	hash, err := auth.HashPassword(request.NewPassword)
 	if err != nil {
-		log.Printf("ConfirmPasswordReset: password hashing failed for userID=%d: %v", user.ID, err)
 		return err
 	}
-	log.Printf("ConfirmPasswordReset: password hashed successfully for userID=%d", user.ID)
 
 	user.PasswordHash = hash
 	if err := s.users.UpdateUser(ctx, user); err != nil {
-		log.Printf("ConfirmPasswordReset: failed to update password for userID=%d: %v", user.ID, err)
 		return err
 	}
-	log.Printf("ConfirmPasswordReset: password updated successfully for userID=%d, email=%s", user.ID, user.Email)
 
 	return nil
 }

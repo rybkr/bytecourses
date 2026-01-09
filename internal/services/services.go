@@ -6,14 +6,11 @@ import (
 	"bytecourses/internal/store"
 )
 
-// Services aggregates all business services
 type Services struct {
 	Auth      *AuthService
-	Users     *UserService
 	Proposals *ProposalService
 }
 
-// Dependencies contains all infrastructure dependencies needed by services
 type Dependencies struct {
 	UserStore          store.UserStore
 	ProposalStore      store.ProposalStore
@@ -22,11 +19,9 @@ type Dependencies struct {
 	EmailSender        notify.EmailSender
 }
 
-// New creates and wires all services with their dependencies
-func New(deps Dependencies) *Services {
+func New(d Dependencies) *Services {
 	return &Services{
-		Auth:      NewAuthService(deps.UserStore, deps.SessionStore, deps.PasswordResetStore, deps.EmailSender),
-		Users:     NewUserService(deps.UserStore),
-		Proposals: NewProposalService(deps.ProposalStore, deps.UserStore),
+		Auth:      NewAuthService(d.UserStore, d.SessionStore, d.PasswordResetStore, d.EmailSender),
+		Proposals: NewProposalService(d.ProposalStore, d.UserStore),
 	}
 }

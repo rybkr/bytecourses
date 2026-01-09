@@ -18,27 +18,25 @@ func NewProposalService(proposals store.ProposalStore, users store.UserStore) *P
 	}
 }
 
-// CreateProposalRequest represents proposal creation input
 type CreateProposalRequest struct {
-	AuthorID             int64
-	Title                string
-	Summary              string
-	TargetAudience       string
-	LearningObjectives   string
-	Outline              string
-	AssumedPrerequisites string
+	AuthorID             int64  `json:"author_id"`
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	Outline              string `json:"outline"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
-// CreateProposal creates a new proposal draft
-func (s *ProposalService) CreateProposal(ctx context.Context, req CreateProposalRequest) (*domain.Proposal, error) {
+func (s *ProposalService) CreateProposal(ctx context.Context, request CreateProposalRequest) (*domain.Proposal, error) {
 	proposal := &domain.Proposal{
-		AuthorID:             req.AuthorID,
-		Title:                req.Title,
-		Summary:              req.Summary,
-		TargetAudience:       req.TargetAudience,
-		LearningObjectives:   req.LearningObjectives,
-		Outline:              req.Outline,
-		AssumedPrerequisites: req.AssumedPrerequisites,
+		AuthorID:             request.AuthorID,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		Outline:              request.Outline,
+		AssumedPrerequisites: request.AssumedPrerequisites,
 		Status:               domain.ProposalStatusDraft,
 	}
 
@@ -49,7 +47,6 @@ func (s *ProposalService) CreateProposal(ctx context.Context, req CreateProposal
 	return proposal, nil
 }
 
-// GetProposal retrieves a proposal by ID with authorization check
 func (s *ProposalService) GetProposal(ctx context.Context, proposalID int64, userID int64) (*domain.Proposal, error) {
 	proposal, ok := s.proposals.GetProposalByID(ctx, proposalID)
 	if !ok {
@@ -60,7 +57,6 @@ func (s *ProposalService) GetProposal(ctx context.Context, proposalID int64, use
 	if !ok {
 		return nil, ErrUnauthorized
 	}
-
 	if !proposal.IsViewableBy(user) {
 		return nil, ErrNotFound
 	}
@@ -68,18 +64,17 @@ func (s *ProposalService) GetProposal(ctx context.Context, proposalID int64, use
 	return proposal, nil
 }
 
-// ListProposalsRequest contains filtering options
 type ListProposalsRequest struct {
 	UserID int64
 	Role   domain.UserRole
 }
 
 // ListProposals returns proposals based on user role
-func (s *ProposalService) ListProposals(ctx context.Context, req ListProposalsRequest) ([]domain.Proposal, error) {
-	if req.Role == domain.UserRoleAdmin {
+func (s *ProposalService) ListProposals(ctx context.Context, request ListProposalsRequest) ([]domain.Proposal, error) {
+	if request.Role == domain.UserRoleAdmin {
 		return s.proposals.ListAllSubmittedProposals(ctx)
 	}
-	return s.proposals.ListProposalsByAuthorID(ctx, req.UserID)
+	return s.proposals.ListProposalsByAuthorID(ctx, request.UserID)
 }
 
 // UpdateProposalRequest represents proposal update input

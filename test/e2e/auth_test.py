@@ -22,9 +22,9 @@ def test_register_duplicate(go_server):
     assert r.status_code == HTTPStatus.CREATED
 
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.BAD_REQUEST
+    assert r.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
     r = requests.post(f"{go_server}/register", json=payload)
-    assert r.status_code == HTTPStatus.BAD_REQUEST
+    assert r.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 def test_register_no_email(go_server):

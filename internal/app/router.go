@@ -35,8 +35,8 @@ func (a *App) Router() http.Handler {
 
 	authH := handlers.NewAuthHandler(appServices)
 	sysH := handlers.NewSystemHandlers(a.DB)
-	propH := handlers.NewProposalHandlers(a.ProposalStore, a.UserStore, a.SessionStore)
-	pageH := handlers.NewPageHandlers(a.UserStore, a.SessionStore, a.ProposalStore)
+	propH := handlers.NewProposalHandler(appServices)
+	pageH := handlers.NewPageHandlers(appServices, a.UserStore, a.SessionStore, a.ProposalStore)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/register", authH.Register)

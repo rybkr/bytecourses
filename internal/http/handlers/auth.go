@@ -25,7 +25,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.services.Auth.Register(r.Context(), request)
+	user, err := h.services.Auth.Register(r.Context(), &request)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -44,7 +44,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginResult, err := h.services.Auth.Login(r.Context(), request)
+	loginResult, err := h.services.Auth.Login(r.Context(), &request)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -110,7 +110,7 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 	request.UserID = u.ID
 
-	user, err := h.services.Auth.UpdateProfile(r.Context(), request)
+	user, err := h.services.Auth.UpdateProfile(r.Context(), &request)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -133,7 +133,7 @@ func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 	// Always return 202 Accepted to avoid email enumeration
 	w.WriteHeader(http.StatusAccepted)
 
-	if err := h.services.Auth.RequestPasswordReset(r.Context(), request); err != nil {
+	if err := h.services.Auth.RequestPasswordReset(r.Context(), &request); err != nil {
 		// Log error but don't expose to client
 		// Service error is in charge of logging the error
 		_ = err
@@ -150,7 +150,7 @@ func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := h.services.Auth.ConfirmPasswordReset(r.Context(), request); err != nil {
+	if err := h.services.Auth.ConfirmPasswordReset(r.Context(), &request); err != nil {
 		handleServiceError(w, err)
 		return
 	}

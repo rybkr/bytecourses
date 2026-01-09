@@ -52,6 +52,19 @@ func requireUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
 	return u, true
 }
 
+func proposalFromRequest(r *http.Request) (*domain.Proposal, bool) {
+	return middleware.ProposalFromContext(r.Context())
+}
+
+func requireProposal(w http.ResponseWriter, r *http.Request) (*domain.Proposal, bool) {
+	p, ok := proposalFromRequest(r)
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return nil, false
+	}
+	return p, true
+}
+
 func handleServiceError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return

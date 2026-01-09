@@ -364,7 +364,7 @@ def test_unknown_action(go_server):
     pid = r.json()["id"]
 
     r = s.post(f"{go_server}/proposals/{pid}/actions/jump")
-    assert r.status_code == HTTPStatus.NOT_FOUND
+    assert r.status_code == HTTPStatus.BAD_REQUEST
 
 
 def test_admin_view_proposals(go_server):

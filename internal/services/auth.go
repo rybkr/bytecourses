@@ -7,7 +7,6 @@ import (
 	"bytecourses/internal/store"
 	"context"
 	"crypto/sha256"
-	"log/slog"
 	"strings"
 	"time"
 )
@@ -52,19 +51,14 @@ func (r *RegisterRequest) IsValid() bool {
 	return r.Name != "" && r.Email != "" && r.Password != ""
 }
 
-func (s *AuthService) Register(ctx context.Context, request RegisterRequest) (*domain.User, error) {
-	start := time.Now()
-	slog.Info("auth.register.attempt")
-
+func (s *AuthService) Register(ctx context.Context, request *RegisterRequest) (*domain.User, error) {
 	request.Normalize()
 	if !request.IsValid() {
-		slog.Warn("auth.register.invalid_input")
 		return nil, ErrInvalidInput
 	}
 
 	hash, err := auth.HashPassword(request.Password)
 	if err != nil {
-		slog.Error("auth.register.hash_error", "err", err)
 		return nil, err
 	}
 
@@ -75,14 +69,8 @@ func (s *AuthService) Register(ctx context.Context, request RegisterRequest) (*d
 		Role:         domain.UserRoleStudent,
 	}
 	if err := s.users.CreateUser(ctx, user); err != nil {
-		slog.Error("auth.register.store_error", "err", err)
 		return nil, err
 	}
-
-	slog.Info("auth.register.success",
-		"user_id", user.ID,
-		"duration_ms", time.Since(start).Milliseconds(),
-	)
 
 	return user, nil
 }
@@ -106,7 +94,7 @@ type LoginResult struct {
 	Token  string
 }
 
-func (s *AuthService) Login(ctx context.Context, request LoginRequest) (*LoginResult, error) {
+func (s *AuthService) Login(ctx context.Context, request *LoginRequest) (*LoginResult, error) {
 	request.Normalize()
 	if !request.IsValid() {
 		return nil, ErrInvalidCredentials
@@ -148,7 +136,7 @@ func (r *UpdateProfileRequest) IsValid() bool {
 	return r.Name != ""
 }
 
-func (s *AuthService) UpdateProfile(ctx context.Context, request UpdateProfileRequest) (*domain.User, error) {
+func (s *AuthService) UpdateProfile(ctx context.Context, request *UpdateProfileRequest) (*domain.User, error) {
 	request.Normalize()
 	if !request.IsValid() {
 		return nil, ErrInvalidInput
@@ -181,7 +169,7 @@ func (r *RequestPasswordResetRequest) IsValid() bool {
 	return r.Email != ""
 }
 
-func (s *AuthService) RequestPasswordReset(ctx context.Context, request RequestPasswordResetRequest) error {
+func (s *AuthService) RequestPasswordReset(ctx context.Context, request *RequestPasswordResetRequest) error {
 	request.Normalize()
 	if !request.IsValid() {
 		return ErrInvalidInput
@@ -223,7 +211,7 @@ func (r *ConfirmPasswordResetRequest) IsValid() bool {
 	return r.Token != "" && r.NewPassword != ""
 }
 
-func (s *AuthService) ConfirmPasswordReset(ctx context.Context, request ConfirmPasswordResetRequest) error {
+func (s *AuthService) ConfirmPasswordReset(ctx context.Context, request *ConfirmPasswordResetRequest) error {
 	request.Normalize()
 	if !request.IsValid() {
 		return ErrInvalidInput

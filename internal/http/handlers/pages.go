@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytecourses/internal/auth"
 	"bytecourses/internal/domain"
+	"bytecourses/internal/services"
 	"bytecourses/internal/store"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
@@ -11,13 +12,15 @@ import (
 )
 
 type PageHandlers struct {
+	services  *services.Services
 	users     store.UserStore
 	sessions  auth.SessionStore
 	proposals store.ProposalStore
 }
 
-func NewPageHandlers(users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore) *PageHandlers {
+func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore) *PageHandlers {
 	return &PageHandlers{
+		services:  services,
 		users:     users,
 		sessions:  sessions,
 		proposals: proposals,
@@ -114,16 +117,16 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p := domain.Proposal{
+	proposal, err := h.services.Proposals.CreateProposal(r.Context(), &services.CreateProposalRequest{
 		AuthorID: u.ID,
-		Status:   domain.ProposalStatusDraft,
-	}
-	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {
+		// Empty fields - proposal starts as draft
+	})
+	if err != nil {
 		http.Error(w, "failed to create draft", http.StatusInternalServerError)
 		return
 	}
 
-	http.Redirect(w, r, "/proposals/"+strconv.FormatInt(p.ID, 10)+"/edit", http.StatusSeeOther)
+	http.Redirect(w, r, "/proposals/"+strconv.FormatInt(proposal.ID, 10)+"/edit", http.StatusSeeOther)
 }
 
 func (h *PageHandlers) ProposalEdit(w http.ResponseWriter, r *http.Request) {

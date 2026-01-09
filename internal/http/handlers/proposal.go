@@ -1,28 +1,20 @@
 package handlers
 
 import (
-	"bytecourses/internal/auth"
-	"bytecourses/internal/domain"
-	"bytecourses/internal/http/middleware"
-	"bytecourses/internal/store"
+	"bytecourses/internal/services"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"io"
 	"net/http"
-	"strconv"
 )
 
-type ProposalHandlers struct {
-	proposals store.ProposalStore
-	users     store.UserStore
-	sessions  auth.SessionStore
+type ProposalHandler struct {
+	services *services.Services
 }
 
-func NewProposalHandlers(proposals store.ProposalStore, users store.UserStore, sessions auth.SessionStore) *ProposalHandlers {
-	return &ProposalHandlers{
-		proposals: proposals,
-		users:     users,
-		sessions:  sessions,
+func NewProposalHandler(services *services.Services) *ProposalHandler {
+	return &ProposalHandler{
+		services: services,
 	}
 }
 
@@ -30,21 +22,152 @@ type ActionRequest struct {
 	ReviewNotes string `json:"review_notes"`
 }
 
-func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPost) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	var request services.CreateProposalRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+	request.AuthorID = user.ID
+
+	proposal, err := h.services.Proposals.CreateProposal(r.Context(), &request)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, proposal)
+}
+
+func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	p, ok := requireProposal(w, r)
+	if !ok {
+		return
+	}
+
+	proposal, err := h.services.Proposals.GetProposal(r.Context(), user, p)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, proposal)
+}
+
+func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	proposals, err := h.services.Proposals.ListProposals(r.Context(), user)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, proposals)
+}
+
+func (h *ProposalHandler) ListMine(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+
+	proposals, err := h.services.Proposals.ListMyProposals(r.Context(), user)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, proposals)
+}
+
+func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPatch) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	p, ok := requireProposal(w, r)
+	if !ok {
+		return
+	}
+
+	var request services.UpdateProposalRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+
+	err := h.services.Proposals.UpdateProposal(r.Context(), p, user, &request)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	u, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	p, ok := requireProposal(w, r)
+	if !ok {
+		return
+	}
+
+	err := h.services.Proposals.DeleteProposal(r.Context(), p, u)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProposalHandler) Action(w http.ResponseWriter, r *http.Request) {
 	action := chi.URLParam(r, "action")
 	if action == "" {
 		http.Error(w, "missing action", http.StatusBadRequest)
 		return
 	}
 
-	u, ok := middleware.UserFromContext(r.Context())
+	u, ok := requireUser(w, r)
 	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	p, ok := middleware.ProposalFromContext(r.Context())
+	p, ok := requireProposal(w, r)
 	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
@@ -54,227 +177,29 @@ func (h *ProposalHandlers) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var err error
 	switch action {
 	case "submit":
-		if !p.IsOwnedBy(u) {
-			http.Error(w, "not found", http.StatusNotFound)
-			return
-		}
-		if !p.IsAmendable() {
-			http.Error(w, "invalid state", http.StatusConflict)
-			return
-		}
-		p.Status = domain.ProposalStatusSubmitted
+		err = h.services.Proposals.SubmitProposal(r.Context(), p, u)
 
 	case "withdraw":
-		if !p.IsOwnedBy(u) {
-			http.Error(w, "not found", http.StatusNotFound)
-			return
-		}
-		if p.Status != domain.ProposalStatusSubmitted {
-			http.Error(w, "invalid state", http.StatusConflict)
-			return
-		}
-		p.Status = domain.ProposalStatusWithdrawn
+		err = h.services.Proposals.WithdrawProposal(r.Context(), p, u)
 
 	case "approve", "reject", "request-changes":
-		if !u.IsAdmin() {
-			http.Error(w, "forbidden", http.StatusForbidden)
-			return
-		}
-		if p.Status != domain.ProposalStatusSubmitted {
-			http.Error(w, "invalid state", http.StatusConflict)
-			return
-		}
-		p.ReviewerID = &u.ID
-		p.ReviewNotes = request.ReviewNotes
-		if action == "approve" {
-			p.Status = domain.ProposalStatusApproved
-		} else if action == "reject" {
-			p.Status = domain.ProposalStatusRejected
-		} else {
-			p.Status = domain.ProposalStatusChangesRequested
-		}
+		err = h.services.Proposals.ReviewProposal(r.Context(), p, u, services.ReviewProposalRequest{
+			Action: action,
+			Notes:  request.ReviewNotes,
+		})
 
 	default:
-		http.Error(w, "unknown action", http.StatusNotFound)
+		http.Error(w, "unknown action", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.proposals.UpdateProposal(r.Context(), p); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
-}
-
-type ProposalCreateResponse struct {
-	ID int64 `json:"id"`
-}
-
-func (h *ProposalHandlers) Create(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	var p domain.Proposal
-	if err := json.NewDecoder(r.Body).Decode(&p); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	p.AuthorID = u.ID
-	p.Status = domain.ProposalStatusDraft
-
-	if err := h.proposals.CreateProposal(r.Context(), &p); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	response := ProposalCreateResponse{
-		ID: p.ID,
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *ProposalHandlers) List(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	switch u.Role {
-	// If the user is an admin, then GET /api/proposals shall return all proposals submitted for review.
-	case domain.UserRoleAdmin:
-		response, _ := h.proposals.ListAllSubmittedProposals(r.Context())
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-
-	// Else, it shall return all proposals owned by the user.
-	default:
-		response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), u.ID)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(response)
-	}
-}
-
-func (h *ProposalHandlers) ListMine(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), u.ID)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(response)
-}
-
-func (h *ProposalHandlers) Get(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	p, ok := middleware.ProposalFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	if !p.IsViewableBy(u) {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(p)
-}
-
-func (h *ProposalHandlers) Update(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	p, ok := middleware.ProposalFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	if !p.IsOwnedBy(u) {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-	if !p.IsAmendable() {
-		http.Error(w, "invalid state", http.StatusConflict)
-		return
-	}
-
-	var patch domain.Proposal
-	if err := json.NewDecoder(r.Body).Decode(&patch); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	p.Title = patch.Title
-	p.Summary = patch.Summary
-	p.TargetAudience = patch.TargetAudience
-	p.LearningObjectives = patch.LearningObjectives
-	p.Outline = patch.Outline
-	p.AssumedPrerequisites = patch.AssumedPrerequisites
-
-	if err := h.proposals.UpdateProposal(r.Context(), p); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *ProposalHandlers) Delete(w http.ResponseWriter, r *http.Request) {
-	u, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	p, ok := middleware.ProposalFromContext(r.Context())
-	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-
-	if !p.IsOwnedBy(u) {
-		http.Error(w, "not found", http.StatusNotFound)
-		return
-	}
-
-	if err := h.proposals.DeleteProposalByID(r.Context(), p.ID); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
-}
-
-func (h *ProposalHandlers) requireProposalID(w http.ResponseWriter, r *http.Request) (int64, bool) {
-	pidStr := chi.URLParam(r, "id")
-	if pidStr == "" {
-		http.Error(w, "missing id", http.StatusBadRequest)
-		return 0, false
-	}
-
-	pid, err := strconv.ParseInt(pidStr, 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
-		return 0, false
+		handleServiceError(w, err)
+		return
 	}
 
-	return pid, true
+	w.WriteHeader(http.StatusNoContent)
 }

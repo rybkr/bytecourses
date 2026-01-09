@@ -8,7 +8,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
+    "strings"
 )
 
 type Sender struct {
@@ -79,4 +81,49 @@ func (s *Sender) Send(ctx context.Context, to, subject, text, html string) error
 		return fmt.Errorf("resend: send failed (status %d): %s", response.StatusCode, bodyStr)
 	}
 	return nil
+}
+
+func (s *Sender) SendPasswordResetPrompt(ctx context.Context, to, resetURL, token string) error {
+	if strings.TrimSpace(to) == "" {
+		return errors.New("resend: missing recipient email")
+	}
+	if strings.TrimSpace(resetURL) == "" {
+		return errors.New("resend: missing reset url")
+	}
+
+	u, err := url.Parse(resetURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return errors.New("resend: invalid reset url")
+	}
+
+	q := u.Query()
+	q.Set("token", token)
+	q.Set("email", to)
+	u.RawQuery = q.Encode()
+	link := u.String()
+
+	subject := "Reset your password"
+	text := fmt.Sprintf(
+		"Someone requested a password reset for %s.\n\nReset your password using this link:\n%s\n\nIf you didn't request this, you can ignore this email.\n",
+		to, link,
+	)
+	html := fmt.Sprintf(
+		`<p>Someone requested a password reset for <strong>%s</strong>.</p>
+<p><a href="%s">Reset your password</a>.</p>
+<p>If you didn't request this, you can ignore this email.</p>`,
+		escapeHTML(to), escapeHTML(link),
+	)
+
+	return s.Send(ctx, to, subject, text, html)
+}
+
+func escapeHTML(s string) string {
+	r := strings.NewReplacer(
+		"&", "&amp;",
+		"<", "&lt;",
+		">", "&gt;",
+		`"`, "&quot;",
+		"'", "&#39;",
+	)
+	return r.Replace(s)
 }

@@ -189,8 +189,8 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, request *Request
 		return err
 	}
 
-	resetURL := request.BaseURL + "/reset-password?token=" + resetToken
-	if err := s.email.Send(ctx, user.Email, "Reset your password", "Click here "+resetURL, ""); err != nil {
+	resetURL := request.BaseURL + "/reset-password"
+	if err := s.email.SendPasswordResetPrompt(ctx, user.Email, resetURL, resetToken); err != nil {
 		return err
 	}
 

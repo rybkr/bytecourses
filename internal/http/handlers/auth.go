@@ -149,6 +149,7 @@ func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 	if !decodeJSON(w, r, &request) {
 		return
 	}
+    request.Token = r.URL.Query().Get("token")
 
 	if err := h.services.Auth.ConfirmPasswordReset(r.Context(), &request); err != nil {
 		handleServiceError(w, err)

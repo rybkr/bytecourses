@@ -226,3 +226,24 @@ def test_user_name(go_server):
 
     assert "name" in r.json()
     assert r.json()["name"] == "User Name"
+
+
+def test_register_welcome_email_non_blocking(go_server):
+    """
+    Verify registration succeeds even if welcome email fails.
+    Email delivery is non-blocking.
+    """
+    payload: dict[str, str] = {
+        "name": "Welcome Test",
+        "email": "welcometest@example.com",
+        "password": "password123",
+    }
+    r = requests.post(f"{go_server}/register", json=payload)
+    assert r.status_code == HTTPStatus.CREATED
+
+    login_payload: dict[str, str] = {
+        "email": "welcometest@example.com",
+        "password": "password123",
+    }
+    r = requests.post(f"{go_server}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK

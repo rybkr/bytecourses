@@ -83,6 +83,16 @@ func (s *AuthService) Register(ctx context.Context, request *RegisterRequest) (*
 	}
 
 	s.logger.InfoUser("user.registered", user)
+
+	if err := s.email.SendWelcomeEmail(ctx, user.Email, user.Name); err != nil {
+		s.logger.Error("failed to send welcome email",
+			"event", "auth.registration",
+			"user_id", user.ID,
+			"email", user.Email,
+			"error", err,
+		)
+	}
+
 	return user, nil
 }
 

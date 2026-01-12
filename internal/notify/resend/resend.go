@@ -117,6 +117,48 @@ func (s *Sender) SendPasswordResetPrompt(ctx context.Context, to, resetURL, toke
 	return s.Send(ctx, to, subject, text, html)
 }
 
+func (s *Sender) SendWelcomeEmail(ctx context.Context, to, name string) error {
+	if strings.TrimSpace(to) == "" {
+		return errors.New("resend: missing recipient email")
+	}
+
+	displayName := strings.TrimSpace(name)
+	if displayName == "" {
+		displayName = "there"
+	}
+
+	subject := "Welcome to Byte Courses!"
+
+	text := fmt.Sprintf(
+		"Hi %s,\n\n"+
+			"Welcome to Byte Courses! We're excited to have you join our community.\n\n"+
+			"Byte Course is a platform where students can both learn and teach specialized topics through short courses. Whether you're here to:\n"+
+			"- Learn from peer-taught courses on specialized topics\n"+
+			"- Share your expertise by proposing and teaching your own course\n\n"+
+			"We're here to support your educational journey.\n\n"+
+			"If you have any questions, please direct them to help@bytecourses.org.\n\n"+
+			"Happy learning!\n"+
+			"The Byte Course Team",
+		displayName,
+	)
+
+	html := fmt.Sprintf(
+		`<p>Hi <strong>%s</strong>,</p>
+<p>Welcome to <strong>Byte Courses</strong>! We're excited to have you join our community.</p>
+<p>Byte Courses is a platform where students can both learn and teach specialized topics through short courses. Whether you're here to:</p>
+<ul>
+  <li>Learn from peer-taught courses on specialized topics</li>
+  <li>Share your expertise by proposing and teaching your own course</li>
+</ul>
+<p>We're here to support your educational journey.</p>
+<p>If you have any questions, please direct them to help@bytecourses.org.</p>
+<p>Happy learning!<br>The Byte Course Team</p>`,
+		escapeHTML(displayName),
+	)
+
+	return s.Send(ctx, to, subject, text, html)
+}
+
 func escapeHTML(s string) string {
 	r := strings.NewReplacer(
 		"&", "&amp;",

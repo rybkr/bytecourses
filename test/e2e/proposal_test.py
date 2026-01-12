@@ -1000,3 +1000,36 @@ def test_proposal_workflow_withdraw_submission(go_server):
         },
     )
     assert r.status_code == HTTPStatus.CONFLICT
+
+
+def test_add_instructor_qualifications(go_server):
+    s = requests.Session()
+
+    register_payload: dict[str, str] = {
+        "email": "usr@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{go_server}/register", json=register_payload)
+    assert r.status_code == HTTPStatus.CREATED
+
+    login_payload: dict[str, str] = {
+        "email": "usr@example.com",
+        "password": "password123",
+    }
+    r = s.post(f"{go_server}/login", json=login_payload)
+    assert r.status_code == HTTPStatus.OK
+
+    proposal_payload: dict[str, str] = {
+        "title": "Some Course Title",
+        "summary": "A summary of some course.",
+        "qualifications": "Some qualifications",
+    }
+    r = s.post(f"{go_server}/proposals", json=proposal_payload)
+    assert r.status_code == HTTPStatus.CREATED
+    assert "id" in r.json()
+    pid = r.json()["id"]
+
+    r = s.get(f"{go_server}/proposals/{pid}")
+    assert r.status_code == HTTPStatus.OK
+    assert "qualifications" in r.json()
+    assert r.json()["qualifications"] == "Some qualifications"

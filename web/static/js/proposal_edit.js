@@ -20,6 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const fieldIds = [
         "title",
         "summary",
+        "qualifications",
         "target_audience",
         "learning_objectives",
         "outline",
@@ -40,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             title: document.getElementById("title")?.value ?? "",
             summary: document.getElementById("summary")?.value ?? "",
+            qualifications: document.getElementById("qualifications")?.value ?? "",
             target_audience:
                 document.getElementById("target_audience")?.value ?? "",
             learning_objectives:

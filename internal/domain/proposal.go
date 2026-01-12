@@ -19,11 +19,12 @@ type Proposal struct {
 	ID                   int64          `json:"id"`
 	Title                string         `json:"title"`
 	Summary              string         `json:"summary"`
-	AuthorID             int64          `json:"author_id"`
+	Qualifications       string         `json:"qualifications"`
 	TargetAudience       string         `json:"target_audience"`
 	LearningObjectives   string         `json:"learning_objectives"`
 	Outline              string         `json:"outline"`
 	AssumedPrerequisites string         `json:"assumed_prerequisites"`
+	AuthorID             int64          `json:"author_id"`
 	ReviewNotes          string         `json:"review_notes"`
 	ReviewerID           *int64         `json:"reviewer_id"`
 	CreatedAt            time.Time      `json:"created_at"`

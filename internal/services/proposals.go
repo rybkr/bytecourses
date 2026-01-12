@@ -22,6 +22,7 @@ func NewProposalService(proposals store.ProposalStore, logger *slog.Logger) *Pro
 type CreateProposalRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`
+	Qualifications       string `json:"qualifications"`
 	TargetAudience       string `json:"target_audience"`
 	LearningObjectives   string `json:"learning_objectives"`
 	Outline              string `json:"outline"`
@@ -49,6 +50,7 @@ func (s *ProposalService) CreateProposal(ctx context.Context, request *CreatePro
 		AuthorID:             request.AuthorID,
 		Title:                request.Title,
 		Summary:              request.Summary,
+		Qualifications:       request.Qualifications,
 		TargetAudience:       request.TargetAudience,
 		LearningObjectives:   request.LearningObjectives,
 		Outline:              request.Outline,
@@ -97,6 +99,7 @@ func (s *ProposalService) ListMyProposals(ctx context.Context, u *domain.User) (
 type UpdateProposalRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`
+	Qualifications       string `json:"qualifications"`
 	TargetAudience       string `json:"target_audience"`
 	LearningObjectives   string `json:"learning_objectives"`
 	Outline              string `json:"outline"`
@@ -113,6 +116,7 @@ func (s *ProposalService) UpdateProposal(ctx context.Context, proposal *domain.P
 
 	proposal.Title = request.Title
 	proposal.Summary = request.Summary
+	proposal.Qualifications = request.Qualifications
 	proposal.TargetAudience = request.TargetAudience
 	proposal.LearningObjectives = request.LearningObjectives
 	proposal.Outline = request.Outline

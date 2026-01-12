@@ -65,7 +65,7 @@ func (s *ProposalStore) ListAllSubmittedProposals(ctx context.Context) ([]domain
 
 	out := make([]domain.Proposal, 0)
 	for _, p := range s.proposalsByID {
-		if p.Status == domain.ProposalStatusSubmitted {
+		if p.WasSubmitted() {
 			out = append(out, p)
 		}
 	}

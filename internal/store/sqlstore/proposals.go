@@ -5,8 +5,9 @@ import (
 	"bytecourses/internal/store"
 	"context"
 	"database/sql"
-	"github.com/jackc/pgconn"
 	"time"
+
+	"github.com/jackc/pgconn"
 )
 
 func (s *Store) CreateProposal(ctx context.Context, p *domain.Proposal) error {
@@ -133,7 +134,7 @@ func (s *Store) ListAllSubmittedProposals(ctx context.Context) ([]domain.Proposa
 		       reviewer_id, review_notes,
 		       created_at, updated_at
 		  FROM proposals
-		 WHERE status = 'submitted'
+		 WHERE status IN ('submitted', 'approved', 'rejected', 'changes_requested')
 		 ORDER BY updated_at DESC, id DESC
 	`)
 	if err != nil {

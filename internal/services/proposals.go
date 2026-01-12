@@ -29,14 +29,10 @@ type CreateProposalRequest struct {
 	AuthorID             int64  `json:"author_id"`
 }
 
-func (r *CreateProposalRequest) Normalize() {
-	if r.Title == "" {
-		r.Title = "Untitled Proposal"
-	}
-}
+func (r *CreateProposalRequest) Normalize() {}
 
 func (r *CreateProposalRequest) IsValid() bool {
-	return r.Title != "" && r.AuthorID > 0
+	return r.AuthorID > 0
 }
 
 type CreateProposalResult struct {

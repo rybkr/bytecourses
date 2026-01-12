@@ -69,7 +69,7 @@ document.addEventListener("DOMContentLoaded", () => {
         dirty = true;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
-            saveNow().catch(() => {});
+            saveNow().catch(() => { });
         }, saveDelay);
     }
 
@@ -140,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
             continue;
         }
         el.addEventListener("input", scheduleSave);
-        el.addEventListener("blur", () => saveNow().catch(() => {}));
+        el.addEventListener("blur", () => saveNow().catch(() => { }));
     }
 
     submitBtn.addEventListener("click", (e) => {
@@ -173,7 +173,177 @@ document.addEventListener("DOMContentLoaded", () => {
                 `/api/proposals/${proposalId}`,
                 JSON.stringify(payload),
             );
-        } catch (_) {}
+        } catch (_) { }
+    });
+
+    // Help tooltip functionality
+    let currentTooltip = null;
+    let tooltipCloseHandler = null;
+    let tooltipRepositionHandlers = [];
+
+    function closeTooltip() {
+        if (currentTooltip) {
+            const helpIcon = currentTooltip.icon;
+            const tooltip = currentTooltip.element;
+            if (tooltip && tooltip.parentNode) {
+                tooltip.parentNode.removeChild(tooltip);
+            }
+            if (helpIcon) {
+                helpIcon.classList.remove("active");
+                helpIcon.setAttribute("aria-expanded", "false");
+            }
+            currentTooltip = null;
+        }
+        if (tooltipCloseHandler) {
+            document.removeEventListener("click", tooltipCloseHandler);
+            document.removeEventListener("focusin", tooltipCloseHandler);
+            tooltipCloseHandler = null;
+        }
+        // Remove reposition handlers
+        tooltipRepositionHandlers.forEach(handler => {
+            window.removeEventListener("scroll", handler, true);
+            window.removeEventListener("resize", handler);
+        });
+        tooltipRepositionHandlers = [];
+    }
+
+    function positionTooltip(tooltip, icon) {
+        const iconRect = icon.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        const padding = 16;
+
+        // Try positioning below first
+        let top = iconRect.bottom + 8;
+        let preferAbove = false;
+
+        // Check if positioning below would go off bottom
+        if (top + tooltipRect.height > viewportHeight - padding) {
+            // Try positioning above
+            const topPosition = iconRect.top - tooltipRect.height - 8;
+            // Only position above if it won't go off the top
+            if (topPosition >= padding) {
+                top = topPosition;
+                preferAbove = true;
+            } else {
+                // Can't fit above or below, constrain to viewport
+                top = Math.max(padding, Math.min(viewportHeight - tooltipRect.height - padding, top));
+            }
+        }
+
+        // Horizontal positioning
+        let left = iconRect.left;
+
+        // Adjust if tooltip would go off right edge
+        if (left + tooltipRect.width > viewportWidth - padding) {
+            left = viewportWidth - tooltipRect.width - padding;
+        }
+
+        // Adjust if tooltip would go off left edge
+        if (left < padding) {
+            left = padding;
+        }
+
+        tooltip.style.top = `${top}px`;
+        tooltip.style.left = `${left}px`;
+    }
+
+    function showTooltip(fieldName) {
+        const helpIcon = document.querySelector(`.help-icon[data-help="${fieldName}"]`);
+        const helpPanel = document.getElementById(`help-${fieldName}`);
+
+        if (!helpIcon || !helpPanel) {
+            return;
+        }
+
+        // Close any existing tooltip
+        closeTooltip();
+
+        // Clone the help panel content
+        const tooltip = helpPanel.cloneNode(true);
+        tooltip.id = `tooltip-${fieldName}`;
+        // Remove inline styles from the cloned element
+        tooltip.removeAttribute("style");
+        // Set clean styles for the tooltip
+        tooltip.style.display = "block";
+        tooltip.style.position = "fixed";
+        tooltip.style.background = "#ffffff";
+        tooltip.style.zIndex = "10000";
+        document.body.appendChild(tooltip);
+
+        // Position the tooltip
+        positionTooltip(tooltip, helpIcon);
+
+        // Update icon state
+        helpIcon.classList.add("active");
+        helpIcon.setAttribute("aria-expanded", "true");
+
+        // Store reference
+        currentTooltip = {
+            element: tooltip,
+            icon: helpIcon,
+            fieldName: fieldName
+        };
+
+        // Reposition on scroll/resize
+        const reposition = () => {
+            if (currentTooltip && currentTooltip.element) {
+                positionTooltip(currentTooltip.element, helpIcon);
+            }
+        };
+        window.addEventListener("scroll", reposition, true);
+        window.addEventListener("resize", reposition);
+        tooltipRepositionHandlers.push(reposition);
+
+        // Set up close handler
+        tooltipCloseHandler = function (e) {
+            const clickedHelpIcon = e.target.closest(".help-icon");
+            const clickedTooltip = e.target.closest(".help-panel");
+
+            if (!clickedHelpIcon && !clickedTooltip) {
+                closeTooltip();
+            }
+        };
+
+        setTimeout(() => {
+            document.addEventListener("click", tooltipCloseHandler);
+            document.addEventListener("focusin", tooltipCloseHandler);
+        }, 10);
+    }
+
+    // Attach event listeners to all help icons
+    const helpIcons = document.querySelectorAll(".help-icon");
+    helpIcons.forEach((icon) => {
+        icon.setAttribute("aria-expanded", "false");
+        icon.addEventListener("click", (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const fieldName = icon.getAttribute("data-help");
+            if (fieldName) {
+                const currentFieldName = currentTooltip?.fieldName;
+                if (currentFieldName === fieldName) {
+                    closeTooltip();
+                } else {
+                    showTooltip(fieldName);
+                }
+            }
+        });
+        icon.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                const fieldName = icon.getAttribute("data-help");
+                if (fieldName) {
+                    const currentFieldName = currentTooltip?.fieldName;
+                    if (currentFieldName === fieldName) {
+                        closeTooltip();
+                    } else {
+                        showTooltip(fieldName);
+                    }
+                }
+            }
+        });
     });
 
     lastSavedJson = JSON.stringify(readPayload());

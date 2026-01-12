@@ -264,8 +264,8 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, request *Request
 }
 
 type ConfirmPasswordResetRequest struct {
-	Token       string
-	NewPassword string
+    Token       string `json:"-"`
+    NewPassword string `json:"password"`
 }
 
 func (r *ConfirmPasswordResetRequest) Normalize() {

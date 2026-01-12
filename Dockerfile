@@ -9,6 +9,10 @@ RUN go build -v -o /run-app ./cmd/server
 
 FROM debian:bookworm
 
+RUN apt-get update\
+ && apt-get install -y --no-install-recommends ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 COPY --from=builder /run-app /usr/local/bin/run-app
 COPY --from=builder /usr/src/app/web/static ./web/static

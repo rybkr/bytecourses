@@ -534,7 +534,10 @@ def test_proposal_workflow_happy_path(go_server):
     assert "status" in r.json() and r.json()["status"] == "submitted"
     assert "title" in r.json() and r.json()["title"] == "Title"
 
-    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    r = a.post(
+        f"{go_server}/proposals/{pid}/actions/approve",
+        json={"review_notes": "Approved"},
+    )
     assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = u.get(f"{go_server}/proposals/{pid}")
@@ -659,7 +662,10 @@ def test_proposal_workflow_with_changes_requested(go_server):
     )
     assert r.status_code == HTTPStatus.CONFLICT
 
-    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    r = a.post(
+        f"{go_server}/proposals/{pid}/actions/approve",
+        json={"review_notes": "approved"},
+    )
     assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = u.get(f"{go_server}/proposals/{pid}")
@@ -771,7 +777,12 @@ def test_proposal_workflow_with_patch(go_server):
     assert "status" in r.json() and r.json()["status"] == "submitted"
     assert "title" in r.json() and r.json()["title"] == "New Title"
 
-    r = a.post(f"{go_server}/proposals/{pid}/actions/approve")
+    r = a.post(
+        f"{go_server}/proposals/{pid}/actions/approve",
+        json={
+            "review_notes": "Approved",
+        },
+    )
     assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = u.get(f"{go_server}/proposals/{pid}")
@@ -889,7 +900,9 @@ def test_proposal_workflow_reject_submission(go_server):
     assert "status" in r.json() and r.json()["status"] == "submitted"
     assert "title" in r.json() and r.json()["title"] == "Title"
 
-    r = a.post(f"{go_server}/proposals/{pid}/actions/reject")
+    r = a.post(
+        f"{go_server}/proposals/{pid}/actions/reject", json={"review_notes": "rejected"}
+    )
     assert r.status_code == HTTPStatus.NO_CONTENT
 
     r = u.get(f"{go_server}/proposals/{pid}")

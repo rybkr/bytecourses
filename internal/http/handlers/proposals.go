@@ -2,9 +2,7 @@ package handlers
 
 import (
 	"bytecourses/internal/services"
-	"encoding/json"
 	"github.com/go-chi/chi/v5"
-	"io"
 	"net/http"
 )
 
@@ -16,10 +14,6 @@ func NewProposalHandler(services *services.Services) *ProposalHandler {
 	return &ProposalHandler{
 		services: services,
 	}
-}
-
-type ActionRequest struct {
-	ReviewNotes string `json:"review_notes"`
 }
 
 func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +55,7 @@ func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	proposal, err := h.services.Proposals.GetProposal(r.Context(), user, p)
+	proposal, err := h.services.Proposals.GetProposal(r.Context(), p, user)
 	if err != nil {
 		handleServiceError(w, err)
 		return
@@ -171,26 +165,21 @@ func (h *ProposalHandler) Action(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var request ActionRequest
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil && err != io.EOF {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	var err error
 	switch action {
 	case "submit":
 		err = h.services.Proposals.SubmitProposal(r.Context(), p, u)
-
 	case "withdraw":
 		err = h.services.Proposals.WithdrawProposal(r.Context(), p, u)
-
 	case "approve", "reject", "request-changes":
-		err = h.services.Proposals.ReviewProposal(r.Context(), p, u, services.ReviewProposalRequest{
+		var request services.ProposalActionRequest
+		if !decodeJSON(w, r, &request) {
+			return
+		}
+		err = h.services.Proposals.ReviewProposal(r.Context(), p, u, &services.ReviewProposalRequest{
 			Action: action,
 			Notes:  request.ReviewNotes,
 		})
-
 	default:
 		http.Error(w, "unknown action", http.StatusBadRequest)
 		return

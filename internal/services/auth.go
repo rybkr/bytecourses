@@ -7,6 +7,7 @@ import (
 	"bytecourses/internal/store"
 	"context"
 	"crypto/sha256"
+	"log/slog"
 	"strings"
 	"time"
 )
@@ -16,6 +17,7 @@ type AuthService struct {
 	sessions auth.SessionStore
 	resets   store.PasswordResetStore
 	email    notify.EmailSender
+	logger   *AuthLogger
 }
 
 func NewAuthService(
@@ -23,12 +25,14 @@ func NewAuthService(
 	sessions auth.SessionStore,
 	resets store.PasswordResetStore,
 	email notify.EmailSender,
+	logger *slog.Logger,
 ) *AuthService {
 	return &AuthService{
 		users:    users,
 		sessions: sessions,
 		resets:   resets,
 		email:    email,
+		logger:   NewAuthLogger(logger),
 	}
 }
 
@@ -59,6 +63,11 @@ func (s *AuthService) Register(ctx context.Context, request *RegisterRequest) (*
 
 	hash, err := auth.HashPassword(request.Password)
 	if err != nil {
+		s.logger.Error("password hashing failed during registration",
+			"event", "auth.registration",
+			"email", request.Email,
+			"error", err,
+		)
 		return nil, err
 	}
 
@@ -69,9 +78,11 @@ func (s *AuthService) Register(ctx context.Context, request *RegisterRequest) (*
 		Role:         domain.UserRoleStudent,
 	}
 	if err := s.users.CreateUser(ctx, user); err != nil {
+		s.logger.ErrorOp("register", request.Email, err)
 		return nil, err
 	}
 
+	s.logger.InfoUser("user.registered", user)
 	return user, nil
 }
 
@@ -102,24 +113,42 @@ func (s *AuthService) Login(ctx context.Context, request *LoginRequest) (*LoginR
 
 	user, ok := s.users.GetUserByEmail(ctx, request.Email)
 	if !ok {
+		s.logger.Warn("failed login attempt",
+			"event", "auth.login.failed",
+			"email", request.Email,
+			"reason", "invalid_credentials",
+		)
 		return nil, ErrInvalidCredentials
 	}
+
 	if !auth.VerifyPassword(user.PasswordHash, request.Password) {
+		s.logger.Warn("failed login attempt",
+			"event", "auth.login.failed",
+			"email", request.Email,
+			"user_id", user.ID,
+			"reason", "invalid_password",
+		)
 		return nil, ErrInvalidCredentials
 	}
 
 	token, err := s.sessions.CreateSession(user.ID)
 	if err != nil {
+		s.logger.Error("session creation failed during login",
+			"event", "auth.login",
+			"user_id", user.ID,
+			"error", err,
+		)
 		return nil, err
 	}
 
+	s.logger.InfoUser("user.login", user)
 	return &LoginResult{
 		UserID: user.ID,
 		Token:  token,
 	}, nil
 }
 
-func (s *AuthService) Logout(token string) {
+func (s *AuthService) Logout(ctx context.Context, token string) {
 	s.sessions.DeleteSessionByToken(token)
 }
 
@@ -147,11 +176,19 @@ func (s *AuthService) UpdateProfile(ctx context.Context, request *UpdateProfileR
 		return nil, ErrNotFound
 	}
 
+	oldName := user.Name
 	user.Name = request.Name
 
 	if err := s.users.UpdateUser(ctx, user); err != nil {
+		s.logger.ErrorOp("update_profile", user.Email, err)
 		return nil, err
 	}
+
+	s.logger.Info("user.profile.updated",
+		"user_id", user.ID,
+		"name_changed", request.Name != oldName,
+	)
+
 	return user, nil
 }
 
@@ -182,17 +219,36 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, request *Request
 
 	resetToken, err := auth.GenerateToken(32)
 	if err != nil {
+		s.logger.Error("token generation failed for password reset",
+			"event", "auth.password_reset",
+			"user_id", user.ID,
+			"error", err,
+		)
 		return err
 	}
+
 	tokenHash := sha256.Sum256([]byte(resetToken))
 	if err := s.resets.CreateResetToken(ctx, user.ID, tokenHash[:], time.Now().Add(30*time.Minute)); err != nil {
+		s.logger.Error("failed to store reset token",
+			"event", "auth.password_reset",
+			"user_id", user.ID,
+			"error", err,
+		)
 		return err
 	}
 
 	resetURL := request.BaseURL + "/reset-password"
 	if err := s.email.SendPasswordResetPrompt(ctx, user.Email, resetURL, resetToken); err != nil {
+		s.logger.Error("failed to send password reset email",
+			"event", "auth.password_reset",
+			"user_id", user.ID,
+			"email", user.Email,
+			"error", err,
+		)
 		return err
 	}
+
+	s.logger.InfoUser("password_reset.requested", user)
 
 	return nil
 }
@@ -225,18 +281,31 @@ func (s *AuthService) ConfirmPasswordReset(ctx context.Context, request *Confirm
 
 	user, ok := s.users.GetUserByID(ctx, userID)
 	if !ok {
+		s.logger.Error("user not found during password reset confirmation",
+			"event", "auth.password_reset",
+			"user_id", userID,
+			"error", "user_not_found",
+		)
 		return ErrNotFound
 	}
 
 	hash, err := auth.HashPassword(request.NewPassword)
 	if err != nil {
+		s.logger.Error("password hashing failed during reset confirmation",
+			"event", "auth.password_reset",
+			"user_id", user.ID,
+			"error", err,
+		)
 		return err
 	}
 
 	user.PasswordHash = hash
 	if err := s.users.UpdateUser(ctx, user); err != nil {
+		s.logger.ErrorOp("confirm_password_reset", user.Email, err)
 		return err
 	}
+
+	s.logger.InfoUser("password_reset.confirmed", user)
 
 	return nil
 }

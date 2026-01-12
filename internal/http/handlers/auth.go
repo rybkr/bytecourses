@@ -68,7 +68,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if c, err := r.Cookie("session"); err == nil && c.Value != "" {
-		h.services.Auth.Logout(c.Value)
+		h.services.Auth.Logout(r.Context(), c.Value)
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -149,7 +149,7 @@ func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 	if !decodeJSON(w, r, &request) {
 		return
 	}
-    request.Token = r.URL.Query().Get("token")
+	request.Token = r.URL.Query().Get("token")
 
 	if err := h.services.Auth.ConfirmPasswordReset(r.Context(), &request); err != nil {
 		handleServiceError(w, err)

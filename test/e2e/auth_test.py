@@ -211,7 +211,6 @@ def test_admin_user(go_server):
 
 def test_user_name(go_server):
     s = requests.Session()
-
     payload: dict[str, str] = {
         "name": "User Name",
         "email": "user@example.com",

@@ -69,13 +69,18 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		return nil, errors.New("unknown storage backend")
 	}
 
-	// Create services layer with all dependencies
+	logger := services.NewLogger()
+	if logger == nil || logger.Logger == nil {
+		log.Fatal("failed to create logger")
+	}
+
 	a.Services = services.New(services.Dependencies{
 		UserStore:          a.UserStore,
 		ProposalStore:      a.ProposalStore,
 		PasswordResetStore: a.PasswordResetStore,
 		SessionStore:       a.SessionStore,
 		EmailSender:        a.EmailSender,
+		Logger:             logger.Logger,
 	})
 
 	if cfg.SeedUsers {

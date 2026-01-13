@@ -5,6 +5,7 @@ import (
 	"bytecourses/internal/auth/memsession"
 	"bytecourses/internal/domain"
 	"bytecourses/internal/notify"
+	"bytecourses/internal/notify/nullsender"
 	"bytecourses/internal/notify/resend"
 	"bytecourses/internal/services"
 	"bytecourses/internal/store"
@@ -23,12 +24,9 @@ type App struct {
 	SessionStore       auth.SessionStore
 	ProposalStore      store.ProposalStore
 	PasswordResetStore store.PasswordResetStore
+	DB                 store.DB
 	EmailSender        notify.EmailSender
-	DB                 interface {
-		Ping(context.Context) error
-		Stats() *store.DBStats
-	}
-	onClose func() error
+	onClose            func() error
 }
 
 func New(ctx context.Context, cfg Config) (*App, error) {
@@ -40,40 +38,43 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.ProposalStore = memstore.NewProposalStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.PasswordResetStore = memstore.NewPasswordResetStore()
-		apiKey := os.Getenv("RESEND_API_KEY")
-		fromEmail := os.Getenv("RESEND_FROM_EMAIL")
-		a.EmailSender = resend.New(apiKey, fromEmail)
-
 	case StorageSQL:
 		dbDsn := os.Getenv("DATABASE_URL")
 		if dbDsn == "" {
-			log.Fatal("DATABASE_URL not set")
+			return nil, errors.New("DATABASE_URL is not set")
 		}
-
-		db, err := sqlstore.Open(ctx, dbDsn)
-		if err != nil {
+		if db, err := sqlstore.Open(ctx, dbDsn); err == nil {
+			a.UserStore = db
+			a.ProposalStore = db
+			a.PasswordResetStore = db
+			a.SessionStore = memsession.New(24 * time.Hour)
+			a.DB = db
+			a.onClose = db.Close
+		} else {
 			return nil, err
 		}
+	default:
+		return nil, errors.New("unrecognized memory configuration")
+	}
 
-		a.UserStore = db
-		a.ProposalStore = db
-		a.PasswordResetStore = db
-		a.SessionStore = memsession.New(24 * time.Hour)
+	switch cfg.EmailService {
+	case EmailServiceResend:
 		apiKey := os.Getenv("RESEND_API_KEY")
 		fromEmail := os.Getenv("RESEND_FROM_EMAIL")
+		if apiKey == "" || fromEmail == "" {
+			return nil, errors.New("RESEND_API_KEY and RESEND_FROM_EMAIL are not set")
+		}
 		a.EmailSender = resend.New(apiKey, fromEmail)
-		a.DB = db
-		a.onClose = db.Close
-
+	case EmailServiceNone:
+		a.EmailSender = nullsender.New()
 	default:
-		return nil, errors.New("unknown storage backend")
+		return nil, errors.New("unrecognized email service provider")
 	}
 
 	logger := services.NewLogger()
 	if logger == nil || logger.Logger == nil {
 		log.Fatal("failed to create logger")
 	}
-
 	a.Services = services.New(services.Dependencies{
 		UserStore:          a.UserStore,
 		ProposalStore:      a.ProposalStore,

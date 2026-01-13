@@ -29,6 +29,7 @@ def go_server():
             "--seed-users=true",
             "--bcrypt-cost=5",
             "--storage=memory",
+            "--email-service=none",
         ],
         env=env,
         stdout=subprocess.DEVNULL,

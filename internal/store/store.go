@@ -38,3 +38,8 @@ type DBStats struct {
 	MaxIdleTimeClosed  int64 `json:"max_idle_time_closed"`
 	MaxLifetimeClosed  int64 `json:"max_lifetime_closed"`
 }
+
+type DB interface {
+	Ping(context.Context) error
+	Stats() *DBStats
+}

@@ -65,6 +65,19 @@ func requireProposal(w http.ResponseWriter, r *http.Request) (*domain.Proposal, 
 	return p, true
 }
 
+func courseFromRequest(r *http.Request) (*domain.Course, bool) {
+	return middleware.CourseFromContext(r.Context())
+}
+
+func requireCourse(w http.ResponseWriter, r *http.Request) (*domain.Course, bool) {
+	c, ok := courseFromRequest(r)
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return nil, false
+	}
+	return c, true
+}
+
 func handleServiceError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return

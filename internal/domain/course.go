@@ -32,3 +32,11 @@ func CourseFromProposal(p *Proposal) *Course {
 func (c *Course) IsLive() bool {
 	return c.Status == CourseStatusLive
 }
+
+func (c *Course) IsTaughtBy(u *User) bool {
+	return c.InstructorID == u.ID
+}
+
+func (c *Course) IsViewableBy(u *User) bool {
+	return u.IsAdmin() || c.IsLive() || c.IsTaughtBy(u)
+}

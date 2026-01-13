@@ -153,3 +153,23 @@ func (l *ProposalLogger) Info(event string, fields ...any) {
 func (l *ProposalLogger) Error(msg string, fields ...any) {
 	l.base.Error(msg, fields...)
 }
+
+type CourseLogger struct {
+	base *slog.Logger
+}
+
+func NewCourseLogger(base *slog.Logger) *CourseLogger {
+	return &CourseLogger{
+		base: base.With("service", "course_service"),
+	}
+}
+
+func (l *CourseLogger) Info(event string, fields ...any) {
+	args := []any{"event", event}
+	args = append(args, fields...)
+	l.base.Info("course event", args...)
+}
+
+func (l *CourseLogger) Error(msg string, fields ...any) {
+	l.base.Error(msg, fields...)
+}

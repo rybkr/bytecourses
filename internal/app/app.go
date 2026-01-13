@@ -21,8 +21,9 @@ import (
 type App struct {
 	Services           *services.Services
 	UserStore          store.UserStore
-	SessionStore       auth.SessionStore
 	ProposalStore      store.ProposalStore
+	CourseStore        store.CourseStore
+	SessionStore       auth.SessionStore
 	PasswordResetStore store.PasswordResetStore
 	DB                 store.DB
 	EmailSender        notify.EmailSender
@@ -36,8 +37,10 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	case StorageMemroy:
 		a.UserStore = memstore.NewUserStore()
 		a.ProposalStore = memstore.NewProposalStore()
+		a.CourseStore = memstore.NewCourseStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.PasswordResetStore = memstore.NewPasswordResetStore()
+
 	case StorageSQL:
 		dbDsn := os.Getenv("DATABASE_URL")
 		if dbDsn == "" {
@@ -53,6 +56,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		} else {
 			return nil, err
 		}
+
 	default:
 		return nil, errors.New("unrecognized memory configuration")
 	}
@@ -78,6 +82,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 	a.Services = services.New(services.Dependencies{
 		UserStore:          a.UserStore,
 		ProposalStore:      a.ProposalStore,
+		CourseStore:        a.CourseStore,
 		PasswordResetStore: a.PasswordResetStore,
 		SessionStore:       a.SessionStore,
 		EmailSender:        a.EmailSender,

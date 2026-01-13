@@ -18,6 +18,15 @@ func proposalID(r *http.Request) (int64, bool) {
 	return id, err == nil
 }
 
+func courseID(r *http.Request) (int64, bool) {
+	idStr := chi.URLParam(r, "id")
+	if idStr == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	return id, err == nil
+}
+
 func (a *App) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
@@ -27,6 +36,7 @@ func (a *App) Router() http.Handler {
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandler(a.Services)
 	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore)
+	courseH := handlers.NewCourseHandler(a.Services)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/register", authH.Register)
@@ -54,6 +64,15 @@ func (a *App) Router() http.Handler {
 				r.Patch("/", propH.Update)
 				r.Delete("/", propH.Delete)
 				r.Post("/actions/{action}", propH.Action)
+			})
+		})
+
+		r.Route("/courses", func(r chi.Router) {
+			r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
+			r.Post("/", courseH.Create)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Use(appmw.RequireCourse(a.CourseStore, courseID))
+				r.Get("/", courseH.Get)
 			})
 		})
 	})

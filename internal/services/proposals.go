@@ -30,18 +30,11 @@ type CreateProposalRequest struct {
 	AuthorID             int64  `json:"author_id"`
 }
 
-func (r *CreateProposalRequest) Normalize() {}
-
 func (r *CreateProposalRequest) IsValid() bool {
 	return r.AuthorID > 0
 }
 
-type CreateProposalResult struct {
-	ProposalID int64 `json:"id"`
-}
-
 func (s *ProposalService) CreateProposal(ctx context.Context, request *CreateProposalRequest) (*domain.Proposal, error) {
-	request.Normalize()
 	if !request.IsValid() {
 		return nil, ErrInvalidInput
 	}

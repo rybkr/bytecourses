@@ -23,3 +23,9 @@ func TestPasswordResetStore(t *testing.T) {
 		return NewUserStore(), NewPasswordResetStore()
 	})
 }
+
+func TestCourseStore(t *testing.T) {
+	storetest.TestCourseStore(t, func(t *testing.T) (store.UserStore, store.CourseStore) {
+		return NewUserStore(), NewCourseStore()
+	})
+}

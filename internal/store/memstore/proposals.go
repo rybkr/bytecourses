@@ -60,10 +60,10 @@ func (s *ProposalStore) ListProposalsByAuthorID(ctx context.Context, uid int64) 
 }
 
 func (s *ProposalStore) ListAllSubmittedProposals(ctx context.Context) ([]domain.Proposal, error) {
+	out := make([]domain.Proposal, 0)
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
-	out := make([]domain.Proposal, 0)
 	for _, p := range s.proposalsByID {
 		if p.WasSubmitted() {
 			out = append(out, p)

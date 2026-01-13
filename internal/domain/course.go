@@ -19,3 +19,16 @@ type Course struct {
 	Status       CourseStatus `json:"status"`
 	CreatedAt    time.Time    `json:"created_at"`
 }
+
+func CourseFromProposal(p *Proposal) *Course {
+	return &Course{
+		Title:        p.Title,
+		Summary:      p.Summary,
+		InstructorID: p.AuthorID,
+		Status:       CourseStatusDraft,
+	}
+}
+
+func (c *Course) IsLive() bool {
+	return c.Status == CourseStatusLive
+}

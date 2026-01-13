@@ -27,6 +27,12 @@ type PasswordResetStore interface {
 	ConsumeResetToken(ctx context.Context, tokenHash []byte, now time.Time) (userID int64, ok bool)
 }
 
+type CourseStore interface {
+	CreateCourse(ctx context.Context, c *domain.Course) error
+	GetCourseByID(ctx context.Context, id int64) (*domain.Course, bool)
+	ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
+}
+
 type DBStats struct {
 	MaxOpenConnections int   `json:"max_open_connections"`
 	OpenConnections    int   `json:"open_connections"`

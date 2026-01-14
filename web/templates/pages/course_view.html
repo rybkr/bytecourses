@@ -1,0 +1,19 @@
+{{template "layout" .}} {{define "title"}}{{.Course.Title}} -
+ByteCourses{{end}} {{define "content"}}
+<div class="page-header">
+    <h1>{{.Course.Title}}</h1>
+    <div class="header-actions">
+        <a href="/courses" class="btn btn-outline">Back to Courses</a>
+    </div>
+</div>
+<div class="proposal-meta-bar">
+    <div class="status-container">
+        <span class="status-badge status-{{.Course.Status}}">{{.Course.Status}}</span>
+    </div>
+    <span>Created: {{.Course.CreatedAt.Format "January 2, 2006"}}</span>
+</div>
+<div class="proposal-content">
+    <h2>Summary</h2>
+    <div class="proposal-content-value">{{markdown .Course.Summary}}</div>
+</div>
+{{end}}

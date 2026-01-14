@@ -46,6 +46,9 @@ type TemplateData struct {
 	User         *domain.User
 	Proposal     *domain.Proposal
 	ProposalJSON string
+	Course       *domain.Course
+	CourseJSON   string
+	Courses      []domain.Course
 	Page         string
 }
 

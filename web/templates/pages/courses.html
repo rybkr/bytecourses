@@ -1,0 +1,29 @@
+{{template "layout" .}}
+
+{{define "title"}}Courses - ByteCourses{{end}}
+
+{{define "content"}}
+<div class="page-header">
+    <h1>Courses</h1>
+</div>
+
+{{if .Courses}}
+<div class="proposals-list">
+    {{range .Courses}}
+    <a href="/courses/{{.ID}}" class="proposal-card" style="text-decoration: none; display: block; color: inherit;">
+        <div class="proposal-header">
+            <h3>{{.Title}}</h3>
+            <span class="status-badge status-{{.Status}}">{{.Status}}</span>
+        </div>
+        <div class="proposal-content-value">
+            {{markdown .Summary}}
+        </div>
+    </a>
+    {{end}}
+</div>
+{{else}}
+<div class="empty-state">
+    <p>No courses available yet.</p>
+</div>
+{{end}}
+{{end}}

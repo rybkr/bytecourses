@@ -95,6 +95,13 @@ func (a *App) Router() http.Handler {
 		r.Get("/{id}/edit", pageH.ProposalEdit)
 	})
 
+	r.Get("/courses", pageH.CoursesList)
+	r.Route("/courses/{id}", func(r chi.Router) {
+		r.Use(appmw.RequireLogin(a.SessionStore, a.UserStore))
+		r.Use(appmw.RequireCourse(a.CourseStore, courseID))
+		r.Get("/", pageH.CourseView)
+	})
+
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 
 	return r

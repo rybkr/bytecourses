@@ -204,3 +204,46 @@ func (h *PageHandlers) Profile(w http.ResponseWriter, r *http.Request) {
 	data := &TemplateData{User: user, Page: "profile.html"}
 	Render(w, data)
 }
+
+func (h *PageHandlers) CoursesList(w http.ResponseWriter, r *http.Request) {
+	courses, err := h.services.Courses.ListCourses(r.Context())
+	if err != nil {
+		http.Error(w, "failed to load courses", http.StatusInternalServerError)
+		return
+	}
+
+	data := &TemplateData{
+		Courses: courses,
+		Page:    "courses.html",
+	}
+	RenderWithUser(w, r, h.sessions, h.users, data)
+}
+
+func (h *PageHandlers) CourseView(w http.ResponseWriter, r *http.Request) {
+	user, ok := userFromRequest(r)
+	if !ok {
+		return
+	}
+
+	c, ok := courseFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	course, err := h.services.Courses.GetCourse(r.Context(), c, user)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+
+	courseJSON, _ := json.Marshal(course)
+
+	data := &TemplateData{
+		User:       user,
+		Course:     course,
+		CourseJSON: string(courseJSON),
+		Page:       "course_view.html",
+	}
+	Render(w, data)
+}

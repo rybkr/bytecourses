@@ -26,7 +26,7 @@ type CreateCourseRequest struct {
 }
 
 func (r *CreateCourseRequest) IsValid() bool {
-	return r.InstructorID > 0
+	return r.InstructorID > 0 && r.Title != ""
 }
 
 func (s *CourseService) CreateCourse(ctx context.Context, request *CreateCourseRequest) (*domain.Course, error) {
@@ -65,4 +65,8 @@ func (s *CourseService) GetCourse(ctx context.Context, c *domain.Course, u *doma
 		return nil, ErrNotFound
 	}
 	return c, nil
+}
+
+func (s *CourseService) ListCourses(ctx context.Context) ([]domain.Course, error) {
+	return s.courses.ListAllLiveCourses(ctx)
 }

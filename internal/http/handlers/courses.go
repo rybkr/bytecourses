@@ -62,3 +62,17 @@ func (h *CourseHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, course)
 }
+
+func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodGet) {
+		return
+	}
+
+	courses, err := h.services.Courses.ListCourses(r.Context())
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusOK, courses)
+}

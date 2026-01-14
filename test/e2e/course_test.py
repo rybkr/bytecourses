@@ -93,67 +93,12 @@ def test_get_course_nonexistent(go_server):
     assert r.status_code == HTTPStatus.NOT_FOUND
 
 
-"""
 def test_list_live_courses_empty(go_server):
     r = requests.get(f"{go_server}/courses")
     assert r.status_code == HTTPStatus.OK
 
     data = r.json()
     assert len(data) == 0
-
-
-def test_list_live_courses(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "instructor@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    login_payload: dict[str, str] = {
-        "email": "instructor@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    course_payload: dict[str, str] = {
-        "title": "Draft Course",
-        "summary": "This is a draft course.",
-    }
-    r = s.post(f"{go_server}/courses", json=course_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    draft_id = r.json()["id"]
-
-    course_payload = {
-        "title": "Live Course 1",
-        "summary": "This is a live course.",
-    }
-    r = s.post(f"{go_server}/courses", json=course_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    live_id_1 = r.json()["id"]
-
-    course_payload = {
-        "title": "Live Course 2",
-        "summary": "This is another live course.",
-    }
-    r = s.post(f"{go_server}/courses", json=course_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    live_id_2 = r.json()["id"]
-
-    r = requests.get(f"{go_server}/courses")
-    assert r.status_code == HTTPStatus.OK
-
-    data = r.json()
-    live_titles = [course["title"] for course in data]
-    live_ids = [course["id"] for course in data]
-
-    assert draft_id not in live_ids
-    assert live_id_1 in live_ids or live_id_2 in live_ids
-    for course in data:
-        assert course["status"] == "live"
 
 
 def test_courses_invalid_method(go_server):
@@ -395,4 +340,3 @@ def test_create_course_rich_content(go_server):
     for key, value in course_payload.items():
         assert key in r.json()
         assert r.json()[key] == value
-        """

@@ -68,9 +68,11 @@ func (a *App) Router() http.Handler {
 		})
 
 		r.Route("/courses", func(r chi.Router) {
-			r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
-			r.Post("/", courseH.Create)
+			r.With(appmw.RequireUser(a.SessionStore, a.UserStore)).Post("/", courseH.Create)
+			r.Get("/", courseH.List)
+
 			r.Route("/{id}", func(r chi.Router) {
+				r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
 				r.Use(appmw.RequireCourse(a.CourseStore, courseID))
 				r.Get("/", courseH.Get)
 			})

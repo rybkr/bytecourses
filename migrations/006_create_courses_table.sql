@@ -13,4 +13,10 @@ CREATE TABLE COURSES (
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+CREATE INDEX courses_instructor_id_idx ON courses(instructor_id);
+CREATE INDEX courses_status_idx ON courses(status);
+
 -- +goose Down
+
+DROP TABLE IF EXISTS courses;
+DROP TYPE IF EXISTS course_status;

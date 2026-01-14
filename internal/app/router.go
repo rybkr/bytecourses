@@ -75,6 +75,7 @@ func (a *App) Router() http.Handler {
 				r.Use(appmw.RequireUser(a.SessionStore, a.UserStore))
 				r.Use(appmw.RequireCourse(a.CourseStore, courseID))
 				r.Get("/", courseH.Get)
+				r.Patch("/", courseH.Update)
 			})
 		})
 	})

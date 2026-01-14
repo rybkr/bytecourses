@@ -3,6 +3,7 @@ package memstore
 import (
 	"bytecourses/internal/domain"
 	"context"
+	"errors"
 	"sync"
 	"time"
 )
@@ -27,7 +28,9 @@ func (s *CourseStore) CreateCourse(ctx context.Context, c *domain.Course) error 
 	defer s.mu.Unlock()
 
 	c.ID = s.nextID
-	c.CreatedAt = time.Now()
+	now := time.Now()
+	c.CreatedAt = now
+	c.UpdatedAt = now
 
 	s.coursesByID[c.ID] = *c
 	if c.ProposalID != nil {
@@ -79,4 +82,17 @@ func (s *CourseStore) ListAllLiveCourses(ctx context.Context) ([]domain.Course, 
 	}
 
 	return out, nil
+}
+
+func (s *CourseStore) UpdateCourse(ctx context.Context, c *domain.Course) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if _, exists := s.coursesByID[c.ID]; !exists {
+		return errors.New("course does not exist")
+	}
+
+	c.UpdatedAt = time.Now()
+	s.coursesByID[c.ID] = *c
+	return nil
 }

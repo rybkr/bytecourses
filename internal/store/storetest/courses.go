@@ -136,4 +136,44 @@ func TestCourseStore(t *testing.T, newStores NewStoresCourse) {
 			t.Fatalf("GetCourseByID returned nonexistent course")
 		}
 	})
+
+	t.Run("UpdateCourse", func(t *testing.T) {
+		ctx := context.Background()
+		users, courses := newStores(t)
+		instructor := newInstructor(ctx, t, users, "i5@example.com")
+
+		c := domain.Course{
+			Title:        "Title",
+			Summary:      "Summary",
+			InstructorID: instructor.ID,
+			Status:       domain.CourseStatusDraft,
+		}
+		if err := courses.CreateCourse(ctx, &c); err != nil {
+			t.Fatalf("CreateCourse failed: %v", err)
+		}
+
+		q := domain.Course{
+			Title:        "New Title",
+			Summary:      "New Summary",
+			InstructorID: instructor.ID,
+			Status:       domain.CourseStatusDraft,
+		}
+		q.ID = c.ID
+		if err := courses.UpdateCourse(ctx, &q); err != nil {
+			t.Fatalf("UpdateCourse failed: %v", err)
+		}
+
+		r, ok := courses.GetCourseByID(ctx, c.ID)
+		if !ok {
+			t.Fatalf("GetCourseByID failed")
+		}
+		if r.Title != "New Title" || r.Summary != "New Summary" {
+			t.Fatalf("CourseStore: failed to update course")
+		}
+
+		s := domain.Course{Title: "R", InstructorID: instructor.ID}
+		if err := courses.UpdateCourse(ctx, &s); err == nil {
+			t.Fatalf("CourseStore: was allowed to update nonexistent course")
+		}
+	})
 }

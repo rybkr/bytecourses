@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytecourses/internal/domain"
+	"bytecourses/internal/store"
 	"context"
 	"database/sql"
 	"time"
@@ -20,13 +21,13 @@ func (s *Store) CreateCourse(ctx context.Context, c *domain.Course) error {
             title, summary,
             proposal_id,
             status,
-            created_at
+            created_at, updated_at
         ) VALUES (
             $1,
             $2, $3,
             $4,
             $5,
-            $6
+            $6, $7
         )
         RETURNING id
     `,
@@ -34,12 +35,13 @@ func (s *Store) CreateCourse(ctx context.Context, c *domain.Course) error {
 		c.Title, c.Summary,
 		nullInt64Ptr(c.ProposalID),
 		string(status),
-		now,
+		now, now,
 	).Scan(&c.ID); err != nil {
 		return err
 	}
 
 	c.CreatedAt = now
+	c.UpdatedAt = now
 	return nil
 }
 
@@ -53,7 +55,7 @@ func (s *Store) GetCourseByID(ctx context.Context, id int64) (*domain.Course, bo
                title, summary,
                proposal_id,
                status,
-               created_at
+               created_at, updated_at
           FROM courses
          WHERE id = $1
     `, id).Scan(
@@ -61,7 +63,7 @@ func (s *Store) GetCourseByID(ctx context.Context, id int64) (*domain.Course, bo
 		&c.Title, &c.Summary,
 		&proposalID,
 		&status,
-		&c.CreatedAt,
+		&c.CreatedAt, &c.UpdatedAt,
 	); err != nil {
 		return nil, false
 	}
@@ -81,7 +83,7 @@ func (s *Store) GetCourseByProposalID(ctx context.Context, proposalID int64) (*d
                title, summary,
                proposal_id,
                status,
-               created_at
+               created_at, updated_at
           FROM courses
          WHERE proposal_id = $1
     `, proposalID).Scan(
@@ -89,7 +91,7 @@ func (s *Store) GetCourseByProposalID(ctx context.Context, proposalID int64) (*d
 		&c.Title, &c.Summary,
 		&pid,
 		&status,
-		&c.CreatedAt,
+		&c.CreatedAt, &c.UpdatedAt,
 	); err != nil {
 		return nil, false
 	}
@@ -104,7 +106,7 @@ func (s *Store) ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
         SELECT id, instructor_id,
                title, summary,
                status,
-               created_at
+               created_at, updated_at
           FROM courses
          WHERE status IN ('live')
           ORDER BY created_at DESC, id DESC
@@ -123,7 +125,7 @@ func (s *Store) ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
 			&c.ID, &c.InstructorID,
 			&c.Title, &c.Summary,
 			&status,
-			&c.CreatedAt,
+			&c.CreatedAt, &c.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -136,4 +138,35 @@ func (s *Store) ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
 		return nil, err
 	}
 	return out, nil
+}
+
+func (s *Store) UpdateCourse(ctx context.Context, c *domain.Course) error {
+	now := time.Now().UTC()
+
+	res, err := s.db.ExecContext(ctx, `
+        UPDATE courses
+           SET title = $2,
+               summary = $3,
+               updated_at = $4
+         WHERE id = $1
+    `,
+		c.ID,
+		c.Title,
+		c.Summary,
+		now,
+	)
+	if err != nil {
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return store.ErrNotFound
+	}
+
+	c.UpdatedAt = now
+	return nil
 }

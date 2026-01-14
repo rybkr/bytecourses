@@ -29,6 +29,11 @@ func (r *CreateCourseRequest) IsValid() bool {
 	return r.InstructorID > 0 && r.Title != ""
 }
 
+type UpdateCourseRequest struct {
+	Title   string `json:"title"`
+	Summary string `json:"summary"`
+}
+
 func (s *CourseService) CreateCourse(ctx context.Context, request *CreateCourseRequest) (*domain.Course, error) {
 	if !request.IsValid() {
 		return nil, ErrInvalidInput
@@ -69,6 +74,37 @@ func (s *CourseService) GetCourse(ctx context.Context, c *domain.Course, u *doma
 
 func (s *CourseService) ListCourses(ctx context.Context) ([]domain.Course, error) {
 	return s.courses.ListAllLiveCourses(ctx)
+}
+
+func (s *CourseService) UpdateCourse(ctx context.Context, course *domain.Course, user *domain.User, request *UpdateCourseRequest) error {
+	if !course.IsTaughtBy(user) {
+		return ErrNotFound
+	}
+	if !course.IsAmendable() {
+		return ErrConflict
+	}
+
+	course.Title = request.Title
+	course.Summary = request.Summary
+
+	err := s.courses.UpdateCourse(ctx, course)
+	if err != nil {
+		s.logger.Error("course update failed",
+			"event", "course.update",
+			"course_id", course.ID,
+			"user_id", user.ID,
+			"error", err,
+		)
+		return err
+	}
+
+	s.logger.Info("course.updated",
+		"course_id", course.ID,
+		"user_id", user.ID,
+		"status", course.Status,
+	)
+
+	return nil
 }
 
 func (s *CourseService) CreateCourseFromProposal(ctx context.Context, proposal *domain.Proposal, user *domain.User) (*domain.Course, error) {

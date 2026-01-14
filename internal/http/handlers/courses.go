@@ -76,3 +76,31 @@ func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) {
 
 	writeJSON(w, http.StatusOK, courses)
 }
+
+func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
+	if !requireMethod(w, r, http.MethodPatch) {
+		return
+	}
+
+	user, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	c, ok := requireCourse(w, r)
+	if !ok {
+		return
+	}
+
+	var request services.UpdateCourseRequest
+	if !decodeJSON(w, r, &request) {
+		return
+	}
+
+	err := h.services.Courses.UpdateCourse(r.Context(), c, user, &request)
+	if err != nil {
+		handleServiceError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

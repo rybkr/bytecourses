@@ -19,6 +19,7 @@ type Course struct {
 	ProposalID   *int64       `json:"proposal_id"`
 	Status       CourseStatus `json:"status"`
 	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
 }
 
 func CourseFromProposal(p *Proposal) *Course {
@@ -41,4 +42,8 @@ func (c *Course) IsTaughtBy(u *User) bool {
 
 func (c *Course) IsViewableBy(u *User) bool {
 	return u.IsAdmin() || c.IsLive() || c.IsTaughtBy(u)
+}
+
+func (c *Course) IsAmendable() bool {
+	return c.Status == CourseStatusDraft
 }

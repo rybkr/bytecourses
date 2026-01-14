@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytecourses/internal/domain"
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -17,18 +18,21 @@ func (s *Store) CreateCourse(ctx context.Context, c *domain.Course) error {
         INSERT INTO courses (
             instructor_id,
             title, summary,
+            proposal_id,
             status,
             created_at
         ) VALUES (
             $1,
             $2, $3,
             $4,
-            $5
+            $5,
+            $6
         )
         RETURNING id
     `,
 		c.InstructorID,
 		c.Title, c.Summary,
+		nullInt64Ptr(c.ProposalID),
 		string(status),
 		now,
 	).Scan(&c.ID); err != nil {
@@ -42,10 +46,12 @@ func (s *Store) CreateCourse(ctx context.Context, c *domain.Course) error {
 func (s *Store) GetCourseByID(ctx context.Context, id int64) (*domain.Course, bool) {
 	var c domain.Course
 	var status string
+	var proposalID sql.NullInt64
 
 	if err := s.db.QueryRowContext(ctx, `
         SELECT id, instructor_id,
                title, summary,
+               proposal_id,
                status,
                created_at
           FROM courses
@@ -53,6 +59,7 @@ func (s *Store) GetCourseByID(ctx context.Context, id int64) (*domain.Course, bo
     `, id).Scan(
 		&c.ID, &c.InstructorID,
 		&c.Title, &c.Summary,
+		&proposalID,
 		&status,
 		&c.CreatedAt,
 	); err != nil {
@@ -60,6 +67,35 @@ func (s *Store) GetCourseByID(ctx context.Context, id int64) (*domain.Course, bo
 	}
 
 	c.Status = domain.CourseStatus(status)
+	c.ProposalID = ptrFromNullInt64(proposalID)
+	return &c, true
+}
+
+func (s *Store) GetCourseByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
+	var c domain.Course
+	var status string
+	var pid sql.NullInt64
+
+	if err := s.db.QueryRowContext(ctx, `
+        SELECT id, instructor_id,
+               title, summary,
+               proposal_id,
+               status,
+               created_at
+          FROM courses
+         WHERE proposal_id = $1
+    `, proposalID).Scan(
+		&c.ID, &c.InstructorID,
+		&c.Title, &c.Summary,
+		&pid,
+		&status,
+		&c.CreatedAt,
+	); err != nil {
+		return nil, false
+	}
+
+	c.Status = domain.CourseStatus(status)
+	c.ProposalID = ptrFromNullInt64(pid)
 	return &c, true
 }
 

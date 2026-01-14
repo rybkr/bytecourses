@@ -30,6 +30,7 @@ type PasswordResetStore interface {
 type CourseStore interface {
 	CreateCourse(ctx context.Context, c *domain.Course) error
 	GetCourseByID(ctx context.Context, id int64) (*domain.Course, bool)
+	GetCourseByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool)
 	ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
 }
 

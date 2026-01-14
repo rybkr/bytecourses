@@ -28,3 +28,6 @@ primary_region = 'ord'
 
 [processes]
   app = "--storage=sql"
+
+[deploy]
+  release_command = "goose -dir migrations postgres $DATABASE_URL up"

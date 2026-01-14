@@ -16,6 +16,7 @@ type Course struct {
 	Title        string       `json:"title"`
 	Summary      string       `json:"summary"`
 	InstructorID int64        `json:"instructor_id"`
+	ProposalID   *int64       `json:"proposal_id"`
 	Status       CourseStatus `json:"status"`
 	CreatedAt    time.Time    `json:"created_at"`
 }
@@ -25,6 +26,7 @@ func CourseFromProposal(p *Proposal) *Course {
 		Title:        p.Title,
 		Summary:      p.Summary,
 		InstructorID: p.AuthorID,
+		ProposalID:   &p.ID,
 		Status:       CourseStatusDraft,
 	}
 }

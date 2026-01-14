@@ -5,6 +5,7 @@
     <h1>Learn from peers. Teach what you know.</h1>
     <p class="lead">Short, specialized courses by students, for students</p>
     <div class="hero-actions">
+        <a href="/courses" class="btn btn-primary">Browse Courses</a>
         {{if not .User}}
         <a href="/register" class="btn btn-primary">Get Started</a>
         {{end}}
@@ -60,11 +61,10 @@
 
 <div class="how-it-works">
     <h2>How It Works</h2>
-    <p class="coming-soon-note" id="learners-coming-soon">Courses launching soon!</p>
     <div class="process-steps-learner active" id="learners-process">
         <div class="process-step">
             <div class="process-step-number">1</div>
-            <h3>Browse <span class="coming-soon-badge">Coming Soon</span></h3>
+            <h3><a href="/courses" style="color: inherit; text-decoration: none;">Browse</a></h3>
             <p>Discover courses that match your interests and learning goals</p>
         </div>
         <div class="process-step">
@@ -139,7 +139,6 @@
         const instructorsProcess = document.getElementById("instructors-process");
 
         function switchTab(targetTab) {
-            const comingSoonNote = document.getElementById("learners-coming-soon");
             if (targetTab === "learners") {
                 learnersTab.classList.add("active");
                 instructorsTab.classList.remove("active");
@@ -147,9 +146,6 @@
                 instructorsPane.classList.remove("active");
                 learnersProcess.classList.add("active");
                 instructorsProcess.classList.remove("active");
-                if (comingSoonNote) {
-                    comingSoonNote.style.display = "block";
-                }
             } else {
                 instructorsTab.classList.add("active");
                 learnersTab.classList.remove("active");
@@ -157,20 +153,11 @@
                 learnersPane.classList.remove("active");
                 instructorsProcess.classList.add("active");
                 learnersProcess.classList.remove("active");
-                if (comingSoonNote) {
-                    comingSoonNote.style.display = "none";
-                }
             }
         }
 
         learnersTab.addEventListener("click", () => switchTab("learners"));
         instructorsTab.addEventListener("click", () => switchTab("instructors"));
-
-        // Show coming soon note initially if learners tab is active
-        const comingSoonNote = document.getElementById("learners-coming-soon");
-        if (comingSoonNote && learnersTab.classList.contains("active")) {
-            comingSoonNote.style.display = "block";
-        }
     });
 </script>
 {{end}}

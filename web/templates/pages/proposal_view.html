@@ -14,6 +14,9 @@ ByteCourses{{end}} {{define "content"}}
         {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "withdrawn") (eq .Proposal.Status "rejected")}}
         <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
         {{end}}
+        {{if eq .Proposal.Status "approved"}}
+        <button id="createCourseBtn" class="btn btn-primary">Create Course</button>
+        {{end}}
         {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
@@ -117,6 +120,7 @@ ByteCourses{{end}} {{define "content"}}
         const submitBtn = document.getElementById("submitBtn");
     const withdrawBtn = document.getElementById("withdrawBtn");
     const deleteBtn = document.getElementById("deleteBtn");
+    const createCourseBtn = document.getElementById("createCourseBtn");
     const errorDiv = document.getElementById("error-message");
 
     if (submitBtn) {
@@ -215,6 +219,37 @@ ByteCourses{{end}} {{define "content"}}
         }
 
         deleteBtn.addEventListener("click", deleteProposal);
+    }
+
+    if (createCourseBtn) {
+        async function createCourse() {
+            errorDiv.style.display = "none";
+            errorDiv.textContent = "";
+            createCourseBtn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/proposals/${proposalId}/actions/create-course`, {
+                    method: "POST",
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    errorDiv.textContent = txt || "Create course failed";
+                    errorDiv.style.display = "block";
+                    createCourseBtn.disabled = false;
+                    return;
+                }
+
+                const course = await res.json();
+                window.location.href = `/courses/${course.id}`;
+            } catch (error) {
+                errorDiv.textContent = "Network error. Please try again.";
+                errorDiv.style.display = "block";
+                createCourseBtn.disabled = false;
+            }
+        }
+
+        createCourseBtn.addEventListener("click", createCourse);
     }
 
     const approveBtn = document.getElementById("approveBtn");

@@ -70,3 +70,39 @@ func (s *CourseService) GetCourse(ctx context.Context, c *domain.Course, u *doma
 func (s *CourseService) ListCourses(ctx context.Context) ([]domain.Course, error) {
 	return s.courses.ListAllLiveCourses(ctx)
 }
+
+func (s *CourseService) CreateCourseFromProposal(ctx context.Context, proposal *domain.Proposal, user *domain.User) (*domain.Course, error) {
+	if proposal.Status != domain.ProposalStatusApproved {
+		return nil, ErrInvalidInput
+	}
+	if proposal.AuthorID != user.ID {
+		return nil, ErrForbidden
+	}
+
+	existing, _ := s.courses.GetCourseByProposalID(ctx, proposal.ID)
+	if existing != nil {
+		return nil, ErrConflict
+	}
+
+	course := domain.CourseFromProposal(proposal)
+	if err := s.courses.CreateCourse(ctx, course); err != nil {
+		s.logger.Error("course creation from proposal failed",
+			"event", "course.creation.from_proposal",
+			"proposal_id", proposal.ID,
+			"user_id", user.ID,
+			"title", proposal.Title,
+			"error", err,
+		)
+		return nil, err
+	}
+
+	s.logger.Info("course.created.from_proposal",
+		"course_id", course.ID,
+		"proposal_id", proposal.ID,
+		"user_id", user.ID,
+		"title", course.Title,
+		"status", course.Status,
+	)
+
+	return course, nil
+}

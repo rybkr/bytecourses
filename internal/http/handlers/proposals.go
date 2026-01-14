@@ -169,8 +169,25 @@ func (h *ProposalHandler) Action(w http.ResponseWriter, r *http.Request) {
 	switch action {
 	case "submit":
 		err = h.services.Proposals.SubmitProposal(r.Context(), p, u)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	case "withdraw":
 		err = h.services.Proposals.WithdrawProposal(r.Context(), p, u)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	case "create-course":
+		course, err := h.services.Courses.CreateCourseFromProposal(r.Context(), p, u)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		writeJSON(w, http.StatusCreated, course)
 	case "approve", "reject", "request-changes":
 		var request services.ProposalActionRequest
 		if !decodeJSON(w, r, &request) {
@@ -180,15 +197,13 @@ func (h *ProposalHandler) Action(w http.ResponseWriter, r *http.Request) {
 			Action: action,
 			Notes:  request.ReviewNotes,
 		})
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	default:
 		http.Error(w, "unknown action", http.StatusBadRequest)
 		return
 	}
-
-	if err != nil {
-		handleServiceError(w, err)
-		return
-	}
-
-	w.WriteHeader(http.StatusNoContent)
 }

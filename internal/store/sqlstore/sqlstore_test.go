@@ -32,6 +32,14 @@ func TestPasswordResetStore(t *testing.T) {
 	})
 }
 
+func TestCourseStore(t *testing.T) {
+	storetest.TestCourseStore(t, func(t *testing.T) (store.UserStore, store.CourseStore) {
+		s := openTestStore(t)
+		resetTestDB(t, s)
+		return s, s
+	})
+}
+
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
 

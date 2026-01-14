@@ -5,9 +5,8 @@ import (
 	"bytecourses/internal/store"
 	"context"
 	"database/sql"
-	"time"
-
 	"github.com/jackc/pgconn"
+	"time"
 )
 
 func (s *Store) CreateProposal(ctx context.Context, p *domain.Proposal) error {

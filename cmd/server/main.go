@@ -14,16 +14,18 @@ import (
 func main() {
 	storage := flag.String("storage", "memory", "storage backend: memory|sql")
 	bcryptCost := flag.Int("bcrypt-cost", bcrypt.DefaultCost, "bcrypt cost factor")
-	seedState := flag.Bool("seed-state", false, "seed system test users, proposals, and courses")
 	emailService := flag.String("email-service", "none", "email service provider: resend|none")
+	seedUsers := flag.Bool("seed-users", false, "seed system test users")
+	seedProposals := flag.Bool("seed-proposals", false, "seed system test proposals")
 	flag.Parse()
 
 	ctx := context.Background()
 	cfg := app.Config{
-		Storage:      app.StorageBackend(*storage),
-		BcryptCost:   *bcryptCost,
-		SeedState:    *seedState,
-		EmailService: app.EmailServiceProvider(*emailService),
+		Storage:       app.StorageBackend(*storage),
+		BcryptCost:    *bcryptCost,
+		SeedUsers:     *seedUsers,
+		SeedProposals: *seedProposals,
+		EmailService:  app.EmailServiceProvider(*emailService),
 	}
 	auth.SetBcryptCost(*bcryptCost)
 

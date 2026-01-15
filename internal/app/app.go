@@ -89,8 +89,13 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		Logger:             logger.Logger,
 	})
 
-	if cfg.SeedState {
-		if err := seedTestState(ctx, a.UserStore, a.ProposalStore); err != nil {
+	if cfg.SeedUsers {
+		if err := seedTestUsers(ctx, a.UserStore); err != nil {
+			log.Fatal(err)
+		}
+	}
+	if cfg.SeedProposals {
+		if err := seedTestProposals(ctx, a.UserStore, a.ProposalStore); err != nil {
 			log.Fatal(err)
 		}
 	}

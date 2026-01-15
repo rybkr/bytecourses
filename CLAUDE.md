@@ -12,7 +12,7 @@ Bytecourses is a web application for managing course proposals. It's built with 
 
 ```bash
 # Run the server (memory storage, useful for development)
-go run cmd/server/main.go --storage=memory --seed-users=true --bcrypt-cost=5
+go run cmd/server/main.go --storage=memory --seed-state=true --bcrypt-cost=5
 
 # Run the server (SQL storage)
 go run cmd/server/main.go --storage=sql
@@ -85,26 +85,26 @@ internal/notify/     - Email notification system
 ### Layer Responsibilities
 
 **Domain Layer** (`internal/domain/`):
-- Core business entities: `User`, `Proposal`
+- Core business entities: `User`, `Proposal`, `Course`
 - Domain logic lives on the entities (e.g., `IsViewableBy()`, `IsAmendable()`)
 - No dependencies on other layers
 
 **Store Layer** (`internal/store/`):
-- Defines repository interfaces: `UserStore`, `ProposalStore`, `PasswordResetStore`
+- Defines repository interfaces: `UserStore`, `ProposalStore`, `CourseStore`, `PasswordResetStore`
 - Two implementations: `memstore` (in-memory) and `sqlstore` (PostgreSQL)
 - `sqlstore.DB` implements all store interfaces (single struct, multiple interfaces)
 - Pure data access, no business logic
 
 **Services Layer** (`internal/services/`):
 - Business logic and orchestration
-- Services: `AuthService`, `ProposalService`
+- Services: `AuthService`, `ProposalService`, `CourseService`
 - Coordinates between stores, handles validations, executes workflows
 - Returns domain errors (defined in `services/errors.go`)
 - All services are collected in the `Services` struct created via `services.New()`
 
 **HTTP Layer** (`internal/http/`):
 - **Handlers**: Convert HTTP requests to service calls, handle HTTP concerns
-  - `AuthHandler`, `ProposalHandler`, `PageHandlers`, `SystemHandlers`
+  - `AuthHandler`, `ProposalHandler`, `CourseHandler`, `PageHandlers`, `SystemHandlers`
   - API handlers return JSON, page handlers render HTML templates
 - **Middleware**: `RequireUser`, `RequireLogin`, `RequireProposal`
   - Middleware injects authenticated users/proposals into request context
@@ -186,7 +186,8 @@ Configuration via environment variables:
 Command-line flags:
 - `--storage`: Choose backend (`memory` or `sql`)
 - `--bcrypt-cost`: Set bcrypt cost (lower for tests)
-- `--seed-users`: Seed test users (admin@local.bytecourses.org / user@local.bytecourses.org)
+- `--seed-state`: Seed test users, proposals, and courses for development/testing
+- `--email-service`: Choose email provider (`resend` or `none`)
 
 ## Web Frontend
 

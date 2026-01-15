@@ -27,3 +27,6 @@ migrate: # @help Run DB migrations
 	goose -dir migrations postgres "$$TEST_DATABASE_URL" up
 
 ci: install migrate lint test # @help Run full CI pipeline
+
+cloc: # @help Count lines of code
+	cloc web/ internal/ test/ migrations/ scripts/ cmd/                                                                                                                                      ─╯

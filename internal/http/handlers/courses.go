@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytecourses/internal/services"
+	"github.com/go-chi/chi/v5"
 	"net/http"
 )
 
@@ -103,4 +104,34 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *CourseHandler) Action(w http.ResponseWriter, r *http.Request) {
+	action := chi.URLParam(r, "action")
+	if action == "" {
+		http.Error(w, "missing action", http.StatusBadRequest)
+		return
+	}
+
+	u, ok := requireUser(w, r)
+	if !ok {
+		return
+	}
+	c, ok := requireCourse(w, r)
+	if !ok {
+		return
+	}
+
+	switch action {
+	case "publish":
+		err := h.services.Courses.PublishCourse(r.Context(), c, u)
+		if err != nil {
+			handleServiceError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
+	default:
+		http.Error(w, "unknown action", http.StatusBadRequest)
+		return
+	}
 }

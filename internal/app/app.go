@@ -89,8 +89,8 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		Logger:             logger.Logger,
 	})
 
-	if cfg.SeedUsers {
-		if err := ensureTestUsers(ctx, a.UserStore); err != nil {
+	if cfg.SeedState {
+		if err := seedTestState(ctx, a.UserStore, a.ProposalStore); err != nil {
 			log.Fatal(err)
 		}
 	}
@@ -129,44 +129,4 @@ func seedAdmin(ctx context.Context, users store.UserStore) error {
 		Role:         domain.UserRoleAdmin,
 		Name:         "Admin",
 	})
-}
-
-func ensureTestUsers(ctx context.Context, users store.UserStore) error {
-	adminEmail := "admin@local.bytecourses.org"
-	if _, ok := users.GetUserByEmail(ctx, adminEmail); ok {
-		return nil
-	}
-	hash, err := auth.HashPassword("admin")
-	if err != nil {
-		return err
-	}
-
-	if err := users.CreateUser(ctx, &domain.User{
-		Email:        adminEmail,
-		PasswordHash: hash,
-		Role:         domain.UserRoleAdmin,
-		Name:         "Admin User",
-	}); err != nil {
-		return err
-	}
-
-	userEmail := "user@local.bytecourses.org"
-	if _, ok := users.GetUserByEmail(ctx, userEmail); ok {
-		return nil
-	}
-	hash, err = auth.HashPassword("user")
-	if err != nil {
-		return err
-	}
-
-	if err := users.CreateUser(ctx, &domain.User{
-		Email:        userEmail,
-		PasswordHash: hash,
-		Role:         domain.UserRoleStudent,
-		Name:         "Guest User",
-	}); err != nil {
-		return err
-	}
-
-	return nil
 }

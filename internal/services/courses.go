@@ -107,6 +107,37 @@ func (s *CourseService) UpdateCourse(ctx context.Context, course *domain.Course,
 	return nil
 }
 
+func (s *CourseService) PublishCourse(ctx context.Context, course *domain.Course, user *domain.User) error {
+	if !course.IsTaughtBy(user) {
+		return ErrNotFound
+	}
+	if course.Status != domain.CourseStatusDraft {
+		return ErrConflict
+	}
+
+	oldStatus := course.Status
+	course.Status = domain.CourseStatusLive
+	err := s.courses.UpdateCourse(ctx, course)
+	if err != nil {
+		s.logger.Error("course publish failed",
+			"event", "course.publish",
+			"course_id", course.ID,
+			"user_id", user.ID,
+			"error", err,
+		)
+		return err
+	}
+
+	s.logger.Info("course.published",
+		"course_id", course.ID,
+		"user_id", user.ID,
+		"old_status", oldStatus,
+		"new_status", course.Status,
+	)
+
+	return nil
+}
+
 func (s *CourseService) CreateCourseFromProposal(ctx context.Context, proposal *domain.Proposal, user *domain.User) (*domain.Course, error) {
 	if proposal.Status != domain.ProposalStatusApproved {
 		return nil, ErrInvalidInput

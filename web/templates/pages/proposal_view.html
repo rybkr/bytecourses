@@ -241,7 +241,7 @@ ByteCourses{{end}} {{define "content"}}
                 }
 
                 const course = await res.json();
-                window.location.href = `/courses/${course.id}`;
+                window.location.href = `/courses/${course.id}/edit`;
             } catch (error) {
                 errorDiv.textContent = "Network error. Please try again.";
                 errorDiv.style.display = "block";

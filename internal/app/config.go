@@ -18,6 +18,6 @@ type Config struct {
 	Storage      StorageBackend
 	DatabaseDSN  string
 	BcryptCost   int
-	SeedUsers    bool
+	SeedState    bool
 	EmailService EmailServiceProvider
 }

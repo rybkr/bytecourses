@@ -35,7 +35,7 @@ func (a *App) Router() http.Handler {
 	authH := handlers.NewAuthHandler(a.Services)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandler(a.Services)
-	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore)
+	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore)
 	courseH := handlers.NewCourseHandler(a.Services)
 
 	r.Route("/api", func(r chi.Router) {
@@ -76,6 +76,7 @@ func (a *App) Router() http.Handler {
 				r.Use(appmw.RequireCourse(a.CourseStore, courseID))
 				r.Get("/", courseH.Get)
 				r.Patch("/", courseH.Update)
+				r.Post("/actions/{action}", courseH.Action)
 			})
 		})
 	})
@@ -101,6 +102,7 @@ func (a *App) Router() http.Handler {
 		r.Use(appmw.RequireLogin(a.SessionStore, a.UserStore))
 		r.Use(appmw.RequireCourse(a.CourseStore, courseID))
 		r.Get("/", pageH.CourseView)
+		r.Get("/edit", pageH.CourseEdit)
 	})
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))

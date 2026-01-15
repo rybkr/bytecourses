@@ -16,14 +16,16 @@ type PageHandlers struct {
 	users     store.UserStore
 	sessions  auth.SessionStore
 	proposals store.ProposalStore
+	courses   store.CourseStore
 }
 
-func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore) *PageHandlers {
+func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore, courses store.CourseStore) *PageHandlers {
 	return &PageHandlers{
 		services:  services,
 		users:     users,
 		sessions:  sessions,
 		proposals: proposals,
+		courses:   courses,
 	}
 }
 
@@ -244,6 +246,41 @@ func (h *PageHandlers) CourseView(w http.ResponseWriter, r *http.Request) {
 		Course:     course,
 		CourseJSON: string(courseJSON),
 		Page:       "course_view.html",
+	}
+	Render(w, data)
+}
+
+func (h *PageHandlers) CourseEdit(w http.ResponseWriter, r *http.Request) {
+	user, ok := userFromRequest(r)
+	if !ok {
+		return
+	}
+
+	idStr := chi.URLParam(r, "id")
+	cid, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	c, ok := h.courses.GetCourseByID(r.Context(), cid)
+	if !ok || c.InstructorID != user.ID {
+		http.Error(w, "not found", http.StatusNotFound)
+		return
+	}
+
+	if c.Status != domain.CourseStatusDraft {
+		http.Redirect(w, r, "/courses/"+strconv.FormatInt(cid, 10), http.StatusSeeOther)
+		return
+	}
+
+	courseJSON, _ := json.Marshal(c)
+
+	data := &TemplateData{
+		User:       user,
+		Course:     c,
+		CourseJSON: string(courseJSON),
+		Page:       "course_edit.html",
 	}
 	Render(w, data)
 }

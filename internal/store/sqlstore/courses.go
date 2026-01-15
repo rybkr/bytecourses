@@ -142,17 +142,23 @@ func (s *Store) ListAllLiveCourses(ctx context.Context) ([]domain.Course, error)
 
 func (s *Store) UpdateCourse(ctx context.Context, c *domain.Course) error {
 	now := time.Now().UTC()
+	status := c.Status
+	if status == "" {
+		status = domain.CourseStatusDraft
+	}
 
 	res, err := s.db.ExecContext(ctx, `
         UPDATE courses
            SET title = $2,
                summary = $3,
-               updated_at = $4
+               status = $4,
+               updated_at = $5
          WHERE id = $1
     `,
 		c.ID,
 		c.Title,
 		c.Summary,
+		string(status),
 		now,
 	)
 	if err != nil {

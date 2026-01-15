@@ -1,0 +1,80 @@
+{{template "layout" .}} {{define "title"}}Edit Course - ByteCourses{{end}}
+{{define "content"}}
+<div class="page-header">
+    <h1>Edit Course</h1>
+    <a href="/courses/{{.Course.ID}}" class="btn btn-secondary">Back to Course</a>
+</div>
+<div class="form-container">
+    <form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="5000"
+        onsubmit="event.preventDefault()">
+        <div class="form-group">
+            <label for="title">Title
+                <span class="help-icon" data-help="title" aria-label="Show help for Title" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>Clear, specific, and focused on one topic.</small></label>
+            <input type="text" id="title" name="title" required value="{{.Course.Title}}" />
+            <div class="help-panel" id="help-title" style="display: none; position: absolute; left: -9999px;">
+                <div class="help-panel-content">
+                    <h4>What we're looking for</h4>
+                    <p>A clear, specific title that immediately tells learners what the course is about.</p>
+                    <h4>Tips</h4>
+                    <ul>
+                        <li>Avoid vague titles like "Programming Course" or "Learn Economics"</li>
+                        <li>Keep it concise &lt;10 words is ideal</li>
+                        <li>Include the specific technology, framework, or skill</li>
+                        <li>Make it searchable: use terms learners would search for</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="summary">Summary
+                <span class="help-icon" data-help="summary" aria-label="Show help for Summary" tabindex="0"
+                    role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>What learners will gain and why it matters.</small></label>
+            <textarea id="summary" name="summary" rows="5" required>{{.Course.Summary}}</textarea>
+            <div class="help-panel" id="help-summary" style="display: none; position: absolute; left: -9999px;">
+                <div class="help-panel-content">
+                    <h4>What we're looking for</h4>
+                    <p>A compelling summary that explains what learners will gain from this course and why it matters.
+                        Focus on outcomes and benefits, not just features.</p>
+                    <h4>Tips</h4>
+                    <ul>
+                        <li>Focus on outcomes and benefits, not just features</li>
+                        <li>Explain what learners will gain from this course</li>
+                        <li>Make it compelling and clear</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="error-message" class="error-message" style="display: none"></div>
+        <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
+
+        <div class="form-actions">
+            {{if eq .Course.Status "draft"}}
+            <button type="button" id="publishBtn" class="btn btn-primary">
+                Publish Course
+            </button>
+            {{end}}
+            <button type="button" id="saveBtn" class="btn btn-secondary">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+{{end}} {{define "scripts"}}
+<script src="/static/js/course_edit.js" defer></script>
+{{end}}

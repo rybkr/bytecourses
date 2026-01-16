@@ -15,8 +15,8 @@
 </div>
 
 <div class="mission-statement">
-    <p>Byte Courses connects students who want to learn specialized skills with peers who want to teach.
-        Short, focused courses that are relatable, nimble, and practical.</p>
+    <h3>Our Mission</h3>
+    <p>ByteCourses connects students who want to learn specialized skills with peers who want to teach. Short, focused courses that are relatable, nimble, and practical.</p>
 </div>
 
 <div class="benefits-section">
@@ -98,6 +98,56 @@
     </div>
 </div>
 
+<div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    <div class="faq-container">
+        <div class="faq-item" aria-expanded="false">
+            <button class="faq-question" type="button">
+                <span>What makes ByteCourses different?</span>
+                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+            <div class="faq-answer">
+                <p>ByteCourses is built by students, for students. Our courses are taught by peers who understand your challenges, offer modern perspectives aligned with today's tools and trends, and focus on practical, immediately applicable skills rather than abstract theory.</p>
+            </div>
+        </div>
+        <div class="faq-item" aria-expanded="false">
+            <button class="faq-question" type="button">
+                <span>Do I need prior experience to learn?</span>
+                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+            <div class="faq-answer">
+                <p>Not necessarily! Courses on ByteCourses cover a range of skill levels. Each course will clearly indicate any prerequisites, but many courses are designed for beginners looking to learn new skills.</p>
+            </div>
+        </div>
+        <div class="faq-item" aria-expanded="false">
+            <button class="faq-question" type="button">
+                <span>How do I become an instructor?</span>
+                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+            <div class="faq-answer">
+                <p>Anyone can become an instructor! Simply submit a course proposal through our platform. Our team reviews proposals to ensure quality and relevance. Once approved, you can create and publish your course for students to discover.</p>
+            </div>
+        </div>
+        <div class="faq-item" aria-expanded="false">
+            <button class="faq-question" type="button">
+                <span>What topics will be covered?</span>
+                <svg class="faq-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M6 9l6 6 6-6"/>
+                </svg>
+            </button>
+            <div class="faq-answer">
+                <p>Our course topics are diverse and driven by what students want to teach and learn. Expect to see courses on programming, design, productivity tools, career skills, and other practical, specialized subjects that help you grow professionally and personally.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div id="teach-modal" class="modal" style="display: none;">
     <div class="modal-overlay" onclick="closeTeachModal()"></div>
     <div class="modal-content">
@@ -163,6 +213,34 @@
 
         learnersTab.addEventListener("click", () => switchTab("learners"));
         instructorsTab.addEventListener("click", () => switchTab("instructors"));
+
+        const faqItems = document.querySelectorAll(".faq-item");
+        faqItems.forEach((item) => {
+            const question = item.querySelector(".faq-question");
+            const answer = item.querySelector(".faq-answer");
+
+            question.addEventListener("click", () => {
+                const isExpanded = item.getAttribute("aria-expanded") === "true";
+                
+                faqItems.forEach((otherItem) => {
+                    otherItem.setAttribute("aria-expanded", "false");
+                });
+
+                if (!isExpanded) {
+                    item.setAttribute("aria-expanded", "true");
+                    question.setAttribute("aria-expanded", "true");
+                } else {
+                    item.setAttribute("aria-expanded", "false");
+                    question.setAttribute("aria-expanded", "false");
+                }
+            });
+            question.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    question.click();
+                }
+            });
+        });
     });
 </script>
 {{end}}

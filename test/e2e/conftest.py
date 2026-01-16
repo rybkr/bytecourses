@@ -1,55 +1,39 @@
 import pytest
-import subprocess
-import time
-from http import HTTPStatus
 import requests
-import os
-import signal
-import socket
+from http import HTTPStatus
 
-
-def get_free_port():
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("127.0.0.1", 0))
-        return s.getsockname()[1]
+from test.conftest import USER_EMAIL, USER_PASSWORD, ADMIN_EMAIL, ADMIN_PASSWORD
 
 
 @pytest.fixture(scope="function")
-def go_server():
-    port = get_free_port()
-    api_root = f"http://127.0.0.1:{port}/api"
-    env = os.environ.copy()
-    env["PORT"] = f"{port}"
-
-    proc = subprocess.Popen(
-        [
-            "go",
-            "run",
-            "cmd/server/main.go",
-            "--seed-users=true",
-            "--bcrypt-cost=5",
-            "--storage=memory",
-            "--email-service=none",
-        ],
-        env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        start_new_session=True,
+def user_session(api_url):
+    session = requests.Session()
+    r = session.post(
+        f"{api_url}/login",
+        json={"email": USER_EMAIL, "password": USER_PASSWORD},
     )
+    assert r.status_code == HTTPStatus.OK, "Failed to login as seeded user"
+    return session
 
-    for _ in range(30):
-        try:
-            r = requests.get(f"{api_root}/health")
-            print(r)
-            if r.status_code == HTTPStatus.OK:
-                break
-        except requests.exceptions.ConnectionError:
-            time.sleep(0.2)
-    else:
-        os.killpg(proc.pid, signal.SIGTERM)
-        raise RuntimeError("Go server did not start")
 
-    yield api_root
+@pytest.fixture(scope="function")
+def admin_session(api_url):
+    session = requests.Session()
+    r = session.post(
+        f"{api_url}/login",
+        json={"email": ADMIN_EMAIL, "password": ADMIN_PASSWORD},
+    )
+    assert r.status_code == HTTPStatus.OK, "Failed to login as seeded admin"
+    return session
 
-    os.killpg(proc.pid, signal.SIGTERM)
-    proc.wait()
+
+def register_and_login(api_url: str, email: str, password: str, name: str = None):
+    session = requests.Session()
+    payload = {"email": email, "password": password}
+    if name:
+        payload["name"] = name
+    r = session.post(f"{api_url}/register", json=payload)
+    assert r.status_code == HTTPStatus.CREATED, f"Failed to register user {email}"
+    r = session.post(f"{api_url}/login", json={"email": email, "password": password})
+    assert r.status_code == HTTPStatus.OK, f"Failed to login as {email}"
+    return session

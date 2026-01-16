@@ -1,1035 +1,490 @@
-import requests
 from http import HTTPStatus
 
-go_server: str = "http://localhost:8080/api"
-
-
-def test_create_proposal(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    login_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "Some Course Title",
-        "summary": "A summary of some course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    proposal_payload = {
-        "title": "Another Course Title",
-        "summary": "A summary of another course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-
-def test_get_proposals(go_server):
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "Some Course Title",
-        "summary": "A summary of some course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    proposal_payload = {
-        "title": "Another Course Title",
-        "summary": "A summary of another course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    r = s.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-
-    data = sorted(r.json(), key=lambda p: p["id"])
-    assert len(data) == 2
-    assert "title" in data[0] and "summary" in data[0]
-    assert "title" in data[1] and "summary" in data[1]
-
-    assert data[0]["title"] == "Some Course Title"
-    assert data[0]["summary"] == "A summary of some course."
-    assert data[1]["title"] == "Another Course Title"
-    assert data[1]["summary"] == "A summary of another course."
-
-
-def test_get_proposals_empty(go_server):
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    r = s.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-
-    data = r.json()
-    assert len(data) == 0
-
-
-def test_proposals_invalid_method(go_server):
-    r = requests.delete(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.UNAUTHORIZED
-
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    r = s.delete(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
-
-
-def test_get_proposals_by_id(go_server):
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "Some Course Title",
-        "summary": "A summary of some course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    proposal_payload = {
-        "title": "Another Course Title",
-        "summary": "A summary of another course.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    r = s.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 2
-
-    p1, p2 = r.json()[0], r.json()[1]
-    assert "id" in p1 and "id" in p2
-
-    id1, id2 = int(p1["id"]), int(p2["id"])
-    r = s.get(f"{go_server}/proposals/{id1}")
-    assert r.status_code == HTTPStatus.OK
-    assert r.json() == p1
-
-    r = s.get(f"{go_server}/proposals/{id2}")
-    assert r.status_code == HTTPStatus.OK
-    assert r.json() == p2
-
-
-def test_get_proposal_nonexistent(go_server):
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    r = s.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-
-    data = r.json()
-    assert len(data) == 0
-
-    r = s.get(f"{go_server}/proposals/{2**63 - 1}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-
-def test_update_proposal(go_server):
-    s = requests.Session()
-
-    login_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    r = s.get(f"{go_server}/me")
-    assert r.status_code == HTTPStatus.OK
-    assert "id" in r.json()
-    author_id = r.json()["id"]
-
-    proposal_payload: dict[str, str] = {
-        "title": "Title",
-        "summary": "Summary",
-        "author_id": author_id,
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-
-    pid: int = r.json()["id"]
-    r = s.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "title" in r.json() and "summary" in r.json()
-    assert r.json()["title"] == "Title"
-
-    p = r.json()
-    p["title"] = "New Title"
-    r = s.patch(f"{go_server}/proposals/{pid}", json=p)
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = s.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "title" in r.json() and "summary" in r.json()
-    assert r.json()["title"] == "New Title"
-
-
-def test_get_proposal_wrong_user(go_server):
-    s = requests.Session()
-    t = requests.Session()
-
-    s_login_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    t_login_payload: dict[str, str] = {
-        "email": "user@example.org",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=s_login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = t.post(f"{go_server}/register", json=t_login_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    r = s.post(f"{go_server}/login", json=s_login_payload)
-    assert r.status_code == HTTPStatus.OK
-    r = t.post(f"{go_server}/login", json=t_login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    s_proposal_payload: dict[str, str] = {
-        "title": "S Title",
-        "summary": "S Summary",
-    }
-    t_proposal_payload: dict[str, str] = {
-        "title": "T Title",
-        "summary": "T Summary",
-    }
-    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    s_id = r.json()["id"]
-
-    r = t.post(f"{go_server}/proposals", json=t_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    t_id = r.json()["id"]
-
-    r = s.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 1
-    assert r.json()[0]["title"] == "S Title"
-
-    r = t.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 1
-    assert r.json()[0]["title"] == "T Title"
-
-    r = s.get(f"{go_server}/proposals/{s_id}")
-    assert r.status_code == HTTPStatus.OK
-    r = t.get(f"{go_server}/proposals/{s_id}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-    r = s.get(f"{go_server}/proposals/{t_id}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-    r = t.get(f"{go_server}/proposals/{t_id}")
-    assert r.status_code == HTTPStatus.OK
-
-
-def test_create_proposal_rich(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    r = s.post(f"{go_server}/login", json=register_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "Some Course Title",
-        "summary": "A summary of some course.",
-        "target_audience": "The target audience for some course.",
-        "learning_objectives": "The learning objectives of some course.",
-        "outline": """
-            - item 1
-            - item 2
-        """,
-        "assumed_prerequisites": "Some older course, some other older course, some skill.",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-
-    r = s.get(f"{go_server}/proposals/{r.json()['id']}")
-    assert r.status_code == HTTPStatus.OK
-
-    for key, value in proposal_payload.items():
-        assert key in r.json()
-        assert r.json()[key] == value
-
-
-def test_submit_proposal(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    r = s.post(f"{go_server}/login", json=register_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "S Title",
-        "summary": "S Summary",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = s.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = s.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert r.json()["status"] == "submitted"
-
-
-def test_unknown_action(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    r = s.post(f"{go_server}/login", json=register_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "S Title",
-        "summary": "S Summary",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = s.post(f"{go_server}/proposals/{pid}/actions/jump")
-    assert r.status_code == HTTPStatus.BAD_REQUEST
-
-
-def test_admin_view_proposals(go_server):
-    s = requests.Session()
-    t = requests.Session()
-
-    s_register_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    t_register_payload: dict[str, str] = {
-        "email": "admin@local.bytecourses.org",
-        "password": "admin",
-    }
-    s.post(f"{go_server}/register", json=s_register_payload)
-    s.post(f"{go_server}/login", json=s_register_payload)
-    t.post(f"{go_server}/login", json=t_register_payload)
-
-    s_proposal_payload: dict[str, str] = {
-        "title": "Title",
-        "summary": "Summary",
-    }
-    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    s_pid_1 = r.json()["id"]
-
-    s_proposal_payload = {
-        "title": "Title 2",
-        "summary": "Summary 2",
-    }
-    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    s_pid_2 = r.json()["id"]
-
-    t_proposal_payload: dict[str, str] = {
-        "title": "Title 3",
-        "summary": "Summary 3",
-    }
-    r = t.post(f"{go_server}/proposals", json=t_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    t_pid_1 = r.json()["id"]
-
-    r = s.post(f"{go_server}/proposals/{s_pid_2}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = t.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 1
-    assert "id" in r.json()[0]
-    assert r.json()[0]["id"] == s_pid_2
-
-    r = t.get(f"{go_server}/proposals/mine")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 1
-    assert "id" in r.json()[0]
-    assert r.json()[0]["id"] == t_pid_1
-
-    assert s_pid_1 != s_pid_2 and s_pid_2 != t_pid_1
-
-
-def test_admin_view_submitted_proposal(go_server):
-    s = requests.Session()
-    t = requests.Session()
-
-    s_register_payload: dict[str, str] = {
-        "email": "user@example.com",
-        "password": "password123",
-    }
-    t_register_payload: dict[str, str] = {
-        "email": "admin@local.bytecourses.org",
-        "password": "admin",
-    }
-    s.post(f"{go_server}/register", json=s_register_payload)
-    s.post(f"{go_server}/login", json=s_register_payload)
-    t.post(f"{go_server}/login", json=t_register_payload)
-
-    s_proposal_payload: dict[str, str] = {
-        "title": "Title",
-        "summary": "Summary",
-    }
-    r = s.post(f"{go_server}/proposals", json=s_proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    s_pid = r.json()["id"]
-
-    r = t.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 0
-
-    r = t.get(f"{go_server}/proposals/{s_pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = s.post(f"{go_server}/proposals/{s_pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = t.get(f"{go_server}/proposals")
-    assert r.status_code == HTTPStatus.OK
-    assert len(r.json()) == 1
-    assert "id" in r.json()[0]
-    assert r.json()[0]["id"] == s_pid
-
-    r = t.get(f"{go_server}/proposals/{r.json()[0]['id']}")
-    assert r.status_code == HTTPStatus.OK
-    assert "id" in r.json()
-    assert r.json()["id"] == s_pid
-
-    assert "title" in r.json()
-    assert r.json()["title"] == "Title"
-
-
-def test_proposal_workflow_happy_path(go_server):
-    u = requests.Session()
-    a = requests.Session()
-
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-    a.post(
-        f"{go_server}/login",
-        json={
-            "email": "admin@local.bytecourses.org",
-            "password": "admin",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-    r = a.post(
-        f"{go_server}/proposals/{pid}/actions/approve",
-        json={"review_notes": "Approved"},
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-
-def test_proposal_workflow_with_changes_requested(go_server):
-    u = requests.Session()
-    a = requests.Session()
-
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-    a.post(
-        f"{go_server}/login",
-        json={
-            "email": "admin@local.bytecourses.org",
-            "password": "admin",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-    r = a.post(
-        f"{go_server}/proposals/{pid}/actions/request-changes",
-        json={"review_notes": "Changes requested"},
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "changes_requested"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-    assert (
-        "review_notes" in r.json() and r.json()["review_notes"] == "Changes requested"
-    )
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={"title": "New Title", "summary": "New Summary", "outline": "Outline"},
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "changes_requested"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-    assert "outline" in r.json() and r.json()["outline"] == "Outline"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "changes_requested"
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = a.post(
-        f"{go_server}/proposals/{pid}/actions/approve",
-        json={"review_notes": "approved"},
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "Old Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-
-
-def test_proposal_workflow_with_patch(go_server):
-    u = requests.Session()
-    a = requests.Session()
-
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-    a.post(
-        f"{go_server}/login",
-        json={
-            "email": "admin@local.bytecourses.org",
-            "password": "admin",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-    assert "outline" in r.json() and r.json()["outline"] == "Outline"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "draft"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-    assert "outline" in r.json() and r.json()["outline"] == ""
-    assert "summary" in r.json() and r.json()["summary"] == ""
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-            "summary": "New Summary",
-        },
-    )
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "draft"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-    assert "summary" in r.json() and r.json()["summary"] == "New Summary"
-    assert "outline" in r.json() and r.json()["outline"] == ""
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "Old Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-
-    r = a.post(
-        f"{go_server}/proposals/{pid}/actions/approve",
-        json={
-            "review_notes": "Approved",
-        },
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "approved"
-    assert "title" in r.json() and r.json()["title"] == "New Title"
-    assert "outline" in r.json() and r.json()["outline"] == ""
-
-
-def test_proposal_workflow_delete_draft(go_server):
-    u = requests.Session()
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-    assert "outline" in r.json() and r.json()["outline"] == "Outline"
-
-    r = u.delete(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-    r = u.patch(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-
-def test_proposal_workflow_reject_submission(go_server):
-    u = requests.Session()
-    a = requests.Session()
-
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-    a.post(
-        f"{go_server}/login",
-        json={
-            "email": "admin@local.bytecourses.org",
-            "password": "admin",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-    r = a.post(
-        f"{go_server}/proposals/{pid}/actions/reject", json={"review_notes": "rejected"}
-    )
-    assert r.status_code == HTTPStatus.NO_CONTENT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "rejected"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "rejected"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "rejected"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-
-def test_proposal_workflow_withdraw_submission(go_server):
-    u = requests.Session()
-    a = requests.Session()
-
-    u.post(
-        f"{go_server}/login",
-        json={
-            "email": "user@local.bytecourses.org",
-            "password": "user",
-        },
-    )
-    a.post(
-        f"{go_server}/login",
-        json={
-            "email": "admin@local.bytecourses.org",
-            "password": "admin",
-        },
-    )
-
-    r = u.post(
-        f"{go_server}/proposals",
-        json={
-            "title": "Title",
-            "summary": "Summary",
-            "outline": "Outline",
-        },
-    )
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json()
-    assert r.json()["status"] == "draft"
-
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/submit")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "submitted"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-    r = u.post(f"{go_server}/proposals/{pid}/actions/withdraw")
-    assert r.status_code == HTTPStatus.NO_CONTENT
-    r = a.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.NOT_FOUND
-
-    r = u.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "status" in r.json() and r.json()["status"] == "withdrawn"
-    assert "title" in r.json() and r.json()["title"] == "Title"
-
-    r = u.patch(
-        f"{go_server}/proposals/{pid}",
-        json={
-            "title": "New Title",
-        },
-    )
-    assert r.status_code == HTTPStatus.CONFLICT
-
-
-def test_add_instructor_qualifications(go_server):
-    s = requests.Session()
-
-    register_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/register", json=register_payload)
-    assert r.status_code == HTTPStatus.CREATED
-
-    login_payload: dict[str, str] = {
-        "email": "usr@example.com",
-        "password": "password123",
-    }
-    r = s.post(f"{go_server}/login", json=login_payload)
-    assert r.status_code == HTTPStatus.OK
-
-    proposal_payload: dict[str, str] = {
-        "title": "Some Course Title",
-        "summary": "A summary of some course.",
-        "qualifications": "Some qualifications",
-    }
-    r = s.post(f"{go_server}/proposals", json=proposal_payload)
-    assert r.status_code == HTTPStatus.CREATED
-    assert "id" in r.json()
-    pid = r.json()["id"]
-
-    r = s.get(f"{go_server}/proposals/{pid}")
-    assert r.status_code == HTTPStatus.OK
-    assert "qualifications" in r.json()
-    assert r.json()["qualifications"] == "Some qualifications"
+from .conftest import register_and_login
+
+
+class TestProposalCreate:
+    def test_creates_proposal_with_title_and_summary(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={"title": "My Course", "summary": "Course summary."},
+        )
+        assert r.status_code == HTTPStatus.CREATED
+        assert "id" in r.json()
+
+    def test_creates_proposal_with_all_fields(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        payload = {
+            "title": "Complete Course",
+            "summary": "A comprehensive course.",
+            "target_audience": "Developers",
+            "learning_objectives": "Learn everything",
+            "outline": "- item 1\n- item 2",
+            "assumed_prerequisites": "Basic programming",
+        }
+        r = session.post(f"{api_url}/proposals", json=payload)
+        assert r.status_code == HTTPStatus.CREATED
+
+        proposal_id = r.json()["id"]
+        r = session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.OK
+        for key, value in payload.items():
+            assert r.json()[key] == value
+
+    def test_creates_proposal_with_qualifications(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={
+                "title": "Course",
+                "summary": "Summary",
+                "qualifications": "10 years experience",
+            },
+        )
+        assert r.status_code == HTTPStatus.CREATED
+
+        proposal_id = r.json()["id"]
+        r = session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.OK
+        assert r.json()["qualifications"] == "10 years experience"
+
+    def test_new_proposal_has_draft_status(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Draft Proposal", "summary": "Summary"},
+        )
+        assert r.status_code == HTTPStatus.CREATED
+
+        proposal_id = r.json()["id"]
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "draft"
+
+
+class TestProposalRead:
+    def test_lists_own_proposals(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        session.post(
+            f"{api_url}/proposals",
+            json={"title": "First Course", "summary": "First summary"},
+        )
+        session.post(
+            f"{api_url}/proposals",
+            json={"title": "Second Course", "summary": "Second summary"},
+        )
+
+        r = session.get(f"{api_url}/proposals")
+        assert r.status_code == HTTPStatus.OK
+
+        proposals = sorted(r.json(), key=lambda p: p["id"])
+        assert len(proposals) == 2
+        assert proposals[0]["title"] == "First Course"
+        assert proposals[1]["title"] == "Second Course"
+
+    def test_returns_empty_list_when_no_proposals(self, api_url):
+        session = register_and_login(api_url, "newauthor@example.com", "password123")
+
+        r = session.get(f"{api_url}/proposals")
+        assert r.status_code == HTTPStatus.OK
+        assert r.json() == []
+
+    def test_gets_proposal_by_id(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={"title": "My Course", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.OK
+        assert r.json()["title"] == "My Course"
+
+    def test_returns_404_for_nonexistent_proposal(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.get(f"{api_url}/proposals/{2**63 - 1}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_rejects_delete_method_on_proposals_list(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.delete(f"{api_url}/proposals")
+        assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+
+class TestProposalUpdate:
+    def test_updates_proposal_title(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={"title": "Original Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["title"] == "New Title"
+
+    def test_patch_replaces_all_fields(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary", "outline": "Outline"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["title"] == "New Title"
+        assert r.json()["summary"] == ""
+        assert r.json()["outline"] == ""
+
+    def test_rejects_update_on_submitted_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+
+class TestProposalDelete:
+    def test_deletes_draft_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "To Delete", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_session.delete(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+
+class TestProposalActions:
+    def test_submit_changes_status_to_submitted(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "submitted"
+
+    def test_unknown_action_returns_400(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        r = session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = session.post(f"{api_url}/proposals/{proposal_id}/actions/unknown")
+        assert r.status_code == HTTPStatus.BAD_REQUEST
+
+
+class TestProposalPermissions:
+    def test_user_cannot_view_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_a_id = r.json()["id"]
+
+        r = user_b.get(f"{api_url}/proposals/{proposal_a_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_users_see_only_their_own_proposals(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        user_b.post(
+            f"{api_url}/proposals",
+            json={"title": "B's Proposal", "summary": "Summary"},
+        )
+
+        r = user_a.get(f"{api_url}/proposals")
+        assert len(r.json()) == 1
+        assert r.json()[0]["title"] == "A's Proposal"
+
+        r = user_b.get(f"{api_url}/proposals")
+        assert len(r.json()) == 1
+        assert r.json()[0]["title"] == "B's Proposal"
+
+
+class TestAdminProposalAccess:
+    def test_admin_sees_submitted_proposals(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Draft Proposal", "summary": "Summary"},
+        )
+        draft_id = r.json()["id"]
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Submitted Proposal", "summary": "Summary"},
+        )
+        submitted_id = r.json()["id"]
+        user.post(f"{api_url}/proposals/{submitted_id}/actions/submit")
+
+        r = admin_session.get(f"{api_url}/proposals")
+        assert r.status_code == HTTPStatus.OK
+        ids = [p["id"] for p in r.json()]
+        assert submitted_id in ids
+        assert draft_id not in ids
+
+    def test_admin_cannot_view_draft_proposals(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Draft", "summary": "Summary"},
+        )
+        draft_id = r.json()["id"]
+
+        r = admin_session.get(f"{api_url}/proposals/{draft_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_admin_can_view_submitted_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "To Submit", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.OK
+        assert r.json()["title"] == "To Submit"
+
+    def test_admin_sees_own_proposals_via_mine_endpoint(self, api_url, admin_session):
+        r = admin_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Admin's Proposal", "summary": "Summary"},
+        )
+        admin_proposal_id = r.json()["id"]
+
+        r = admin_session.get(f"{api_url}/proposals/mine")
+        assert r.status_code == HTTPStatus.OK
+        assert any(p["id"] == admin_proposal_id for p in r.json())
+
+
+class TestProposalWorkflowHappyPath:
+    def test_draft_submit_approve_workflow(self, api_url, user_session, admin_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary", "outline": "Outline"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "draft"
+
+        r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.OK
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Looks good!"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "approved"
+
+
+class TestProposalWorkflowChangesRequested:
+    def test_changes_requested_allows_editing(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={
+                "title": "Original Title",
+                "summary": "Summary",
+                "outline": "Outline",
+            },
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Please add more detail"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "changes_requested"
+        assert r.json()["review_notes"] == "Please add more detail"
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={
+                "title": "Updated Title",
+                "summary": "Better summary",
+                "outline": "Outline",
+            },
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["title"] == "Updated Title"
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "submitted"
+
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "approved"
+
+
+class TestProposalWorkflowRejection:
+    def test_reject_sets_rejected_status(self, api_url, user_session, admin_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary", "outline": "Outline"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Not suitable"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "rejected"
+
+    def test_rejected_proposal_cannot_be_edited(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+
+class TestProposalWorkflowWithdrawal:
+    def test_withdraw_sets_withdrawn_status(self, api_url, user_session, admin_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary", "outline": "Outline"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "withdrawn"
+
+    def test_admin_cannot_see_withdrawn_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_withdrawn_proposal_cannot_be_edited(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = user_session.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "New Title"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT

@@ -12,7 +12,7 @@ Bytecourses is a web application for managing course proposals. It's built with 
 
 ```bash
 # Run the server (memory storage, useful for development)
-go run cmd/server/main.go --storage=memory --seed-state=true --bcrypt-cost=5
+go run cmd/server/main.go --storage=memory --seed-users=true --seed-proposals=true --bcrypt-cost=5
 
 # Run the server (SQL storage)
 go run cmd/server/main.go --storage=sql
@@ -88,6 +88,8 @@ internal/notify/     - Email notification system
 - Core business entities: `User`, `Proposal`, `Course`
 - Domain logic lives on the entities (e.g., `IsViewableBy()`, `IsAmendable()`)
 - No dependencies on other layers
+- Proposal workflow states: `draft` → `submitted` → (`approved`|`rejected`|`changes_requested`|`withdrawn`)
+- Proposals can only be edited in `draft` or `changes_requested` status
 
 **Store Layer** (`internal/store/`):
 - Defines repository interfaces: `UserStore`, `ProposalStore`, `CourseStore`, `PasswordResetStore`
@@ -106,9 +108,9 @@ internal/notify/     - Email notification system
 - **Handlers**: Convert HTTP requests to service calls, handle HTTP concerns
   - `AuthHandler`, `ProposalHandler`, `CourseHandler`, `PageHandlers`, `SystemHandlers`
   - API handlers return JSON, page handlers render HTML templates
-- **Middleware**: `RequireUser`, `RequireLogin`, `RequireProposal`
-  - Middleware injects authenticated users/proposals into request context
-  - Access via `handlers.UserFromContext()`, `handlers.ProposalFromContext()`
+- **Middleware**: `RequireUser`, `RequireLogin`, `RequireProposal`, `RequireCourse`
+  - Middleware injects authenticated users/proposals/courses into request context
+  - Access via `middleware.UserFromContext()`, `middleware.ProposalFromContext()`, `middleware.CourseFromContext()`
 
 **App Layer** (`internal/app/`):
 - App initialization (`app.New()`)
@@ -186,7 +188,8 @@ Configuration via environment variables:
 Command-line flags:
 - `--storage`: Choose backend (`memory` or `sql`)
 - `--bcrypt-cost`: Set bcrypt cost (lower for tests)
-- `--seed-state`: Seed test users, proposals, and courses for development/testing
+- `--seed-users`: Seed test users for development/testing
+- `--seed-proposals`: Seed test proposals for development/testing
 - `--email-service`: Choose email provider (`resend` or `none`)
 
 ## Web Frontend

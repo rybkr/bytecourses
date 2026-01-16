@@ -2,20 +2,21 @@
 
 {{define "content"}}
 <div class="hero">
-    <h1>Learn from peers. Teach what you know.</h1>
-    <p class="lead">Short, specialized courses by students, for students</p>
-    <div class="hero-actions">
-        <a href="/courses" class="btn btn-primary">Browse Courses</a>
-        {{if not .User}}
-        <a href="/register" class="btn btn-primary">Get Started</a>
-        {{end}}
-        <button class="btn btn-secondary" onclick="openTeachModal(event)">Teach a Course</button>
+    <div class="hero-content">
+        <h1>Learn from peers. Teach what you know.</h1>
+        <p class="lead">Short, specialized courses by students, for students</p>
+        <div class="hero-actions">
+            <a href="/courses" class="btn btn-primary">Browse Courses</a>
+            {{if not .User}}
+            <a href="/register" class="btn btn-primary">Get Started</a>
+            {{end}}
+        </div>
     </div>
 </div>
 
 <div class="mission-statement">
     <p>Byte Courses connects students who want to learn specialized skills with peers who want to teach.
-    Short, focused courses that are relatable, nimble, and practical.</p>
+        Short, focused courses that are relatable, nimble, and practical.</p>
 </div>
 
 <div class="benefits-section">
@@ -107,18 +108,22 @@
         <div class="modal-body">
             <h3>Why Teach on Byte Courses?</h3>
             <ul class="instructor-benefits">
-                <li><strong>Build Teaching Experience</strong> - Grow your teaching portfolio with hands-on experience</li>
+                <li><strong>Build Teaching Experience</strong> - Grow your teaching portfolio with hands-on experience
+                </li>
                 <li><strong>Enhance Your Resume</strong> - Differentiate yourself with experience employers respect</li>
-                <li><strong>Share Your Expertise</strong> - Make an impact while sharpening your own skills and reputation</li>
+                <li><strong>Share Your Expertise</strong> - Make an impact while sharpening your own skills and
+                    reputation</li>
             </ul>
-            
+
             <h3>How It Works</h3>
             <ol class="instructor-process">
-                <li><strong>Submit Your Proposal</strong> - Share your course idea with details about what you'll teach</li>
+                <li><strong>Submit Your Proposal</strong> - Share your course idea with details about what you'll teach
+                </li>
                 <li><strong>Our Team Reviews</strong> - We review your proposal to ensure quality and relevance</li>
-                <li><strong>Launch Your Course</strong> - Once approved, your course can go live for students to discover</li>
+                <li><strong>Launch Your Course</strong> - Once approved, your course can go live for students to
+                    discover</li>
             </ol>
-            
+
             <div class="modal-actions">
                 <a href="/proposals/new" class="btn btn-primary" onclick="closeTeachModal()">Submit Your Proposal</a>
                 <button class="btn btn-outline" onclick="closeTeachModal()">Close</button>

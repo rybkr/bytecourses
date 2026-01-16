@@ -239,12 +239,18 @@ func (h *PageHandlers) CourseView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	var instructor *domain.User
+	if instructorUser, ok := h.users.GetUserByID(r.Context(), course.InstructorID); ok {
+		instructor = instructorUser
+	}
+
 	courseJSON, _ := json.Marshal(course)
 
 	data := &TemplateData{
 		User:       user,
 		Course:     course,
 		CourseJSON: string(courseJSON),
+		Instructor: instructor,
 		Page:       "course_view.html",
 	}
 	Render(w, data)

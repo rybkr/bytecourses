@@ -1,13 +1,21 @@
-.PHONY: help install lint go-test py-test test migrate ci
+.PHONY: help setup venv install env lint go-test py-test test migrate ci cloc
 
 help: # @help Show available targets
 	@grep -E '^[a-zA-Z_-]+:.*?# @help ' $(MAKEFILE_LIST) | \
 	awk 'BEGIN {FS = ":.*?# @help "}; {printf "  %-12s %s\n", $$1, $$2}'
 
+setup: venv install env # @help Configure dev environment
+
+venv: # @help Ensure virtual environment
+	@test -d .venv || python3 -m venv .venv
+
 install: # @help Install dev tooling
-	go install github.com/pressly/goose/v3/cmd/goose@latest
 	python -m pip install --upgrade pip
 	./scripts/install.sh
+
+env: # @help Ensure .env file
+	@test -f .env || (echo ".env missing" && exit 1)
+	@echo "Run: source .env"
 
 lint: # @help Run format and lint checks
 	test -z "$$(gofmt -l .)"

@@ -12,23 +12,29 @@ const (
 )
 
 type Course struct {
-	ID           int64        `json:"id"`
-	Title        string       `json:"title"`
-	Summary      string       `json:"summary"`
-	InstructorID int64        `json:"instructor_id"`
-	ProposalID   *int64       `json:"proposal_id"`
-	Status       CourseStatus `json:"status"`
-	CreatedAt    time.Time    `json:"created_at"`
-	UpdatedAt    time.Time    `json:"updated_at"`
+	ID                   int64        `json:"id"`
+	Title                string       `json:"title"`
+	Summary              string       `json:"summary"`
+	TargetAudience       string       `json:"target_audience"`
+	LearningObjectives   string       `json:"learning_objectives"`
+	AssumedPrerequisites string       `json:"assumed_prerequisites"`
+	InstructorID         int64        `json:"instructor_id"`
+	ProposalID           *int64       `json:"proposal_id"`
+	Status               CourseStatus `json:"status"`
+	CreatedAt            time.Time    `json:"created_at"`
+	UpdatedAt            time.Time    `json:"updated_at"`
 }
 
 func CourseFromProposal(p *Proposal) *Course {
 	return &Course{
-		Title:        p.Title,
-		Summary:      p.Summary,
-		InstructorID: p.AuthorID,
-		ProposalID:   &p.ID,
-		Status:       CourseStatusDraft,
+		Title:                p.Title,
+		Summary:              p.Summary,
+		TargetAudience:       p.TargetAudience,
+		LearningObjectives:   p.LearningObjectives,
+		AssumedPrerequisites: p.AssumedPrerequisites,
+		InstructorID:         p.AuthorID,
+		ProposalID:           &p.ID,
+		Status:               CourseStatusDraft,
 	}
 }
 

@@ -49,6 +49,7 @@ type TemplateData struct {
 	Course       *domain.Course
 	CourseJSON   string
 	Courses      []domain.Course
+	Instructor   *domain.User
 	Page         string
 }
 

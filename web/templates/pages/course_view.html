@@ -10,10 +10,25 @@ ByteCourses{{end}} {{define "content"}}
     <div class="status-container">
         <span class="status-badge status-{{.Course.Status}}">{{.Course.Status}}</span>
     </div>
+    {{if .Instructor}}
+    <span>Instructor: {{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</span>
+    {{end}}
     <span>Created: {{.Course.CreatedAt.Format "January 2, 2006"}}</span>
 </div>
 <div class="proposal-content">
     <h2>Summary</h2>
     <div class="proposal-content-value">{{markdown .Course.Summary}}</div>
+    {{if .Course.TargetAudience}}
+    <h2>Target Audience</h2>
+    <div class="proposal-content-value">{{markdown .Course.TargetAudience}}</div>
+    {{end}}
+    {{if .Course.LearningObjectives}}
+    <h2>Learning Objectives</h2>
+    <div class="proposal-content-value">{{markdown .Course.LearningObjectives}}</div>
+    {{end}}
+    {{if .Course.AssumedPrerequisites}}
+    <h2>Prerequisites</h2>
+    <div class="proposal-content-value">{{markdown .Course.AssumedPrerequisites}}</div>
+    {{end}}
 </div>
 {{end}}

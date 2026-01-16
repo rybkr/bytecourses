@@ -20,9 +20,12 @@ func NewCourseService(courses store.CourseStore, logger *slog.Logger) *CourseSer
 }
 
 type CreateCourseRequest struct {
-	Title        string `json:"title"`
-	Summary      string `json:"summary"`
-	InstructorID int64  `json:"instructor_id"`
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
+	InstructorID         int64  `json:"instructor_id"`
 }
 
 func (r *CreateCourseRequest) IsValid() bool {
@@ -30,8 +33,11 @@ func (r *CreateCourseRequest) IsValid() bool {
 }
 
 type UpdateCourseRequest struct {
-	Title   string `json:"title"`
-	Summary string `json:"summary"`
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
 func (s *CourseService) CreateCourse(ctx context.Context, request *CreateCourseRequest) (*domain.Course, error) {
@@ -40,10 +46,13 @@ func (s *CourseService) CreateCourse(ctx context.Context, request *CreateCourseR
 	}
 
 	course := &domain.Course{
-		InstructorID: request.InstructorID,
-		Title:        request.Title,
-		Summary:      request.Summary,
-		Status:       domain.CourseStatusDraft,
+		InstructorID:         request.InstructorID,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		AssumedPrerequisites: request.AssumedPrerequisites,
+		Status:               domain.CourseStatusDraft,
 	}
 	if err := s.courses.CreateCourse(ctx, course); err != nil {
 		s.logger.Error("course creation failed",

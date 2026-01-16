@@ -27,7 +27,7 @@ primary_region = 'ord'
   cpus = 1
 
 [processes]
-  app = "--storage=sql"
+  app = "run-app --storage=sql"
 
 [deploy]
-  release_command = "goose -dir migrations postgres $DATABASE_URL up"
+  release_command = "sh -c 'goose -dir migrations postgres \"$DATABASE_URL\" up'"

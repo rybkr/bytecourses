@@ -1,13 +1,20 @@
 -- +goose Up
 CREATE EXTENSION IF NOT EXISTS citext;
 
-CREATE TYPE user_role AS ENUM (
-    'student',
-    'instructor',
-    'admin'
-);
+-- +goose StatementBegin
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM (
+            'student',
+            'instructor',
+            'admin'
+        );
+    END IF;
+END $$;
+-- +goose StatementEnd
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id            BIGSERIAL PRIMARY KEY,
     email         CITEXT NOT NULL UNIQUE,
     name          TEXT NOT NULL,

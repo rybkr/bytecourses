@@ -1,14 +1,22 @@
 -- +goose Up
-CREATE TYPE proposal_status AS ENUM (
-	'draft',
-	'submitted',
-	'withdrawn',
-	'approved',
-	'rejected',
-	'changes_requested'
-);
 
-CREATE TABLE proposals (
+-- +goose StatementBegin
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'proposal_status') THEN
+        CREATE TYPE proposal_status AS ENUM (
+            'draft',
+            'submitted',
+            'withdrawn',
+            'approved',
+            'rejected',
+            'changes_requested'
+        );
+    END IF;
+END $$;
+-- +goose StatementEnd
+
+CREATE TABLE IF NOT EXISTS proposals (
     id                    BIGSERIAL PRIMARY KEY,
     author_id             BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     title                 TEXT NOT NULL default '',
@@ -24,8 +32,8 @@ CREATE TABLE proposals (
     updated_at            TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX proposals_author_id_idx ON proposals(author_id);
-CREATE INDEX proposals_status_idx ON proposals(status);
+CREATE INDEX IF NOT EXISTS proposals_author_id_idx ON proposals(author_id);
+CREATE INDEX IF NOT EXISTS proposals_status_idx ON proposals(status);
 
 -- +goose Down
 DROP TABLE IF EXISTS proposals;

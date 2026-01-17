@@ -1,8 +1,7 @@
 package memsession
 
 import (
-	"crypto/rand"
-	"encoding/base64"
+	"bytecourses/internal/auth"
 	"sync"
 	"time"
 )
@@ -27,12 +26,10 @@ func New(ttl time.Duration) *Store {
 
 func (s *Store) CreateSession(userID int64) (string, error) {
 	for {
-		b := make([]byte, 32)
-		if _, err := rand.Read(b); err != nil {
+		token, err := auth.GenerateToken(32)
+		if err != nil {
 			return "", err
 		}
-
-		token := base64.RawURLEncoding.EncodeToString(b)
 		exp := time.Now().Add(s.ttl)
 
 		s.mu.Lock()
@@ -49,20 +46,36 @@ func (s *Store) CreateSession(userID int64) (string, error) {
 }
 
 func (s *Store) GetUserIDByToken(token string) (int64, bool) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	now := time.Now()
 
+	s.mu.RLock()
 	session, ok := s.byToken[token]
-	if !ok || time.Now().After(session.expiresAt) {
-		delete(s.byToken, token)
+	s.mu.RUnlock()
+
+	if !ok {
 		return 0, false
 	}
+	if now.Before(session.expiresAt) {
+		return session.userID, true
+	}
 
+	s.mu.Lock()
+	session, ok = s.byToken[token]
+	if ok && now.After(session.expiresAt) {
+		delete(s.byToken, token)
+		s.mu.Unlock()
+		return 0, false
+	}
+	s.mu.Unlock()
+
+	if !ok {
+		return 0, false
+	}
 	return session.userID, true
 }
 
 func (s *Store) DeleteSessionByToken(token string) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	delete(s.byToken, token)
+	s.mu.Unlock()
 }

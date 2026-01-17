@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const publishBtn = document.getElementById("publishBtn");
     const saveBtn = document.getElementById("saveBtn");
 
-    const fieldIds = ["title", "summary"];
+    const fieldIds = ["title", "summary", "target_audience", "learning_objectives", "assumed_prerequisites"];
 
     let saveTimer = null;
     let dirty = false;
@@ -33,6 +33,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return {
             title: document.getElementById("title")?.value ?? "",
             summary: document.getElementById("summary")?.value ?? "",
+            target_audience: document.getElementById("target_audience")?.value ?? "",
+            learning_objectives: document.getElementById("learning_objectives")?.value ?? "",
+            assumed_prerequisites: document.getElementById("assumed_prerequisites")?.value ?? "",
         };
     }
 
@@ -156,4 +159,219 @@ document.addEventListener("DOMContentLoaded", () => {
             saveNow().catch(() => { });
         }
     });
+
+    // Module management
+    const modulesList = document.getElementById("modules-list");
+    const addModuleBtn = document.getElementById("add-module-btn");
+    const modulesError = document.getElementById("modules-error");
+    let modules = [];
+    let editingModuleId = null;
+
+    async function loadModules() {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/modules`);
+            if (!res.ok) {
+                throw new Error("Failed to load modules");
+            }
+            modules = await res.json();
+            renderModules();
+        } catch (e) {
+            showModulesError(e.message || "Failed to load modules");
+        }
+    }
+
+    function renderModules() {
+        if (!modulesList) return;
+        
+        if (modules.length === 0) {
+            modulesList.innerHTML = '<p style="color: var(--text-muted); margin: 1rem 0;">No modules yet. Click "Add Module" to create one.</p>';
+            return;
+        }
+
+        modulesList.innerHTML = modules.map(module => {
+            const isEditing = editingModuleId === module.id;
+            return `
+                <div class="module-item" data-module-id="${module.id}">
+                    ${isEditing ? `
+                        <input type="text" class="module-edit-input" value="${escapeHtml(module.title)}" 
+                               data-module-id="${module.id}" />
+                        <div class="module-item-actions">
+                            <button type="button" class="btn btn-small btn-primary save-module-btn" data-module-id="${module.id}">Save</button>
+                            <button type="button" class="btn btn-small btn-secondary cancel-edit-btn" data-module-id="${module.id}">Cancel</button>
+                        </div>
+                    ` : `
+                        <div class="module-item-content">
+                            <span class="module-position">${module.position}</span>
+                            <span class="module-title">${escapeHtml(module.title)}</span>
+                        </div>
+                        <div class="module-item-actions">
+                            <button type="button" class="btn btn-small btn-secondary edit-module-btn" data-module-id="${module.id}">Edit</button>
+                            <button type="button" class="btn btn-small btn-danger delete-module-btn" data-module-id="${module.id}">Delete</button>
+                        </div>
+                    `}
+                </div>
+            `;
+        }).join("");
+
+        // Attach event listeners
+        modulesList.querySelectorAll(".edit-module-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                const moduleId = Number(btn.dataset.moduleId);
+                editingModuleId = moduleId;
+                renderModules();
+                const input = modulesList.querySelector(`.module-edit-input[data-module-id="${moduleId}"]`);
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+            });
+        });
+
+        modulesList.querySelectorAll(".cancel-edit-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
+                editingModuleId = null;
+                renderModules();
+            });
+        });
+
+        modulesList.querySelectorAll(".save-module-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const moduleId = Number(btn.dataset.moduleId);
+                const input = modulesList.querySelector(`.module-edit-input[data-module-id="${moduleId}"]`);
+                if (!input) return;
+                
+                const newTitle = input.value.trim();
+                if (!newTitle) {
+                    showModulesError("Module title cannot be empty");
+                    return;
+                }
+                
+                await updateModule(moduleId, newTitle);
+            });
+        });
+
+        modulesList.querySelectorAll(".module-edit-input").forEach(input => {
+            input.addEventListener("keydown", (e) => {
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                    const moduleId = Number(input.dataset.moduleId);
+                    const saveBtn = modulesList.querySelector(`.save-module-btn[data-module-id="${moduleId}"]`);
+                    saveBtn?.click();
+                } else if (e.key === "Escape") {
+                    editingModuleId = null;
+                    renderModules();
+                }
+            });
+        });
+
+        modulesList.querySelectorAll(".delete-module-btn").forEach(btn => {
+            btn.addEventListener("click", async () => {
+                const moduleId = Number(btn.dataset.moduleId);
+                if (!confirm(`Are you sure you want to delete "${modules.find(m => m.id === moduleId)?.title}"?`)) {
+                    return;
+                }
+                await deleteModule(moduleId);
+            });
+        });
+    }
+
+    async function createModule(title) {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/modules`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title }),
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || "Failed to create module");
+            }
+
+            const module = await res.json();
+            await loadModules();
+            editingModuleId = module.id;
+            renderModules();
+            const input = modulesList.querySelector(`.module-edit-input[data-module-id="${module.id}"]`);
+            if (input) {
+                input.focus();
+                input.select();
+            }
+            clearModulesError();
+        } catch (e) {
+            showModulesError(e.message || "Failed to create module");
+        }
+    }
+
+    async function updateModule(moduleId, title) {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ title }),
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || "Failed to update module");
+            }
+
+            editingModuleId = null;
+            await loadModules();
+            clearModulesError();
+        } catch (e) {
+            showModulesError(e.message || "Failed to update module");
+        }
+    }
+
+    async function deleteModule(moduleId) {
+        try {
+            const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                const txt = await res.text();
+                throw new Error(txt || "Failed to delete module");
+            }
+
+            await loadModules();
+            clearModulesError();
+        } catch (e) {
+            showModulesError(e.message || "Failed to delete module");
+        }
+    }
+
+    function showModulesError(message) {
+        if (modulesError) {
+            modulesError.textContent = message;
+            modulesError.style.display = "block";
+        }
+    }
+
+    function clearModulesError() {
+        if (modulesError) {
+            modulesError.style.display = "none";
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement("div");
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    if (addModuleBtn) {
+        addModuleBtn.addEventListener("click", () => {
+            const title = prompt("Enter module title:");
+            if (title && title.trim()) {
+                createModule(title.trim());
+            }
+        });
+    }
+
+    // Load modules on page load
+    if (modulesList) {
+        loadModules();
+    }
 });

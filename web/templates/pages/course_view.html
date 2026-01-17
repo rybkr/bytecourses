@@ -86,15 +86,27 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 
-{{if .Modules}}
 <div class="curriculum-section">
-    <h2>Curriculum</h2>
+    <div class="curriculum-header">
+        <h2>Curriculum</h2>
+        {{if .IsInstructor}}
+        <button type="button" id="add-module-btn" class="btn btn-primary">Add Module</button>
+        {{end}}
+    </div>
+    {{if .Modules}}
     {{range $index, $module := .Modules}}
     <div class="module-accordion{{if eq $index 0}} expanded{{end}}" data-module-id="{{$module.ID}}">
         <div class="module-accordion-header">
             <h3 class="module-accordion-title">{{$module.Title}}</h3>
             <div class="module-accordion-meta">
+                {{if $.IsInstructor}}
+                <div class="module-actions">
+                    <button type="button" class="btn btn-small btn-secondary edit-module-btn" data-module-id="{{$module.ID}}" data-module-title="{{$module.Title}}">Edit</button>
+                    <button type="button" class="btn btn-small btn-danger delete-module-btn" data-module-id="{{$module.ID}}" data-module-title="{{$module.Title}}">Delete</button>
+                </div>
+                {{else}}
                 <span>Coming soon</span>
+                {{end}}
             </div>
             <div class="module-accordion-toggle">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -104,15 +116,36 @@ ByteCourses{{end}} {{define "content"}}
         </div>
         <div class="module-accordion-content">
             <div class="module-accordion-body">
+                {{if $.IsInstructor}}
+                <div class="module-content-editor">
+                    <h4>Module Content</h4>
+                    <textarea class="module-content-input" data-module-id="{{$module.ID}}" placeholder="Add text content, notes, or instructions for this module..." rows="6"></textarea>
+                    <div class="module-content-actions">
+                        <button type="button" class="btn btn-primary save-content-btn" data-module-id="{{$module.ID}}">Save Content</button>
+                        <span class="content-save-status" data-module-id="{{$module.ID}}"></span>
+                    </div>
+                </div>
+                {{else}}
                 <div class="lesson-placeholder">
                     Module content will be available soon. Lessons and materials are being prepared.
                 </div>
+                {{end}}
             </div>
         </div>
     </div>
     {{end}}
+    {{else}}
+    {{if .IsInstructor}}
+    <div class="empty-modules-message">
+        <p>No modules yet. Click "Add Module" to get started.</p>
+    </div>
+    {{else}}
+    <div class="empty-modules-message">
+        <p>Curriculum will be available soon.</p>
+    </div>
+    {{end}}
+    {{end}}
 </div>
-{{end}}
 {{end}}
 
 {{define "scripts"}}

@@ -53,6 +53,7 @@ type TemplateData struct {
 	Modules      []domain.Module
 	Instructors  map[int64]*domain.User
 	ModuleCounts map[int64]int
+	IsInstructor bool
 	Page         string
 }
 

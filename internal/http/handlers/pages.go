@@ -123,7 +123,6 @@ func (h *PageHandlers) ProposalNew(w http.ResponseWriter, r *http.Request) {
 
 	proposal, err := h.services.Proposals.CreateProposal(r.Context(), &services.CreateProposalRequest{
 		AuthorID: u.ID,
-		// Empty fields - proposal starts as draft
 	})
 	if err != nil {
 		http.Error(w, "failed to create draft", http.StatusInternalServerError)
@@ -216,19 +215,16 @@ func (h *PageHandlers) CoursesList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Build instructor map and module counts
 	instructors := make(map[int64]*domain.User)
 	moduleCounts := make(map[int64]int)
-	
+
 	for _, c := range courses {
-		// Fetch instructor
 		if _, exists := instructors[c.InstructorID]; !exists {
 			if instructor, ok := h.users.GetUserByID(r.Context(), c.InstructorID); ok {
 				instructors[c.InstructorID] = instructor
 			}
 		}
-		
-		// Fetch module count
+
 		if modules, err := h.modules.ListModulesByCourseID(r.Context(), c.ID); err == nil {
 			moduleCounts[c.ID] = len(modules)
 		}
@@ -268,19 +264,19 @@ func (h *PageHandlers) CourseView(w http.ResponseWriter, r *http.Request) {
 
 	courseJSON, _ := json.Marshal(course)
 
-	// Fetch modules for this course
 	var modules []domain.Module
 	if courseModules, err := h.services.Modules.ListModules(r.Context(), course, user); err == nil {
 		modules = courseModules
 	}
 
 	data := &TemplateData{
-		User:       user,
-		Course:     course,
-		CourseJSON: string(courseJSON),
-		Instructor: instructor,
-		Modules:    modules,
-		Page:       "course_view.html",
+		User:         user,
+		Course:       course,
+		CourseJSON:   string(courseJSON),
+		Instructor:   instructor,
+		Modules:      modules,
+		IsInstructor: course.IsTaughtBy(user),
+		Page:         "course_view.html",
 	}
 	Render(w, data)
 }

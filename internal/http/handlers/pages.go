@@ -17,15 +17,17 @@ type PageHandlers struct {
 	sessions  auth.SessionStore
 	proposals store.ProposalStore
 	courses   store.CourseStore
+	modules   store.ModuleStore
 }
 
-func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore, courses store.CourseStore) *PageHandlers {
+func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore, courses store.CourseStore, modules store.ModuleStore) *PageHandlers {
 	return &PageHandlers{
 		services:  services,
 		users:     users,
 		sessions:  sessions,
 		proposals: proposals,
 		courses:   courses,
+		modules:   modules,
 	}
 }
 
@@ -214,9 +216,29 @@ func (h *PageHandlers) CoursesList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Build instructor map and module counts
+	instructors := make(map[int64]*domain.User)
+	moduleCounts := make(map[int64]int)
+	
+	for _, c := range courses {
+		// Fetch instructor
+		if _, exists := instructors[c.InstructorID]; !exists {
+			if instructor, ok := h.users.GetUserByID(r.Context(), c.InstructorID); ok {
+				instructors[c.InstructorID] = instructor
+			}
+		}
+		
+		// Fetch module count
+		if modules, err := h.modules.ListModulesByCourseID(r.Context(), c.ID); err == nil {
+			moduleCounts[c.ID] = len(modules)
+		}
+	}
+
 	data := &TemplateData{
-		Courses: courses,
-		Page:    "courses.html",
+		Courses:      courses,
+		Instructors:  instructors,
+		ModuleCounts: moduleCounts,
+		Page:         "courses.html",
 	}
 	RenderWithUser(w, r, h.sessions, h.users, data)
 }
@@ -246,11 +268,18 @@ func (h *PageHandlers) CourseView(w http.ResponseWriter, r *http.Request) {
 
 	courseJSON, _ := json.Marshal(course)
 
+	// Fetch modules for this course
+	var modules []domain.Module
+	if courseModules, err := h.services.Modules.ListModules(r.Context(), course, user); err == nil {
+		modules = courseModules
+	}
+
 	data := &TemplateData{
 		User:       user,
 		Course:     course,
 		CourseJSON: string(courseJSON),
 		Instructor: instructor,
+		Modules:    modules,
 		Page:       "course_view.html",
 	}
 	Render(w, data)

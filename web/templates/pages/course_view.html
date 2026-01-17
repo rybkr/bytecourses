@@ -1,34 +1,120 @@
 {{template "layout" .}} {{define "title"}}{{.Course.Title}} -
 ByteCourses{{end}} {{define "content"}}
 <div class="page-header">
-    <h1>{{.Course.Title}}</h1>
-    <div class="header-actions">
-        <a href="/courses" class="btn btn-outline">Back to Courses</a>
+    <a href="/courses" class="btn btn-outline">← Back to Courses</a>
+</div>
+
+<div class="course-hero">
+    <div class="course-hero-content">
+        <h1>{{.Course.Title}}</h1>
+        <p>{{.Course.Summary}}</p>
+        <div class="course-meta-pills">
+            {{if .Course.Status}}
+            <span class="pill">{{.Course.Status}}</span>
+            {{end}}
+            {{if .Modules}}
+            <span class="pill">📦 {{len .Modules}} module{{if ne (len .Modules) 1}}s{{end}}</span>
+            {{end}}
+            {{if .Instructor}}
+            <span class="pill">by {{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</span>
+            {{end}}
+        </div>
     </div>
 </div>
-<div class="proposal-meta-bar">
-    <div class="status-container">
-        <span class="status-badge status-{{.Course.Status}}">{{.Course.Status}}</span>
+
+<div class="course-layout">
+    <div class="course-main">
+        <section>
+            <h2>About This Course</h2>
+            <div class="proposal-content-value">{{markdown .Course.Summary}}</div>
+        </section>
+
+        {{if .Course.LearningObjectives}}
+        <section style="margin-top: 2.5rem;">
+            <h2>What You'll Learn</h2>
+            <div class="proposal-content-value">{{markdown .Course.LearningObjectives}}</div>
+        </section>
+        {{end}}
+
+        {{if .Course.AssumedPrerequisites}}
+        <section style="margin-top: 2.5rem;">
+            <h2>Prerequisites</h2>
+            <div class="proposal-content-value">{{markdown .Course.AssumedPrerequisites}}</div>
+        </section>
+        {{end}}
+
+        {{if .Course.TargetAudience}}
+        <section style="margin-top: 2.5rem;">
+            <h2>Target Audience</h2>
+            <div class="proposal-content-value">{{markdown .Course.TargetAudience}}</div>
+        </section>
+        {{end}}
     </div>
-    {{if .Instructor}}
-    <span>Instructor: {{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</span>
-    {{end}}
-    <span>Created: {{.Course.CreatedAt.Format "January 2, 2006"}}</span>
+
+    <div class="course-sidebar">
+        {{if .Instructor}}
+        <div class="instructor-card">
+            <h3>Instructor</h3>
+            <div class="instructor-info">
+                <div class="instructor-avatar">
+                    {{if .Instructor.Name}}{{printf "%.1s" .Instructor.Name}}{{else}}{{printf "%.1s" .Instructor.Email}}{{end}}
+                </div>
+                <div>
+                    <p class="instructor-name">{{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</p>
+                </div>
+            </div>
+        </div>
+        {{end}}
+
+        <div class="course-details-card">
+            <h3>Course Details</h3>
+            <div class="course-detail-item">
+                <span class="course-detail-label">Status</span>
+                <span class="course-detail-value">{{.Course.Status}}</span>
+            </div>
+            {{if .Modules}}
+            <div class="course-detail-item">
+                <span class="course-detail-label">Modules</span>
+                <span class="course-detail-value">{{len .Modules}}</span>
+            </div>
+            {{end}}
+            <div class="course-detail-item">
+                <span class="course-detail-label">Created</span>
+                <span class="course-detail-value">{{.Course.CreatedAt.Format "January 2, 2006"}}</span>
+            </div>
+        </div>
+    </div>
 </div>
-<div class="proposal-content">
-    <h2>Summary</h2>
-    <div class="proposal-content-value">{{markdown .Course.Summary}}</div>
-    {{if .Course.TargetAudience}}
-    <h2>Target Audience</h2>
-    <div class="proposal-content-value">{{markdown .Course.TargetAudience}}</div>
-    {{end}}
-    {{if .Course.LearningObjectives}}
-    <h2>Learning Objectives</h2>
-    <div class="proposal-content-value">{{markdown .Course.LearningObjectives}}</div>
-    {{end}}
-    {{if .Course.AssumedPrerequisites}}
-    <h2>Prerequisites</h2>
-    <div class="proposal-content-value">{{markdown .Course.AssumedPrerequisites}}</div>
+
+{{if .Modules}}
+<div class="curriculum-section">
+    <h2>Curriculum</h2>
+    {{range $index, $module := .Modules}}
+    <div class="module-accordion{{if eq $index 0}} expanded{{end}}" data-module-id="{{$module.ID}}">
+        <div class="module-accordion-header">
+            <h3 class="module-accordion-title">{{$module.Title}}</h3>
+            <div class="module-accordion-meta">
+                <span>Coming soon</span>
+            </div>
+            <div class="module-accordion-toggle">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+            </div>
+        </div>
+        <div class="module-accordion-content">
+            <div class="module-accordion-body">
+                <div class="lesson-placeholder">
+                    Module content will be available soon. Lessons and materials are being prepared.
+                </div>
+            </div>
+        </div>
+    </div>
     {{end}}
 </div>
+{{end}}
+{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/course_view.js" defer></script>
 {{end}}

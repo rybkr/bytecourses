@@ -44,7 +44,7 @@ func (a *App) Router() http.Handler {
 	authH := handlers.NewAuthHandler(a.Services)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandler(a.Services)
-	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore)
+	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore, a.ModuleStore)
 	courseH := handlers.NewCourseHandler(a.Services)
 	moduleH := handlers.NewModuleHandler(a.Services)
 

@@ -26,7 +26,7 @@ class ProposalsPage(BasePage):
         return self.page.locator(self.PAGE_HEADER).text_content() or ""
 
     def click_new_proposal(self):
-        self.page.click(self.NEW_PROPOSAL_BTN)
+        self.go_to_new_proposal()
 
     def get_proposal_count(self) -> int:
         self.wait_for_proposals_loaded()

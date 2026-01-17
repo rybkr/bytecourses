@@ -6,9 +6,6 @@ MAKEFLAGS += --no-builtin-rules
 
 VENV := .venv
 PY := $(VENV)/bin/python
-PIP := $(VENV)/bin/pip
-RUFF := $(VENV)/bin/ruff
-PYTEST := $(VENV)/bin/pytest
 
 ifneq (,$(wildcard .env))
 include .env
@@ -26,7 +23,7 @@ venv: # @help Ensure virtual environment
 	@test -d $(VENV) || python3 -m venv $(VENV)
 
 install: venv # @help Install dev tooling
-	$(PIP) install --upgrade pip
+	pip install --upgrade pip
 	./scripts/install.sh
 
 setup: install # @help Configure dev environment
@@ -34,20 +31,20 @@ setup: install # @help Configure dev environment
 lint: # @help Run format and lint checks
 	test -z "$$(gofmt -l .)"
 	go vet ./...
-	$(RUFF) format --check .
-	$(RUFF) check .
+	ruff format --check .
+	ruff check .
 
 go-test: # @help Run go tests
 	go test ./... -count=1 -race -cover
 
 py-test: venv # @help Run Python e2e tests
-	$(PYTEST) test/e2e -vn auto
+	pytest test/e2e -vn auto
 
 ui-test: venv # @help Run Playwright UI tests (headed)
-	$(PYTEST) test/ui -vn auto --headed
+	pytest test/ui -vn auto --headed
 
 ui-test-headless: venv # @help Run Playwright UI tests headless
-	$(PYTEST) test/ui -vn auto
+	pytest test/ui -vn auto
 
 test: go-test py-test ui-test-headless # @help Run all tests
 

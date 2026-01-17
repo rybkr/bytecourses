@@ -23,6 +23,7 @@ type App struct {
 	UserStore          store.UserStore
 	ProposalStore      store.ProposalStore
 	CourseStore        store.CourseStore
+	ModuleStore        store.ModuleStore
 	SessionStore       auth.SessionStore
 	PasswordResetStore store.PasswordResetStore
 	DB                 store.DB
@@ -38,6 +39,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.UserStore = memstore.NewUserStore()
 		a.ProposalStore = memstore.NewProposalStore()
 		a.CourseStore = memstore.NewCourseStore()
+		a.ModuleStore = memstore.NewModuleStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.PasswordResetStore = memstore.NewPasswordResetStore()
 
@@ -49,6 +51,8 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		if db, err := sqlstore.Open(ctx, dbDsn); err == nil {
 			a.UserStore = db
 			a.ProposalStore = db
+			a.CourseStore = db
+			a.ModuleStore = db
 			a.PasswordResetStore = db
 			a.SessionStore = memsession.New(24 * time.Hour)
 			a.DB = db
@@ -83,6 +87,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		UserStore:          a.UserStore,
 		ProposalStore:      a.ProposalStore,
 		CourseStore:        a.CourseStore,
+		ModuleStore:        a.ModuleStore,
 		PasswordResetStore: a.PasswordResetStore,
 		SessionStore:       a.SessionStore,
 		EmailSender:        a.EmailSender,

@@ -35,6 +35,15 @@ type CourseStore interface {
 	UpdateCourse(ctx context.Context, c *domain.Course) error
 }
 
+type ModuleStore interface {
+	CreateModule(ctx context.Context, m *domain.Module) error
+	GetModuleByID(ctx context.Context, id int64) (*domain.Module, bool)
+	UpdateModule(ctx context.Context, m *domain.Module) error
+	DeleteModuleByID(ctx context.Context, id int64) error
+	ListModulesByCourseID(ctx context.Context, courseID int64) ([]domain.Module, error)
+	ReorderModules(ctx context.Context, courseID int64, moduleIDs []int64) error
+}
+
 type DBStats struct {
 	MaxOpenConnections int   `json:"max_open_connections"`
 	OpenConnections    int   `json:"open_connections"`

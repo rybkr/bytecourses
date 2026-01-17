@@ -50,6 +50,10 @@ type TemplateData struct {
 	CourseJSON   string
 	Courses      []domain.Course
 	Instructor   *domain.User
+	Modules      []domain.Module
+	Instructors  map[int64]*domain.User
+	ModuleCounts map[int64]int
+	IsInstructor bool
 	Page         string
 }
 

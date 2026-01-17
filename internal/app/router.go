@@ -27,6 +27,15 @@ func courseID(r *http.Request) (int64, bool) {
 	return id, err == nil
 }
 
+func moduleID(r *http.Request) (int64, bool) {
+	idStr := chi.URLParam(r, "moduleId")
+	if idStr == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	return id, err == nil
+}
+
 func (a *App) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
@@ -35,8 +44,9 @@ func (a *App) Router() http.Handler {
 	authH := handlers.NewAuthHandler(a.Services)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandler(a.Services)
-	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore)
+	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore, a.ModuleStore)
 	courseH := handlers.NewCourseHandler(a.Services)
+	moduleH := handlers.NewModuleHandler(a.Services)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/register", authH.Register)
@@ -77,6 +87,19 @@ func (a *App) Router() http.Handler {
 				r.Get("/", courseH.Get)
 				r.Patch("/", courseH.Update)
 				r.Post("/actions/{action}", courseH.Action)
+
+				r.Route("/modules", func(r chi.Router) {
+					r.Post("/", moduleH.Create)
+					r.Get("/", moduleH.List)
+					r.Post("/reorder", moduleH.Reorder)
+
+					r.Route("/{moduleId}", func(r chi.Router) {
+						r.Use(appmw.RequireModule(a.ModuleStore, moduleID))
+						r.Get("/", moduleH.Get)
+						r.Patch("/", moduleH.Update)
+						r.Delete("/", moduleH.Delete)
+					})
+				})
 			})
 		})
 	})

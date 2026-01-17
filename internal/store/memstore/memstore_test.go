@@ -29,3 +29,9 @@ func TestCourseStore(t *testing.T) {
 		return NewUserStore(), NewCourseStore()
 	})
 }
+
+func TestModuleStore(t *testing.T) {
+	storetest.TestModuleStore(t, func(t *testing.T) (store.UserStore, store.CourseStore, store.ModuleStore) {
+		return NewUserStore(), NewCourseStore(), NewModuleStore()
+	})
+}

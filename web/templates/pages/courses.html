@@ -3,27 +3,50 @@
 {{define "title"}}Courses - ByteCourses{{end}}
 
 {{define "content"}}
-<div class="page-header">
-    <h1>Courses</h1>
+<div class="catalog-controls">
+    <h1>Browse Courses</h1>
+    <div class="search-input-wrapper">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+        </svg>
+        <input type="text" id="course-search" placeholder="Search courses..." autocomplete="off">
+    </div>
 </div>
 
 {{if .Courses}}
-<div class="proposals-list">
+<div class="course-grid" id="course-grid">
     {{range .Courses}}
-    <a href="/courses/{{.ID}}" class="proposal-card" style="text-decoration: none; display: block; color: inherit;">
-        <div class="proposal-header">
-            <h3>{{.Title}}</h3>
-            <span class="status-badge status-{{.Status}}">{{.Status}}</span>
-        </div>
-        <div class="proposal-content-value">
-            {{markdown .Summary}}
+    <a href="/courses/{{.ID}}" class="course-card" data-title="{{.Title}}" data-summary="{{.Summary}}">
+        <div class="course-card-header"></div>
+        <div class="course-card-body">
+            <h3 class="course-card-title">{{.Title}}</h3>
+            <div class="course-card-meta">
+                {{if index $.Instructors .InstructorID}}
+                    {{$instructor := index $.Instructors .InstructorID}}
+                    <span>by {{if $instructor.Name}}{{$instructor.Name}}{{else}}{{$instructor.Email}}{{end}}</span>
+                {{end}}
+                {{if index $.ModuleCounts .ID}}
+                    <span class="module-count">📦 {{index $.ModuleCounts .ID}} module{{if ne (index $.ModuleCounts .ID) 1}}s{{end}}</span>
+                {{end}}
+            </div>
+            <div class="course-card-summary">
+                {{markdown .Summary}}
+            </div>
         </div>
     </a>
     {{end}}
+</div>
+<div id="no-results" class="empty-state" style="display: none;">
+    <p>No courses match your search.</p>
 </div>
 {{else}}
 <div class="empty-state">
     <p>No courses available yet.</p>
 </div>
 {{end}}
+{{end}}
+
+{{define "scripts"}}
+<script src="/static/js/courses.js" defer></script>
 {{end}}

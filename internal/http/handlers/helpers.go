@@ -78,6 +78,19 @@ func requireCourse(w http.ResponseWriter, r *http.Request) (*domain.Course, bool
 	return c, true
 }
 
+func moduleFromRequest(r *http.Request) (*domain.Module, bool) {
+	return middleware.ModuleFromContext(r.Context())
+}
+
+func requireModule(w http.ResponseWriter, r *http.Request) (*domain.Module, bool) {
+	m, ok := moduleFromRequest(r)
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return nil, false
+	}
+	return m, true
+}
+
 func handleServiceError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return

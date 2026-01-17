@@ -1,0 +1,50 @@
+{{define "title"}}404 - Page Not Found{{end}}
+
+{{define "content"}}
+<div class="error-page">
+    <div class="error-content">
+        <img src="/static/images/404.png" alt="404 Error" class="error-image" />
+        <h2 class="error-subtitle">Page not found</h2>
+    </div>
+</div>
+
+<style>
+    .error-page {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 60vh;
+        padding: 3rem 1.5rem;
+        text-align: center;
+    }
+
+    .error-content {
+        max-width: 800px;
+        width: 100%;
+    }
+
+    .error-image {
+        max-width: 100%;
+        width: 100%;
+        height: auto;
+        margin: 0 auto 2rem;
+        display: block;
+    }
+
+    .error-subtitle {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--text-color);
+        margin: 0;
+    }
+
+    @media (max-width: 640px) {
+        .error-page {
+            min-height: 50vh;
+            padding: 2rem 1rem;
+        }
+    }
+</style>
+{{end}}
+
+{{template "layout" .}}

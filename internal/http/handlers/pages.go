@@ -18,9 +18,10 @@ type PageHandlers struct {
 	proposals store.ProposalStore
 	courses   store.CourseStore
 	modules   store.ModuleStore
+	content   store.ContentStore
 }
 
-func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore, courses store.CourseStore, modules store.ModuleStore) *PageHandlers {
+func NewPageHandlers(services *services.Services, users store.UserStore, sessions auth.SessionStore, proposals store.ProposalStore, courses store.CourseStore, modules store.ModuleStore, content store.ContentStore) *PageHandlers {
 	return &PageHandlers{
 		services:  services,
 		users:     users,
@@ -28,6 +29,7 @@ func NewPageHandlers(services *services.Services, users store.UserStore, session
 		proposals: proposals,
 		courses:   courses,
 		modules:   modules,
+		content:   content,
 	}
 }
 
@@ -312,6 +314,118 @@ func (h *PageHandlers) CourseEdit(w http.ResponseWriter, r *http.Request) {
 		Course:     c,
 		CourseJSON: string(courseJSON),
 		Page:       "course_edit.html",
+	}
+	Render(w, data)
+}
+
+func (h *PageHandlers) LectureEdit(w http.ResponseWriter, r *http.Request) {
+	user, ok := userFromRequest(r)
+	if !ok {
+		return
+	}
+
+	course, ok := courseFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	module, ok := moduleFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	item, ok := contentItemFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Verify instructor access
+	if !course.IsTaughtBy(user) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Verify ownership chain
+	if module.CourseID != course.ID || item.ModuleID != module.ID {
+		http.NotFound(w, r)
+		return
+	}
+
+	lecture, _ := h.content.GetLecture(r.Context(), item.ID)
+	if lecture == nil {
+		lecture = &domain.Lecture{
+			ContentItemID: item.ID,
+			Content:       "",
+		}
+	}
+
+	data := &TemplateData{
+		User:         user,
+		Course:       course,
+		Module:       module,
+		ContentItem:  item,
+		Lecture:      lecture,
+		IsInstructor: true,
+		Page:         "lecture_edit.html",
+	}
+	Render(w, data)
+}
+
+func (h *PageHandlers) LectureView(w http.ResponseWriter, r *http.Request) {
+	user, ok := userFromRequest(r)
+	if !ok {
+		return
+	}
+
+	course, ok := courseFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	module, ok := moduleFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	item, ok := contentItemFromRequest(r)
+	if !ok {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Verify ownership chain
+	if module.CourseID != course.ID || item.ModuleID != module.ID {
+		http.NotFound(w, r)
+		return
+	}
+
+	// Non-instructors can only see published content
+	if !course.IsTaughtBy(user) && item.Status != domain.ContentStatusPublished {
+		http.NotFound(w, r)
+		return
+	}
+
+	lecture, _ := h.content.GetLecture(r.Context(), item.ID)
+	if lecture == nil {
+		lecture = &domain.Lecture{
+			ContentItemID: item.ID,
+			Content:       "",
+		}
+	}
+
+	data := &TemplateData{
+		User:         user,
+		Course:       course,
+		Module:       module,
+		ContentItem:  item,
+		Lecture:      lecture,
+		IsInstructor: course.IsTaughtBy(user),
+		Page:         "lecture_view.html",
 	}
 	Render(w, data)
 }

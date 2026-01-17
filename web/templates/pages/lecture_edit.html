@@ -1,0 +1,54 @@
+{{template "layout" .}} {{define "title"}}Edit: {{.ContentItem.Title}} - ByteCourses{{end}} {{define "content"}}
+<div class="lecture-edit-container">
+    <div class="page-header">
+        <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+    </div>
+
+    <div class="lecture-edit-header">
+        <div class="lecture-edit-header-left">
+            <input type="text" id="lecture-title" class="lecture-title-input" value="{{.ContentItem.Title}}" placeholder="Lecture title...">
+        </div>
+        <div class="lecture-edit-header-right">
+            <span id="save-status" class="save-status"></span>
+            <span class="content-status-badge content-status-{{.ContentItem.Status}}">{{.ContentItem.Status}}</span>
+            {{if eq .ContentItem.Status "draft"}}
+            <button type="button" id="publish-btn" class="btn btn-success">Publish</button>
+            {{else}}
+            <button type="button" id="unpublish-btn" class="btn btn-secondary">Unpublish</button>
+            {{end}}
+            <button type="button" id="save-btn" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+
+    <div class="lecture-editor">
+        <div class="lecture-editor-pane">
+            <div class="lecture-editor-pane-header">
+                <span>Markdown</span>
+            </div>
+            <textarea id="lecture-content" class="lecture-content-textarea" placeholder="Write your lecture content here using Markdown...">{{.Lecture.Content}}</textarea>
+        </div>
+        <div class="lecture-editor-pane">
+            <div class="lecture-editor-pane-header">
+                <span>Preview</span>
+            </div>
+            <div id="lecture-preview" class="lecture-preview">
+                <div class="proposal-content-value">{{markdown .Lecture.Content}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.LECTURE_DATA = {
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}},
+        contentId: {{.ContentItem.ID}},
+        status: "{{.ContentItem.Status}}"
+    };
+</script>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="/static/js/lecture_edit.js" defer></script>
+{{end}}

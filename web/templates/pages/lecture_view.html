@@ -1,0 +1,30 @@
+{{template "layout" .}} {{define "title"}}{{.ContentItem.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+<div class="lecture-view-container">
+    <div class="lecture-view-header">
+        <div class="lecture-view-breadcrumb">
+            <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
+            <span> / </span>
+            <span>{{.Module.Title}}</span>
+        </div>
+        <h1 class="lecture-view-title">{{.ContentItem.Title}}</h1>
+        <div class="lecture-view-meta">
+            {{if .IsInstructor}}
+            <span class="content-status-badge content-status-{{.ContentItem.Status}}">{{.ContentItem.Status}}</span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.ContentItem.ID}}/edit" class="btn btn-small btn-secondary">Edit</a>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="lecture-view-content">
+        {{if .Lecture.Content}}
+        <div class="proposal-content-value">{{markdown .Lecture.Content}}</div>
+        {{else}}
+        <p class="text-muted">No content available yet.</p>
+        {{end}}
+    </div>
+
+    <div class="lecture-navigation">
+        <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+    </div>
+</div>
+{{end}}

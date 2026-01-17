@@ -86,7 +86,7 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 
-<div class="curriculum-section">
+<div class="curriculum-section" data-is-instructor="{{.IsInstructor}}">
     <div class="curriculum-header">
         <h2>Curriculum</h2>
         {{if .IsInstructor}}
@@ -116,18 +116,12 @@ ByteCourses{{end}} {{define "content"}}
         </div>
         <div class="module-accordion-content">
             <div class="module-accordion-body">
-                {{if $.IsInstructor}}
-                <div class="module-content-editor">
-                    <h4>Module Content</h4>
-                    <textarea class="module-content-input" data-module-id="{{$module.ID}}" placeholder="Add text content, notes, or instructions for this module..." rows="6"></textarea>
-                    <div class="module-content-actions">
-                        <button type="button" class="btn btn-primary save-content-btn" data-module-id="{{$module.ID}}">Save Content</button>
-                        <span class="content-save-status" data-module-id="{{$module.ID}}"></span>
-                    </div>
+                <div class="content-list" data-module-id="{{$module.ID}}">
+                    <div class="content-list-loading">Loading content...</div>
                 </div>
-                {{else}}
-                <div class="lesson-placeholder">
-                    Module content will be available soon. Lessons and materials are being prepared.
+                {{if $.IsInstructor}}
+                <div class="module-content-actions" style="margin-top: 1rem;">
+                    <button type="button" class="btn btn-secondary add-lecture-btn" data-module-id="{{$module.ID}}">+ Add Lecture</button>
                 </div>
                 {{end}}
             </div>

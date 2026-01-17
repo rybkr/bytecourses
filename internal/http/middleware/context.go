@@ -12,6 +12,7 @@ const (
 	ctxProposalKey
 	ctxCourseKey
 	ctxModuleKey
+	ctxContentItemKey
 )
 
 func withUser(ctx context.Context, u *domain.User) context.Context {
@@ -48,4 +49,13 @@ func withModule(ctx context.Context, m *domain.Module) context.Context {
 func ModuleFromContext(ctx context.Context) (*domain.Module, bool) {
 	m, ok := ctx.Value(ctxModuleKey).(*domain.Module)
 	return m, ok
+}
+
+func withContentItem(ctx context.Context, item *domain.ContentItem) context.Context {
+	return context.WithValue(ctx, ctxContentItemKey, item)
+}
+
+func ContentItemFromContext(ctx context.Context) (*domain.ContentItem, bool) {
+	item, ok := ctx.Value(ctxContentItemKey).(*domain.ContentItem)
+	return item, ok
 }

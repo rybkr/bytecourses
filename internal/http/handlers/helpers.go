@@ -91,6 +91,19 @@ func requireModule(w http.ResponseWriter, r *http.Request) (*domain.Module, bool
 	return m, true
 }
 
+func contentItemFromRequest(r *http.Request) (*domain.ContentItem, bool) {
+	return middleware.ContentItemFromContext(r.Context())
+}
+
+func requireContentItem(w http.ResponseWriter, r *http.Request) (*domain.ContentItem, bool) {
+	item, ok := contentItemFromRequest(r)
+	if !ok {
+		http.Error(w, "internal error", http.StatusInternalServerError)
+		return nil, false
+	}
+	return item, true
+}
+
 func handleServiceError(w http.ResponseWriter, err error) {
 	if err == nil {
 		return

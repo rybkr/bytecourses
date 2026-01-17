@@ -51,6 +51,9 @@ type TemplateData struct {
 	Courses      []domain.Course
 	Instructor   *domain.User
 	Modules      []domain.Module
+	Module       *domain.Module
+	ContentItem  *domain.ContentItem
+	Lecture      *domain.Lecture
 	Instructors  map[int64]*domain.User
 	ModuleCounts map[int64]int
 	IsInstructor bool

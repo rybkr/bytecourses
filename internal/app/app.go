@@ -24,6 +24,7 @@ type App struct {
 	ProposalStore      store.ProposalStore
 	CourseStore        store.CourseStore
 	ModuleStore        store.ModuleStore
+	ContentStore       store.ContentStore
 	SessionStore       auth.SessionStore
 	PasswordResetStore store.PasswordResetStore
 	DB                 store.DB
@@ -40,6 +41,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		a.ProposalStore = memstore.NewProposalStore()
 		a.CourseStore = memstore.NewCourseStore()
 		a.ModuleStore = memstore.NewModuleStore()
+		a.ContentStore = memstore.NewContentStore()
 		a.SessionStore = memsession.New(24 * time.Hour)
 		a.PasswordResetStore = memstore.NewPasswordResetStore()
 
@@ -53,6 +55,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 			a.ProposalStore = db
 			a.CourseStore = db
 			a.ModuleStore = db
+			a.ContentStore = db
 			a.PasswordResetStore = db
 			a.SessionStore = memsession.New(24 * time.Hour)
 			a.DB = db
@@ -88,6 +91,7 @@ func New(ctx context.Context, cfg Config) (*App, error) {
 		ProposalStore:      a.ProposalStore,
 		CourseStore:        a.CourseStore,
 		ModuleStore:        a.ModuleStore,
+		ContentStore:       a.ContentStore,
 		PasswordResetStore: a.PasswordResetStore,
 		SessionStore:       a.SessionStore,
 		EmailSender:        a.EmailSender,

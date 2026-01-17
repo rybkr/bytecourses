@@ -7,6 +7,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
+    const curriculumSection = document.querySelector(".curriculum-section");
+    const isInstructor = curriculumSection?.dataset.isInstructor === "true";
+
     // Accordion functionality
     const accordions = document.querySelectorAll(".module-accordion");
 
@@ -20,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
             const isExpanded = accordion.classList.contains("expanded");
-            
+
             if (isExpanded) {
                 accordion.classList.remove("expanded");
                 accordion.setAttribute("aria-expanded", "false");
@@ -42,6 +45,12 @@ document.addEventListener("DOMContentLoaded", () => {
         // Set initial aria-expanded state
         const isInitiallyExpanded = accordion.classList.contains("expanded");
         accordion.setAttribute("aria-expanded", isInitiallyExpanded ? "true" : "false");
+
+        // Load content for this module
+        const moduleId = Number(accordion.dataset.moduleId);
+        if (moduleId) {
+            loadModuleContent(moduleId);
+        }
     });
 
     // Instructor-only functionality
@@ -81,7 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const moduleId = Number(btn.dataset.moduleId);
             const currentTitle = btn.dataset.moduleTitle || "";
             const newTitle = prompt("Enter new module title:", currentTitle);
-            
+
             if (!newTitle || !newTitle.trim() || newTitle.trim() === currentTitle) {
                 return;
             }
@@ -96,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.stopPropagation();
             const moduleId = Number(btn.dataset.moduleId);
             const moduleTitle = btn.dataset.moduleTitle || "this module";
-            
+
             if (!confirm(`Are you sure you want to delete "${moduleTitle}"? This action cannot be undone.`)) {
                 return;
             }
@@ -120,51 +129,137 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Save content buttons (placeholder - saves to localStorage for now)
-    document.querySelectorAll(".save-content-btn").forEach((btn) => {
+    // Add lecture buttons
+    document.querySelectorAll(".add-lecture-btn").forEach((btn) => {
         btn.addEventListener("click", async (e) => {
             e.stopPropagation();
             const moduleId = Number(btn.dataset.moduleId);
-            const textarea = document.querySelector(`.module-content-input[data-module-id="${moduleId}"]`);
-            const statusSpan = document.querySelector(`.content-save-status[data-module-id="${moduleId}"]`);
-            
-            if (!textarea) return;
 
-            const content = textarea.value.trim();
-            
-            // For MVP: Save to localStorage (could be enhanced with backend API later)
-            const storageKey = `module-content-${courseId}-${moduleId}`;
+            const title = prompt("Enter lecture title:");
+            if (!title || !title.trim()) {
+                return;
+            }
+
             try {
-                localStorage.setItem(storageKey, content);
-                if (statusSpan) {
-                    statusSpan.textContent = "Saved";
-                    statusSpan.style.color = "var(--success-color)";
-                    setTimeout(() => {
-                        statusSpan.textContent = "";
-                    }, 2000);
+                const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}/content`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ title: title.trim() }),
+                });
+
+                if (!res.ok) {
+                    const txt = await res.text();
+                    alert(txt || "Failed to create lecture");
+                    return;
                 }
+
+                const item = await res.json();
+                // Redirect to edit page
+                window.location.href = `/courses/${courseId}/modules/${moduleId}/content/${item.id}/edit`;
             } catch (error) {
-                if (statusSpan) {
-                    statusSpan.textContent = "Failed to save";
-                    statusSpan.style.color = "var(--danger-color)";
-                }
+                alert("Network error. Please try again.");
             }
         });
     });
 
-    // Load saved content from localStorage on page load
-    document.querySelectorAll(".module-content-input").forEach((textarea) => {
-        const moduleId = Number(textarea.dataset.moduleId);
-        const storageKey = `module-content-${courseId}-${moduleId}`;
+    async function loadModuleContent(moduleId) {
+        const contentList = document.querySelector(`.content-list[data-module-id="${moduleId}"]`);
+        if (!contentList) return;
+
         try {
-            const saved = localStorage.getItem(storageKey);
-            if (saved) {
-                textarea.value = saved;
+            const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}/content`);
+            if (!res.ok) {
+                contentList.innerHTML = '<div class="content-list-error">Failed to load content</div>';
+                return;
             }
+
+            const data = await res.json();
+            renderContentList(moduleId, data.items || [], data.lectures || {});
         } catch (error) {
-            // Ignore localStorage errors
+            contentList.innerHTML = '<div class="content-list-error">Failed to load content</div>';
         }
-    });
+    }
+
+    function renderContentList(moduleId, items, lectures) {
+        const contentList = document.querySelector(`.content-list[data-module-id="${moduleId}"]`);
+        if (!contentList) return;
+
+        if (!items || items.length === 0) {
+            contentList.innerHTML = '<div class="content-list-empty">No content yet.</div>';
+            return;
+        }
+
+        const html = items.map(item => {
+            const statusBadge = isInstructor ?
+                `<span class="content-status-badge content-status-${item.status}">${item.status}</span>` : '';
+
+            const viewUrl = `/courses/${courseId}/modules/${moduleId}/content/${item.id}`;
+            const editUrl = `/courses/${courseId}/modules/${moduleId}/content/${item.id}/edit`;
+
+            const deleteBtn = isInstructor ?
+                `<button type="button" class="btn btn-small btn-danger delete-content-btn" data-content-id="${item.id}" data-content-title="${item.title}">Delete</button>` : '';
+
+            return `
+                <div class="content-item" data-content-id="${item.id}">
+                    <div class="content-item-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <div class="content-item-info">
+                        <a href="${isInstructor ? editUrl : viewUrl}" class="content-item-title">${escapeHtml(item.title)}</a>
+                        ${statusBadge}
+                    </div>
+                    <div class="content-item-actions">
+                        ${deleteBtn}
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        contentList.innerHTML = html;
+
+        // Attach delete handlers
+        contentList.querySelectorAll(".delete-content-btn").forEach(btn => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const contentId = Number(btn.dataset.contentId);
+                const contentTitle = btn.dataset.contentTitle || "this content";
+
+                if (!confirm(`Are you sure you want to delete "${contentTitle}"? This action cannot be undone.`)) {
+                    return;
+                }
+
+                try {
+                    const res = await fetch(`/api/courses/${courseId}/modules/${moduleId}/content/${contentId}`, {
+                        method: "DELETE",
+                    });
+
+                    if (!res.ok) {
+                        const txt = await res.text();
+                        alert(txt || "Failed to delete content");
+                        return;
+                    }
+
+                    // Reload content list
+                    loadModuleContent(moduleId);
+                } catch (error) {
+                    alert("Network error. Please try again.");
+                }
+            });
+        });
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
     async function updateModuleTitle(courseId, moduleId, title) {
         try {

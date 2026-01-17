@@ -12,6 +12,7 @@ type Services struct {
 	Proposals *ProposalService
 	Courses   *CourseService
 	Modules   *ModuleService
+	Content   *ContentService
 }
 
 type Dependencies struct {
@@ -19,6 +20,7 @@ type Dependencies struct {
 	ProposalStore      store.ProposalStore
 	CourseStore        store.CourseStore
 	ModuleStore        store.ModuleStore
+	ContentStore       store.ContentStore
 	PasswordResetStore store.PasswordResetStore
 	SessionStore       auth.SessionStore
 	EmailSender        notify.EmailSender
@@ -31,5 +33,6 @@ func New(d Dependencies) *Services {
 		Proposals: NewProposalService(d.ProposalStore, d.Logger),
 		Courses:   NewCourseService(d.CourseStore, d.Logger),
 		Modules:   NewModuleService(d.ModuleStore, d.Logger),
+		Content:   NewContentService(d.ContentStore, d.Logger),
 	}
 }

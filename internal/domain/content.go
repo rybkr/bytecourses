@@ -29,6 +29,6 @@ type ContentItem struct {
 }
 
 type Lecture struct {
-	ContentItemID int64  `json:"content_item_md"`
+	ContentItemID int64  `json:"content_item_id"`
 	Content       string `json:"content"`
 }

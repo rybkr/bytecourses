@@ -40,7 +40,9 @@ def test_teach_dropdown_shows_for_logged_in_users(logged_in_user: Page, go_serve
     expect(page.locator(base_page.TEACH_MY_PROPOSALS)).to_be_visible()
 
 
-def test_teach_dropdown_all_proposals_shows_for_admin(logged_in_admin: Page, go_server: str):
+def test_teach_dropdown_all_proposals_shows_for_admin(
+    logged_in_admin: Page, go_server: str
+):
     page = logged_in_admin
     base_page = BasePage(page, go_server)
 
@@ -49,7 +51,9 @@ def test_teach_dropdown_all_proposals_shows_for_admin(logged_in_admin: Page, go_
     expect(page.locator(base_page.TEACH_ALL_PROPOSALS)).to_be_visible()
 
 
-def test_teach_dropdown_all_proposals_hidden_for_regular_user(logged_in_user: Page, go_server: str):
+def test_teach_dropdown_all_proposals_hidden_for_regular_user(
+    logged_in_user: Page, go_server: str
+):
     page = logged_in_user
     base_page = BasePage(page, go_server)
 
@@ -58,7 +62,9 @@ def test_teach_dropdown_all_proposals_hidden_for_regular_user(logged_in_user: Pa
     expect(page.locator(base_page.TEACH_ALL_PROPOSALS)).not_to_be_visible()
 
 
-def test_user_dropdown_contains_profile_and_logout(logged_in_user: Page, go_server: str):
+def test_user_dropdown_contains_profile_and_logout(
+    logged_in_user: Page, go_server: str
+):
     page = logged_in_user
     base_page = BasePage(page, go_server)
 
@@ -102,7 +108,9 @@ def test_teach_dropdown_new_proposal_navigates(logged_in_user: Page, go_server: 
     base_page.go_to_new_proposal()
 
     current_url = page.url
-    assert re.match(rf"{re.escape(go_server)}/proposals/\d+/edit", current_url), f"URL {current_url} doesn't match expected pattern"
+    assert re.match(rf"{re.escape(go_server)}/proposals/\d+/edit", current_url), (
+        f"URL {current_url} doesn't match expected pattern"
+    )
 
 
 def test_teach_dropdown_my_proposals_navigates(logged_in_user: Page, go_server: str):
@@ -114,7 +122,9 @@ def test_teach_dropdown_my_proposals_navigates(logged_in_user: Page, go_server: 
     expect(page).to_have_url(f"{go_server}/proposals/mine")
 
 
-def test_teach_dropdown_all_proposals_navigates_for_admin(logged_in_admin: Page, go_server: str):
+def test_teach_dropdown_all_proposals_navigates_for_admin(
+    logged_in_admin: Page, go_server: str
+):
     page = logged_in_admin
     base_page = BasePage(page, go_server)
 
@@ -153,7 +163,9 @@ def test_mobile_menu_shows_navigation_links(page: Page, go_server: str):
     expect(page.locator(".mobile-menu-item[href='/login']")).to_be_visible()
 
 
-def test_mobile_menu_shows_proposals_for_logged_in_user(logged_in_user: Page, go_server: str):
+def test_mobile_menu_shows_proposals_for_logged_in_user(
+    logged_in_user: Page, go_server: str
+):
     page = logged_in_user
     page.set_viewport_size({"width": 600, "height": 800})
     base_page = BasePage(page, go_server)
@@ -165,7 +177,9 @@ def test_mobile_menu_shows_proposals_for_logged_in_user(logged_in_user: Page, go
     expect(page.locator(".mobile-menu-item[href='/proposals']")).not_to_be_visible()
 
 
-def test_mobile_menu_shows_all_proposals_for_admin(logged_in_admin: Page, go_server: str):
+def test_mobile_menu_shows_all_proposals_for_admin(
+    logged_in_admin: Page, go_server: str
+):
     page = logged_in_admin
     page.set_viewport_size({"width": 600, "height": 800})
     base_page = BasePage(page, go_server)

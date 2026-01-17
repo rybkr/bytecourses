@@ -44,6 +44,21 @@ type ModuleStore interface {
 	ReorderModules(ctx context.Context, courseID int64, moduleIDs []int64) error
 }
 
+type ContentStore interface {
+	CreateContentItem(ctx context.Context, item *domain.ContentItem) error
+	GetContentItemByID(ctx context.Context, id int64) (*domain.ContentItem, bool)
+	UpdateContentItem(ctx context.Context, item *domain.ContentItem) error
+	DeleteContentItemByID(ctx context.Context, id int64) error
+	ListContentItemsByModuleID(ctx context.Context, moduleID int64) ([]domain.ContentItem, error)
+	ReorderContentItems(ctx context.Context, moduleID int64, itemIDs []int64) error
+
+	GetLecture(ctx context.Context, contentItemID int64) (*domain.Lecture, bool)
+	UpsertLecture(ctx context.Context, lecture *domain.Lecture) error
+
+	GetContentItemWithLecture(ctx context.Context, id int64) (*domain.ContentItem, *domain.Lecture, bool)
+	ListContentItemsWithLecturesByModuleID(ctx context.Context, moduleID int64) ([]domain.ContentItem, map[int64]*domain.Lecture, error)
+}
+
 type DBStats struct {
 	MaxOpenConnections int   `json:"max_open_connections"`
 	OpenConnections    int   `json:"open_connections"`

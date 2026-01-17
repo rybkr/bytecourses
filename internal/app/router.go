@@ -36,6 +36,15 @@ func moduleID(r *http.Request) (int64, bool) {
 	return id, err == nil
 }
 
+func contentID(r *http.Request) (int64, bool) {
+	idStr := chi.URLParam(r, "contentId")
+	if idStr == "" {
+		return 0, false
+	}
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	return id, err == nil
+}
+
 func (a *App) Router() http.Handler {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
@@ -44,9 +53,10 @@ func (a *App) Router() http.Handler {
 	authH := handlers.NewAuthHandler(a.Services)
 	sysH := handlers.NewSystemHandlers(a.DB)
 	propH := handlers.NewProposalHandler(a.Services)
-	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore, a.ModuleStore)
+	pageH := handlers.NewPageHandlers(a.Services, a.UserStore, a.SessionStore, a.ProposalStore, a.CourseStore, a.ModuleStore, a.ContentStore)
 	courseH := handlers.NewCourseHandler(a.Services)
 	moduleH := handlers.NewModuleHandler(a.Services)
+	contentH := handlers.NewContentHandler(a.Services)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Post("/register", authH.Register)
@@ -98,6 +108,21 @@ func (a *App) Router() http.Handler {
 						r.Get("/", moduleH.Get)
 						r.Patch("/", moduleH.Update)
 						r.Delete("/", moduleH.Delete)
+
+						r.Route("/content", func(r chi.Router) {
+							r.Post("/", contentH.CreateLecture)
+							r.Get("/", contentH.ListContent)
+							r.Post("/reorder", contentH.ReorderContent)
+
+							r.Route("/{contentId}", func(r chi.Router) {
+								r.Use(appmw.RequireContentItem(a.ContentStore, contentID))
+								r.Get("/", contentH.GetLecture)
+								r.Patch("/", contentH.UpdateLecture)
+								r.Delete("/", contentH.DeleteContent)
+								r.Post("/publish", contentH.PublishContent)
+								r.Post("/unpublish", contentH.UnpublishContent)
+							})
+						})
 					})
 				})
 			})
@@ -126,6 +151,13 @@ func (a *App) Router() http.Handler {
 		r.Use(appmw.RequireCourse(a.CourseStore, courseID))
 		r.Get("/", pageH.CourseView)
 		r.Get("/edit", pageH.CourseEdit)
+
+		r.Route("/modules/{moduleId}/content/{contentId}", func(r chi.Router) {
+			r.Use(appmw.RequireModule(a.ModuleStore, moduleID))
+			r.Use(appmw.RequireContentItem(a.ContentStore, contentID))
+			r.Get("/", pageH.LectureView)
+			r.Get("/edit", pageH.LectureEdit)
+		})
 	})
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))

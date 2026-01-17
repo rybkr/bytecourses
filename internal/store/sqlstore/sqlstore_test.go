@@ -40,6 +40,14 @@ func TestCourseStore(t *testing.T) {
 	})
 }
 
+func TestModuleStore(t *testing.T) {
+	storetest.TestModuleStore(t, func(t *testing.T) (store.UserStore, store.CourseStore, store.ModuleStore) {
+		s := openTestStore(t)
+		resetTestDB(t, s)
+		return s, s, s
+	})
+}
+
 func openTestStore(t *testing.T) *Store {
 	t.Helper()
 
@@ -61,6 +69,8 @@ func resetTestDB(t *testing.T, s *Store) {
 	t.Helper()
 
 	_, err := s.db.ExecContext(context.Background(), `
+		TRUNCATE TABLE modules RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE courses RESTART IDENTITY CASCADE;
 		TRUNCATE TABLE proposals RESTART IDENTITY CASCADE;
 		TRUNCATE TABLE users RESTART IDENTITY CASCADE;
 	`)

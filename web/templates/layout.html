@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     {{block "head" .}}{{end}}
 </head>
 
@@ -16,11 +17,27 @@
     <nav class="navbar">
         <div class="container">
             <div class="nav-brand">
-                <a href="/">Byte Courses</a>
+                <a href="/">ByteCourses</a>
             </div>
+            <button class="hamburger-btn" onclick="toggleMobileMenu(event)" aria-label="Toggle menu" aria-expanded="false">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
             <div class="nav-links">
-                <button class="btn btn-secondary btn-sm" onclick="openTeachModal(event)">Teach a Course</button>
+                <a href="/about" class="nav-link">About</a>
+                <a href="/courses" class="nav-link">Browse Courses</a>
                 {{if .User}}
+                <div class="teach-dropdown">
+                    <a href="#" class="nav-link teach-menu-trigger" onclick="toggleTeachMenu(event); return false;">Teach</a>
+                    <div class="teach-dropdown-menu" id="teachDropdownMenu">
+                        <a href="/proposals/new" class="teach-dropdown-item">New Proposal</a>
+                        <a href="/proposals/mine" class="teach-dropdown-item">My Proposals</a>
+                        {{if eq .User.Role "admin"}}
+                        <a href="/proposals" class="teach-dropdown-item">All Proposals</a>
+                        {{end}}
+                    </div>
+                </div>
                 <div class="user-dropdown">
                     <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="User menu"
                         aria-expanded="false">
@@ -47,17 +64,6 @@
                             </svg>
                             Profile
                         </a>
-                        <a href="/proposals" class="user-dropdown-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="16" y1="13" x2="8" y2="13"></line>
-                                <line x1="16" y1="17" x2="8" y2="17"></line>
-                                <polyline points="10 9 9 9 8 9"></polyline>
-                            </svg>
-                            My Proposals
-                        </a>
                         <div class="user-dropdown-divider"></div>
                         <button onclick="handleLogout()" class="user-dropdown-item user-dropdown-logout">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -71,7 +77,26 @@
                     </div>
                 </div>
                 {{else}}
-                <a href="/login">Login</a>
+                <a href="/login" class="nav-link">Login</a>
+                {{end}}
+            </div>
+            <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+            <div class="mobile-menu" id="mobileMenu">
+                <a href="/about" class="mobile-menu-item" onclick="closeMobileMenu()">About</a>
+                <a href="/courses" class="mobile-menu-item" onclick="closeMobileMenu()">Browse Courses</a>
+                {{if .User}}
+                <div class="mobile-menu-divider"></div>
+                <a href="/proposals/new" class="mobile-menu-item" onclick="closeMobileMenu()">New Proposal</a>
+                <a href="/proposals/mine" class="mobile-menu-item" onclick="closeMobileMenu()">My Proposals</a>
+                {{if eq .User.Role "admin"}}
+                <a href="/proposals" class="mobile-menu-item" onclick="closeMobileMenu()">All Proposals</a>
+                {{end}}
+                <div class="mobile-menu-divider"></div>
+                <a href="/profile" class="mobile-menu-item" onclick="closeMobileMenu()">Profile</a>
+                <button onclick="handleLogout(); closeMobileMenu();" class="mobile-menu-item mobile-menu-logout">Logout</button>
+                {{else}}
+                <div class="mobile-menu-divider"></div>
+                <a href="/login" class="mobile-menu-item" onclick="closeMobileMenu()">Login</a>
                 {{end}}
             </div>
         </div>

@@ -23,6 +23,7 @@ func NewCreateHandler(
 	return &CreateHandler{
 		proposals: proposals,
 		eventBus:  eventBus,
+        validator: validator,
 	}
 }
 
@@ -50,4 +51,37 @@ func (h *CreateHandler) Handle(ctx context.Context, cmd *CreateCommand) (*domain
 	_ = h.eventBus.Publish(ctx, event)
 
 	return proposal, nil
+}
+
+type UpdateHandler struct {
+    proposals store.ProposalStore
+	eventBus  events.EventBus
+	validator *validation.Validator
+}
+
+func NewUpdateHandler(
+	proposals store.ProposalStore,
+	eventBus events.EventBus,
+	validator *validation.Validator,
+) *CreateHandler {
+	return &CreateHandler{
+		proposals: proposals,
+		eventBus:  eventBus,
+        validator: validator,
+	}
+}
+
+func (h *UpdateHandler) Handle(ctx context.Context, cmd *UpdateCommand) error {
+    if err := h.validator.Validate(cmd); err != nil {
+        return err
+    }
+
+    proposal, ok := h.proposals.GetProposalByID(ctx, cmd.ProposalID)
+    if !ok {
+        return errors.ErrNotFound
+    }
+
+    if proposal.AuthorID != cmd.UserID {
+
+    }
 }

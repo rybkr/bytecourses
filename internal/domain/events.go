@@ -30,8 +30,8 @@ type UserRegisteredEvent struct {
 	Name   string
 }
 
-func NewUserRegisteredEvent(userID int64, email string, name string) UserRegisteredEvent {
-	return UserRegisteredEvent{
+func NewUserRegisteredEvent(userID int64, email string, name string) *UserRegisteredEvent {
+	return &UserRegisteredEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 		Email:     email,
@@ -39,7 +39,7 @@ func NewUserRegisteredEvent(userID int64, email string, name string) UserRegiste
 	}
 }
 
-func (e UserRegisteredEvent) EventName() string {
+func (e *UserRegisteredEvent) EventName() string {
 	return "user.registered"
 }
 
@@ -50,8 +50,8 @@ type UserProfileUpdatedEvent struct {
 	NewName string
 }
 
-func NewUserProfileUpdatedEvent(userID int64, oldName, newName string) UserProfileUpdatedEvent {
-	return UserProfileUpdatedEvent{
+func NewUserProfileUpdatedEvent(userID int64, oldName, newName string) *UserProfileUpdatedEvent {
+	return &UserProfileUpdatedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 		OldName:   oldName,
@@ -59,7 +59,7 @@ func NewUserProfileUpdatedEvent(userID int64, oldName, newName string) UserProfi
 	}
 }
 
-func (e UserProfileUpdatedEvent) EventName() string {
+func (e *UserProfileUpdatedEvent) EventName() string {
 	return "user.profile_updated"
 }
 
@@ -69,15 +69,15 @@ type PasswordResetRequestedEvent struct {
 	Email  string
 }
 
-func NewPasswordResetRequestedEvent(userID int64, email string) PasswordResetRequestedEvent {
-	return PasswordResetRequestedEvent{
+func NewPasswordResetRequestedEvent(userID int64, email string) *PasswordResetRequestedEvent {
+	return &PasswordResetRequestedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 		Email:     email,
 	}
 }
 
-func (e PasswordResetRequestedEvent) EventName() string {
+func (e *PasswordResetRequestedEvent) EventName() string {
 	return "user.password_reset_requested"
 }
 
@@ -86,14 +86,14 @@ type PasswordResetCompletedEvent struct {
 	UserID int64
 }
 
-func NewPasswordResetCompletedEvent(userID int64) PasswordResetCompletedEvent {
-	return PasswordResetCompletedEvent{
+func NewPasswordResetCompletedEvent(userID int64) *PasswordResetCompletedEvent {
+	return &PasswordResetCompletedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 	}
 }
 
-func (e PasswordResetCompletedEvent) EventName() string {
+func (e *PasswordResetCompletedEvent) EventName() string {
 	return "user.password_reset_completed"
 }
 
@@ -104,8 +104,8 @@ type ProposalCreatedEvent struct {
 	Title      string
 }
 
-func NewProposalCreatedEvent(proposalID int64, authorID int64, title string) ProposalCreatedEvent {
-	return ProposalCreatedEvent{
+func NewProposalCreatedEvent(proposalID int64, authorID int64, title string) *ProposalCreatedEvent {
+	return &ProposalCreatedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -113,7 +113,7 @@ func NewProposalCreatedEvent(proposalID int64, authorID int64, title string) Pro
 	}
 }
 
-func (e ProposalCreatedEvent) EventName() string {
+func (e *ProposalCreatedEvent) EventName() string {
 	return "proposal.created"
 }
 
@@ -124,8 +124,8 @@ type ProposalUpdatedEvent struct {
 	Title      string
 }
 
-func NewProposalUpdatedEvent(proposalID int64, authorID int64, title string) ProposalUpdatedEvent {
-	return ProposalUpdatedEvent{
+func NewProposalUpdatedEvent(proposalID int64, authorID int64, title string) *ProposalUpdatedEvent {
+	return &ProposalUpdatedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -133,7 +133,7 @@ func NewProposalUpdatedEvent(proposalID int64, authorID int64, title string) Pro
 	}
 }
 
-func (e ProposalUpdatedEvent) EventName() string {
+func (e *ProposalUpdatedEvent) EventName() string {
 	return "proposal.updated"
 }
 
@@ -145,8 +145,8 @@ type ProposalSubmittedEvent struct {
 	OldStatus  ProposalStatus
 }
 
-func NewProposalSubmittedEvent(proposalID int64, authorID int64, title string, oldStatus ProposalStatus) ProposalSubmittedEvent {
-	return ProposalSubmittedEvent{
+func NewProposalSubmittedEvent(proposalID int64, authorID int64, title string, oldStatus ProposalStatus) *ProposalSubmittedEvent {
+	return &ProposalSubmittedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -155,7 +155,7 @@ func NewProposalSubmittedEvent(proposalID int64, authorID int64, title string, o
 	}
 }
 
-func (e ProposalSubmittedEvent) EventName() string {
+func (e *ProposalSubmittedEvent) EventName() string {
 	return "proposal.submitted"
 }
 
@@ -165,15 +165,15 @@ type ProposalWithdrawnEvent struct {
 	AuthorID   int64
 }
 
-func NewProposalWithdrawnEvent(proposalID int64, authorID int64) ProposalWithdrawnEvent {
-	return ProposalWithdrawnEvent{
+func NewProposalWithdrawnEvent(proposalID int64, authorID int64) *ProposalWithdrawnEvent {
+	return &ProposalWithdrawnEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
 	}
 }
 
-func (e ProposalWithdrawnEvent) EventName() string {
+func (e *ProposalWithdrawnEvent) EventName() string {
 	return "proposal.withdrawn"
 }
 
@@ -185,8 +185,8 @@ type ProposalApprovedEvent struct {
 	Title      string
 }
 
-func NewProposalApprovedEvent(proposalID int64, authorID int64, reviewerID int64, title string) ProposalApprovedEvent {
-	return ProposalApprovedEvent{
+func NewProposalApprovedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalApprovedEvent {
+	return &ProposalApprovedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -195,7 +195,7 @@ func NewProposalApprovedEvent(proposalID int64, authorID int64, reviewerID int64
 	}
 }
 
-func (e ProposalApprovedEvent) EventName() string {
+func (e *ProposalApprovedEvent) EventName() string {
 	return "proposal.approved"
 }
 
@@ -207,8 +207,8 @@ type ProposalRejectedEvent struct {
 	Title      string
 }
 
-func NewProposalRejectedEvent(proposalID int64, authorID int64, reviewerID int64, title string) ProposalRejectedEvent {
-	return ProposalRejectedEvent{
+func NewProposalRejectedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalRejectedEvent {
+	return &ProposalRejectedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -217,7 +217,7 @@ func NewProposalRejectedEvent(proposalID int64, authorID int64, reviewerID int64
 	}
 }
 
-func (e ProposalRejectedEvent) EventName() string {
+func (e *ProposalRejectedEvent) EventName() string {
 	return "proposal.rejected"
 }
 
@@ -229,8 +229,8 @@ type ProposalChangesRequestedEvent struct {
 	Title      string
 }
 
-func NewProposalChangesRequestedEvent(proposalID int64, authorID int64, reviewerID int64, title string) ProposalChangesRequestedEvent {
-	return ProposalChangesRequestedEvent{
+func NewProposalChangesRequestedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalChangesRequestedEvent {
+	return &ProposalChangesRequestedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -239,7 +239,7 @@ func NewProposalChangesRequestedEvent(proposalID int64, authorID int64, reviewer
 	}
 }
 
-func (e ProposalChangesRequestedEvent) EventName() string {
+func (e *ProposalChangesRequestedEvent) EventName() string {
 	return "proposal.changes_requested"
 }
 
@@ -250,8 +250,8 @@ type ProposalDeletedEvent struct {
 	Status     ProposalStatus
 }
 
-func NewProposalDeletedEvent(proposalID int64, authorID int64, status ProposalStatus) ProposalDeletedEvent {
-	return ProposalDeletedEvent{
+func NewProposalDeletedEvent(proposalID int64, authorID int64, status ProposalStatus) *ProposalDeletedEvent {
+	return &ProposalDeletedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
@@ -259,7 +259,7 @@ func NewProposalDeletedEvent(proposalID int64, authorID int64, status ProposalSt
 	}
 }
 
-func (e ProposalDeletedEvent) EventName() string {
+func (e *ProposalDeletedEvent) EventName() string {
 	return "proposal.deleted"
 }
 
@@ -271,8 +271,8 @@ type CourseCreatedFromProposalEvent struct {
 	Title        string
 }
 
-func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instructorID int64, title string) CourseCreatedFromProposalEvent {
-	return CourseCreatedFromProposalEvent{
+func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instructorID int64, title string) *CourseCreatedFromProposalEvent {
+	return &CourseCreatedFromProposalEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		ProposalID:   proposalID,
@@ -281,7 +281,7 @@ func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instruc
 	}
 }
 
-func (e CourseCreatedFromProposalEvent) EventName() string {
+func (e *CourseCreatedFromProposalEvent) EventName() string {
 	return "course.created_from_proposal"
 }
 
@@ -292,8 +292,8 @@ type CourseUpdatedEvent struct {
 	Title        string
 }
 
-func NewCourseUpdatedEvent(courseID int64, instructorID int64, title string) CourseUpdatedEvent {
-	return CourseUpdatedEvent{
+func NewCourseUpdatedEvent(courseID int64, instructorID int64, title string) *CourseUpdatedEvent {
+	return &CourseUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		InstructorID: instructorID,
@@ -301,7 +301,7 @@ func NewCourseUpdatedEvent(courseID int64, instructorID int64, title string) Cou
 	}
 }
 
-func (e CourseUpdatedEvent) EventName() string {
+func (e *CourseUpdatedEvent) EventName() string {
 	return "course.updated"
 }
 
@@ -312,8 +312,8 @@ type CoursePublishedEvent struct {
 	Title        string
 }
 
-func NewCoursePublishedEvent(courseID int64, instructorID int64, title string) CoursePublishedEvent {
-	return CoursePublishedEvent{
+func NewCoursePublishedEvent(courseID int64, instructorID int64, title string) *CoursePublishedEvent {
+	return &CoursePublishedEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		InstructorID: instructorID,
@@ -321,7 +321,7 @@ func NewCoursePublishedEvent(courseID int64, instructorID int64, title string) C
 	}
 }
 
-func (e CoursePublishedEvent) EventName() string {
+func (e *CoursePublishedEvent) EventName() string {
 	return "course.published"
 }
 
@@ -334,8 +334,8 @@ type ModuleCreatedEvent struct {
 	Position     int
 }
 
-func NewModuleCreatedEvent(moduleID int64, courseID int64, instructorID int64, title string, position int) ModuleCreatedEvent {
-	return ModuleCreatedEvent{
+func NewModuleCreatedEvent(moduleID int64, courseID int64, instructorID int64, title string, position int) *ModuleCreatedEvent {
+	return &ModuleCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ModuleID:     moduleID,
 		CourseID:     courseID,
@@ -345,7 +345,7 @@ func NewModuleCreatedEvent(moduleID int64, courseID int64, instructorID int64, t
 	}
 }
 
-func (e ModuleCreatedEvent) EventName() string {
+func (e *ModuleCreatedEvent) EventName() string {
 	return "module.created"
 }
 
@@ -357,8 +357,8 @@ type ModuleUpdatedEvent struct {
 	Title        string
 }
 
-func NewModuleUpdatedEvent(moduleID int64, courseID int64, instructorID int64, title string) ModuleUpdatedEvent {
-	return ModuleUpdatedEvent{
+func NewModuleUpdatedEvent(moduleID int64, courseID int64, instructorID int64, title string) *ModuleUpdatedEvent {
+	return &ModuleUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ModuleID:     moduleID,
 		CourseID:     courseID,
@@ -367,7 +367,7 @@ func NewModuleUpdatedEvent(moduleID int64, courseID int64, instructorID int64, t
 	}
 }
 
-func (e ModuleUpdatedEvent) EventName() string {
+func (e *ModuleUpdatedEvent) EventName() string {
 	return "module.updated"
 }
 
@@ -378,8 +378,8 @@ type ModuleDeletedEvent struct {
 	InstructorID int64
 }
 
-func NewModuleDeletedEvent(moduleID int64, courseID int64, instructorID int64) ModuleDeletedEvent {
-	return ModuleDeletedEvent{
+func NewModuleDeletedEvent(moduleID int64, courseID int64, instructorID int64) *ModuleDeletedEvent {
+	return &ModuleDeletedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ModuleID:     moduleID,
 		CourseID:     courseID,
@@ -387,7 +387,7 @@ func NewModuleDeletedEvent(moduleID int64, courseID int64, instructorID int64) M
 	}
 }
 
-func (e ModuleDeletedEvent) EventName() string {
+func (e *ModuleDeletedEvent) EventName() string {
 	return "module.deleted"
 }
 
@@ -400,8 +400,8 @@ type ContentCreatedEvent struct {
 	Title        string
 }
 
-func NewContentCreatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) ContentCreatedEvent {
-	return ContentCreatedEvent{
+func NewContentCreatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentCreatedEvent {
+	return &ContentCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
@@ -411,7 +411,7 @@ func NewContentCreatedEvent(contentID int64, moduleID int64, courseID int64, ins
 	}
 }
 
-func (e ContentCreatedEvent) EventName() string {
+func (e *ContentCreatedEvent) EventName() string {
 	return "content.created"
 }
 
@@ -424,8 +424,8 @@ type ContentUpdatedEvent struct {
 	Title        string
 }
 
-func NewContentUpdatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) ContentUpdatedEvent {
-	return ContentUpdatedEvent{
+func NewContentUpdatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentUpdatedEvent {
+	return &ContentUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
@@ -435,7 +435,7 @@ func NewContentUpdatedEvent(contentID int64, moduleID int64, courseID int64, ins
 	}
 }
 
-func (e ContentUpdatedEvent) EventName() string {
+func (e *ContentUpdatedEvent) EventName() string {
 	return "content.updated"
 }
 
@@ -448,8 +448,8 @@ type ContentPublishedEvent struct {
 	Title        string
 }
 
-func NewContentPublishedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) ContentPublishedEvent {
-	return ContentPublishedEvent{
+func NewContentPublishedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentPublishedEvent {
+	return &ContentPublishedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
@@ -459,7 +459,7 @@ func NewContentPublishedEvent(contentID int64, moduleID int64, courseID int64, i
 	}
 }
 
-func (e ContentPublishedEvent) EventName() string {
+func (e *ContentPublishedEvent) EventName() string {
 	return "content.published"
 }
 
@@ -471,8 +471,8 @@ type ContentDeletedEvent struct {
 	InstructorID int64
 }
 
-func NewContentDeletedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64) ContentDeletedEvent {
-	return ContentDeletedEvent{
+func NewContentDeletedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64) *ContentDeletedEvent {
+	return &ContentDeletedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
@@ -481,6 +481,6 @@ func NewContentDeletedEvent(contentID int64, moduleID int64, courseID int64, ins
 	}
 }
 
-func (e ContentDeletedEvent) EventName() string {
+func (e *ContentDeletedEvent) EventName() string {
 	return "content.deleted"
 }

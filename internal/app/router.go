@@ -160,7 +160,7 @@ func (a *App) Router() http.Handler {
 		})
 	})
 
-    r.NotFound(pageH.NotFound)
+	r.NotFound(pageH.NotFound)
 
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
 

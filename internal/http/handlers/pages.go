@@ -431,7 +431,7 @@ func (h *PageHandlers) LectureView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandlers) NotFound(w http.ResponseWriter, r *http.Request) {
-    w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(http.StatusNotFound)
 	Render(w, &TemplateData{
 		Page: "404.html",

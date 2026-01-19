@@ -16,12 +16,17 @@ var (
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
 )
 
+var (
+    _ error = (*ValidationError)(nil)
+    _ error = (*ValidationErrors)(nil)
+)
+
 type ValidationError struct {
 	Field   string
 	Message string
 }
 
-func NewValidationError(field string, message string) error {
+func NewValidationError(field string, message string) *ValidationError {
 	return ValidationError{
 		Field:   field,
 		Message: message,

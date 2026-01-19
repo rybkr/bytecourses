@@ -4,10 +4,35 @@ import (
 	"time"
 )
 
-type DomainEvent interface {
+type Event interface {
 	EventName() string
 	OccurredAt() time.Time
 }
+
+var (
+    _ Event = (*UserRegisteredEvent)(nil)
+    _ Event = (*UserProfileUpdatedEvent)(nil)
+    _ Event = (*PasswordResetRequestedEvent)(nil)
+    _ Event = (*PasswordResetCompletedEvent)(nil)
+    _ Event = (*ProposalCreatedEvent)(nil)
+    _ Event = (*ProposalUpdatedEvent)(nil)
+    _ Event = (*ProposalSubmittedEvent)(nil)
+    _ Event = (*ProposalWithdrawnEvent)(nil)
+    _ Event = (*ProposalApprovedEvent)(nil)
+    _ Event = (*ProposalRejectedEvent)(nil)
+    _ Event = (*ProposalChangesRequestedEvent)(nil)
+    _ Event = (*ProposalDeletedEvent)(nil)
+    _ Event = (*CourseCreatedFromProposalEvent)(nil)
+    _ Event = (*CourseUpdatedEvent)(nil)
+    _ Event = (*CoursePublishedEvent)(nil)
+    _ Event = (*ModuleCreatedEvent)(nil)
+    _ Event = (*ModuleUpdatedEvent)(nil)
+    _ Event = (*ModuleDeletedEvent)(nil)
+    _ Event = (*ContentCreatedEvent)(nil)
+    _ Event = (*ContentUpdatedEvent)(nil)
+    _ Event = (*ContentPublishedEvent)(nil)
+    _ Event = (*ContentDeletedEvent)(nil)
+)
 
 type BaseEvent struct {
 	occurredAt time.Time
@@ -46,16 +71,12 @@ func (e *UserRegisteredEvent) EventName() string {
 type UserProfileUpdatedEvent struct {
 	BaseEvent
 	UserID  int64
-	OldName string
-	NewName string
 }
 
-func NewUserProfileUpdatedEvent(userID int64, oldName, newName string) *UserProfileUpdatedEvent {
+func NewUserProfileUpdatedEvent(userID int64) *UserProfileUpdatedEvent {
 	return &UserProfileUpdatedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
-		OldName:   oldName,
-		NewName:   newName,
 	}
 }
 
@@ -101,15 +122,13 @@ type ProposalCreatedEvent struct {
 	BaseEvent
 	ProposalID int64
 	AuthorID   int64
-	Title      string
 }
 
-func NewProposalCreatedEvent(proposalID int64, authorID int64, title string) *ProposalCreatedEvent {
+func NewProposalCreatedEvent(proposalID int64, authorID int64) *ProposalCreatedEvent {
 	return &ProposalCreatedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
-		Title:      title,
 	}
 }
 
@@ -121,15 +140,13 @@ type ProposalUpdatedEvent struct {
 	BaseEvent
 	ProposalID int64
 	AuthorID   int64
-	Title      string
 }
 
-func NewProposalUpdatedEvent(proposalID int64, authorID int64, title string) *ProposalUpdatedEvent {
+func NewProposalUpdatedEvent(proposalID int64, authorID int64) *ProposalUpdatedEvent {
 	return &ProposalUpdatedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
-		Title:      title,
 	}
 }
 
@@ -268,16 +285,14 @@ type CourseCreatedFromProposalEvent struct {
 	CourseID     int64
 	ProposalID   int64
 	InstructorID int64
-	Title        string
 }
 
-func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instructorID int64, title string) *CourseCreatedFromProposalEvent {
+func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instructorID int64) *CourseCreatedFromProposalEvent {
 	return &CourseCreatedFromProposalEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		ProposalID:   proposalID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -289,15 +304,13 @@ type CourseUpdatedEvent struct {
 	BaseEvent
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewCourseUpdatedEvent(courseID int64, instructorID int64, title string) *CourseUpdatedEvent {
+func NewCourseUpdatedEvent(courseID int64, instructorID int64) *CourseUpdatedEvent {
 	return &CourseUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -309,15 +322,13 @@ type CoursePublishedEvent struct {
 	BaseEvent
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewCoursePublishedEvent(courseID int64, instructorID int64, title string) *CoursePublishedEvent {
+func NewCoursePublishedEvent(courseID int64, instructorID int64) *CoursePublishedEvent {
 	return &CoursePublishedEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -330,18 +341,14 @@ type ModuleCreatedEvent struct {
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
-	Title        string
-	Position     int
 }
 
-func NewModuleCreatedEvent(moduleID int64, courseID int64, instructorID int64, title string, position int) *ModuleCreatedEvent {
+func NewModuleCreatedEvent(moduleID int64, courseID int64, instructorID int64) *ModuleCreatedEvent {
 	return &ModuleCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
-		Position:     position,
 	}
 }
 
@@ -354,16 +361,14 @@ type ModuleUpdatedEvent struct {
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewModuleUpdatedEvent(moduleID int64, courseID int64, instructorID int64, title string) *ModuleUpdatedEvent {
+func NewModuleUpdatedEvent(moduleID int64, courseID int64, instructorID int64) *ModuleUpdatedEvent {
 	return &ModuleUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -397,17 +402,15 @@ type ContentCreatedEvent struct {
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewContentCreatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentCreatedEvent {
+func NewContentCreatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64) *ContentCreatedEvent {
 	return &ContentCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -421,17 +424,15 @@ type ContentUpdatedEvent struct {
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewContentUpdatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentUpdatedEvent {
+func NewContentUpdatedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64) *ContentUpdatedEvent {
 	return &ContentUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 
@@ -445,17 +446,15 @@ type ContentPublishedEvent struct {
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
-	Title        string
 }
 
-func NewContentPublishedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64, title string) *ContentPublishedEvent {
+func NewContentPublishedEvent(contentID int64, moduleID int64, courseID int64, instructorID int64) *ContentPublishedEvent {
 	return &ContentPublishedEvent{
 		BaseEvent:    NewBaseEvent(),
 		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
-		Title:        title,
 	}
 }
 

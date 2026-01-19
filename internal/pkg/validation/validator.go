@@ -2,6 +2,7 @@ package validation
 
 import (
 	"bytecourses/internal/pkg/errors"
+	"strconv"
 	"strings"
 )
 
@@ -44,7 +45,7 @@ func MinLength(value string, min int, field string) *errors.ValidationError {
 	if len(strings.TrimSpace(value)) < min {
 		return &errors.ValidationError{
 			Field:   field,
-			Message: "must be at least " + string(rune(min)) + " characters",
+			Message: "must be at least " + strconv.Itoa(min) + " characters",
 		}
 	}
 	return nil
@@ -54,7 +55,7 @@ func MaxLength(value string, max int, field string) *errors.ValidationError {
 	if len(value) > max {
 		return &errors.ValidationError{
 			Field:   field,
-			Message: "must be at most " + string(rune(max)) + " characters",
+			Message: "must be at most " + strconv.Itoa(max) + " characters",
 		}
 	}
 	return nil

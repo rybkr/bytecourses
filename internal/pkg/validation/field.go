@@ -40,13 +40,35 @@ func (fv *FieldValidator) MaxLength(max int) *FieldValidator {
 	return fv
 }
 
+func (fv *FieldValidator) IsLower() *FieldValidator {
+	if s, ok := fv.value.(string); ok {
+		if s != strings.ToLower(s) {
+			fv.errs.Add(fv.name, "must be lowercase")
+		}
+	}
+	return fv
+}
+
+func (fv *FieldValidator) IsTrimmed() *FieldValidator {
+	if s, ok := fv.value.(string); ok {
+		if s != strings.TrimSpace(s) {
+			fv.errs.Add(fv.name, "must not be surrounded by whitespace")
+		}
+	}
+	return fv
+}
+
 func (fv *FieldValidator) Email() *FieldValidator {
 	if s, ok := fv.value.(string); ok {
 		if _, err := mail.ParseAddress(strings.TrimSpace(s)); err != nil {
 			fv.errs.Add(fv.name, "invalid email format")
 		}
 	}
-	return fv
+	return fv.MaxLength(254).IsLower().IsTrimmed()
+}
+
+func (fv *FieldValidator) Password() *FieldValidator {
+    return fv.MinLength(1).IsTrimmed()
 }
 
 func (fv *FieldValidator) EntityID() *FieldValidator {

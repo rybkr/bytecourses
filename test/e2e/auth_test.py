@@ -6,46 +6,56 @@ from .conftest import register_and_login
 
 class TestRegister:
     def test_creates_user_with_valid_credentials(self, api_url):
-        payload = {"email": "newuser@example.com", "password": "password123"}
+        payload = {
+            "email": "newuser@example.com",
+            "password": "password123",
+            "name": "New User",
+        }
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.CREATED
+        assert "id" in r.json()
 
     def test_creates_user_with_name(self, api_url):
         session = register_and_login(
             api_url,
-            email="nameduser@example.com",
+            email="user@example.com",
             password="secret",
             name="Test User",
         )
         r = session.get(f"{api_url}/me")
         assert r.status_code == HTTPStatus.OK
-        assert r.json()["name"] == "Test User"
+        assert "name" in r.json() and r.json()["name"] == "Test User"
+        assert "email" in r.json() and r.json()["email"] == "user@example.com"
 
     def test_rejects_duplicate_email(self, api_url):
-        payload = {"email": "duplicate@example.com", "password": "password123"}
+        payload = {
+            "email": "duplicate@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.CREATED
 
         r = requests.post(f"{api_url}/register", json=payload)
-        assert r.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+        assert r.status_code == HTTPStatus.CONFLICT
 
     def test_rejects_missing_email(self, api_url):
-        payload = {"password": "password1234"}
+        payload = {"password": "password1234", "name": "Name"}
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_empty_email(self, api_url):
-        payload = {"email": "", "password": "password1234"}
+        payload = {"email": "", "password": "password1234", "name": "Name"}
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_missing_password(self, api_url):
-        payload = {"email": "nopass@example.com"}
+        payload = {"email": "nopass@example.com", "name": "Name"}
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_empty_password(self, api_url):
-        payload = {"email": "emptypass@example.com", "password": ""}
+        payload = {"email": "emptypass@example.com", "password": "", "name": "Name"}
         r = requests.post(f"{api_url}/register", json=payload)
         assert r.status_code == HTTPStatus.BAD_REQUEST
 
@@ -61,28 +71,38 @@ class TestRegister:
         r = requests.delete(f"{api_url}/register")
         assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
-    def test_succeeds_even_if_welcome_email_fails(self, api_url):
-        payload = {"email": "welcometest@example.com", "password": "password123"}
-        r = requests.post(f"{api_url}/register", json=payload)
-        assert r.status_code == HTTPStatus.CREATED
-
-        r = requests.post(
-            f"{api_url}/login",
-            json={"email": "welcometest@example.com", "password": "password123"},
+    def test_trims_whitespace(self, api_url):
+        session = register_and_login(
+            api_url,
+            email="   user@example.com  ",
+            password="secret",
+            name="Test User   \
+            ",
         )
+        r = session.get(f"{api_url}/me")
         assert r.status_code == HTTPStatus.OK
+        assert "name" in r.json() and r.json()["name"] == "Test User"
+        assert "email" in r.json() and r.json()["email"] == "user@example.com"
 
 
 class TestLogin:
     def test_succeeds_with_valid_credentials(self, api_url):
-        payload = {"email": "logintest@example.com", "password": "password123"}
+        payload = {
+            "email": "logintest@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
         requests.post(f"{api_url}/register", json=payload)
 
         r = requests.post(f"{api_url}/login", json=payload)
         assert r.status_code == HTTPStatus.OK
 
     def test_allows_multiple_logins(self, api_url):
-        payload = {"email": "multilogin@example.com", "password": "password123"}
+        payload = {
+            "email": "multilogin@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
         requests.post(f"{api_url}/register", json=payload)
 
         for _ in range(3):
@@ -90,33 +110,59 @@ class TestLogin:
             assert r.status_code == HTTPStatus.OK
 
     def test_rejects_wrong_password(self, api_url):
-        r = requests.post(
-            f"{api_url}/login",
-            json={"email": "user@example.com", "password": "wrongpassword"},
-        )
+        payload = {
+            "email": "logintest@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
+        requests.post(f"{api_url}/register", json=payload)
+
+        payload = {
+            "email": "logintest@example.com",
+            "password": "wrongpassword",
+        }
+        r = requests.post(f"{api_url}/login", json=payload)
         assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     def test_rejects_missing_password(self, api_url):
-        r = requests.post(f"{api_url}/login", json={"email": "user@example.com"})
-        assert r.status_code == HTTPStatus.UNAUTHORIZED
+        payload = {
+            "email": "logintest@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
+        requests.post(f"{api_url}/register", json=payload)
+
+        payload = {
+            "email": "logintest@example.com",
+        }
+        r = requests.post(f"{api_url}/login", json=payload)
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_empty_password(self, api_url):
-        r = requests.post(
-            f"{api_url}/login",
-            json={"email": "user@example.com", "password": ""},
-        )
-        assert r.status_code == HTTPStatus.UNAUTHORIZED
+        payload = {
+            "email": "logintest@example.com",
+            "password": "password123",
+            "name": "Name",
+        }
+        requests.post(f"{api_url}/register", json=payload)
+
+        payload = {
+            "email": "logintest@example.com",
+            "password": "",
+        }
+        r = requests.post(f"{api_url}/login", json=payload)
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_missing_email(self, api_url):
         r = requests.post(f"{api_url}/login", json={"password": "password123"})
-        assert r.status_code == HTTPStatus.UNAUTHORIZED
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_empty_email(self, api_url):
         r = requests.post(
             f"{api_url}/login",
             json={"email": "", "password": "password123"},
         )
-        assert r.status_code == HTTPStatus.UNAUTHORIZED
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_get_method(self, api_url):
         r = requests.get(f"{api_url}/login")

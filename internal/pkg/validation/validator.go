@@ -4,6 +4,14 @@ import (
 	"bytecourses/internal/pkg/errors"
 )
 
+func Validate(value interface{}) error {
+	errs := New().Validate(value)
+	if errs == nil {
+		return nil
+	}
+	return errs
+}
+
 type Validator struct {
 	errs *errors.ValidationErrors
 }

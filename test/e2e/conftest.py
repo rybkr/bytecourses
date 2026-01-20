@@ -27,11 +27,9 @@ def admin_session(api_url):
     return session
 
 
-def register_and_login(api_url: str, email: str, password: str, name: str = None):
+def register_and_login(api_url: str, email: str, password: str, name: str):
     session = requests.Session()
-    payload = {"email": email, "password": password}
-    if name:
-        payload["name"] = name
+    payload = {"email": email, "password": password, "name": name}
     r = session.post(f"{api_url}/register", json=payload)
     assert r.status_code == HTTPStatus.CREATED, f"Failed to register user {email}"
     r = session.post(f"{api_url}/login", json={"email": email, "password": password})

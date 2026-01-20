@@ -1,11 +1,10 @@
 package handlers
 
 import (
-	stderrors "errors"
 	"net/http"
+	"strings"
 
 	"bytecourses/internal/infrastructure/http/middleware"
-	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/services"
 )
 
@@ -19,23 +18,27 @@ func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 	}
 }
 
-type registerRequest struct {
+type RegisterRequest struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+func (r *RegisterRequest) ToMessage() *services.RegisterCommand {
+	return &services.RegisterCommand{
+		Name:     strings.TrimSpace(r.Name),
+		Email:    strings.ToLower(strings.TrimSpace(r.Email)),
+		Password: strings.TrimSpace(r.Password),
+	}
+}
+
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var req registerRequest
-	if !decodeJSON(w, r, &req) {
+	var request RegisterRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	user, err := h.authService.Register(r.Context(), &services.RegisterInput{
-		Email:    req.Email,
-		Password: req.Password,
-		Name:     req.Name,
-	})
+	user, err := h.authService.Register(r.Context(), request.ToMessage())
 	if err != nil {
 		handleError(w, err)
 		return
@@ -44,27 +47,27 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, user)
 }
 
-type loginRequest struct {
+type LoginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+func (r *LoginRequest) ToMessage() *services.LoginCommand {
+	return &services.LoginCommand{
+		Email:    strings.ToLower(strings.TrimSpace(r.Email)),
+		Password: strings.TrimSpace(r.Password),
+	}
+}
+
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var req loginRequest
-	if !decodeJSON(w, r, &req) {
+	var request LoginRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	result, err := h.authService.Login(r.Context(), &services.LoginInput{
-		Email:    req.Email,
-		Password: req.Password,
-	})
+	result, err := h.authService.Login(r.Context(), request.ToMessage())
 	if err != nil {
-		if stderrors.Is(err, errors.ErrInvalidCredentials) {
-			http.Error(w, "invalid credentials", http.StatusUnauthorized)
-		} else {
-			http.Error(w, "internal error", http.StatusInternalServerError)
-		}
+		handleError(w, err)
 		return
 	}
 

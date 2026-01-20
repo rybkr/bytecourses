@@ -20,6 +20,8 @@ func main() {
 	storage := flag.String("storage", "memory", "storage backend: memory|sql")
 	bcryptCost := flag.Int("bcrypt-cost", bcrypt.DefaultCost, "bcrypt cost factor")
 	emailService := flag.String("email-service", "none", "email service provider: resend|none")
+	seedUsers := flag.String("seed-users", "", "path to JSON file containing users to seed")
+	seedProposals := flag.String("seed-proposals", "", "path to JSON file containing proposals to seed")
 	flag.Parse()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -51,9 +53,11 @@ func main() {
 	}
 
 	cfg := bootstrap.Config{
-		Storage:      storageType,
-		EmailService: emailServiceType,
-		BCryptCost:   *bcryptCost,
+		Storage:       storageType,
+		EmailService:  emailServiceType,
+		BCryptCost:    *bcryptCost,
+		SeedUsers:     *seedUsers,
+		SeedProposals: *seedProposals,
 	}
 
 	ctx := context.Background()

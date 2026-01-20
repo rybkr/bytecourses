@@ -9,7 +9,7 @@
     "outline": "1. What makes systems distributed\n2. Failure modes and fallacies\n3. Timeouts, retries, and idempotency\n4. Background workers and queues\n5. Consistency models in practice\n6. Observability and debugging",
     "assumed_prerequisites": "- Solid Go fundamentals\n- Basic HTTP and concurrency knowledge",
     "status": "draft",
-    "author_id": 1,
+    "author_id": 1
   },
   {
     "id": 2,
@@ -21,7 +21,7 @@
     "outline": "1. Threat modeling basics\n2. Authentication strategies\n3. Authorization patterns\n4. Input validation and encoding\n5. Common attacks and defenses\n6. Security testing and reviews",
     "assumed_prerequisites": "- Go web development experience\n- Basic understanding of HTTP",
     "author_id": 1,
-    "status": "submitted",
+    "status": "submitted"
   },
   {
     "id": 3,
@@ -35,7 +35,7 @@
     "author_id": 1,
     "review_notes": "Looks good!",
     "reviewer_id": 2,
-    "status": "approved",
+    "status": "approved"
   },
   {
     "id": 4,
@@ -49,6 +49,6 @@
     "author_id": 1,
     "review_notes": "It seems that there should be more prerequisites than you have listed here.",
     "reviewer_id": 2,
-    "status": "changes_requested",
+    "status": "changes_requested"
   }
 ]

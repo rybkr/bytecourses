@@ -196,7 +196,11 @@ class TestAuthFlow:
 
         r = session.post(
             f"{api_url}/register",
-            json={"email": "flowtest@example.com", "password": "secret"},
+            json={
+                "email": "flowtest@example.com",
+                "password": "secret",
+                "name": "Name",
+            },
         )
         assert r.status_code == HTTPStatus.CREATED
 

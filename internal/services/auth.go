@@ -5,7 +5,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
-	"strings"
 	"time"
 
 	"bytecourses/internal/domain"
@@ -41,6 +40,15 @@ func NewAuthService(
 	}
 }
 
+var (
+    _ Message = (*RegisterCommand)(nil)
+    _ Message = (*LoginCommand)(nil)
+    _ Message = (*LogoutCommand)(nil)
+    _ Message = (*UpdateProfileCommand)(nil)
+    _ Message = (*RequestPasswordResetCommand)(nil)
+    _ Message = (*ConfirmPasswordResetCommand)(nil)
+)
+
 type RegisterCommand struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
@@ -48,7 +56,7 @@ type RegisterCommand struct {
 }
 
 func (c *RegisterCommand) Validate(v *validation.Validator) {
-	v.Field(c.Name, "name").Required().MinLength(2).MaxLength(80)
+	v.Field(c.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
 	v.Field(c.Email, "email").Required().Email()
 	v.Field(c.Password, "password").Required().Password()
 }
@@ -123,33 +131,40 @@ func (s *AuthService) Login(ctx context.Context, command *LoginCommand) (*LoginR
 	}, nil
 }
 
-func (s *AuthService) Logout(ctx context.Context, sessionID string) error {
-	return s.Sessions.Delete(sessionID)
+type LogoutCommand struct {
+    SessionID string `json:"session_id"`
 }
 
-// UpdateProfileInput contains the data needed to update a user profile.
-type UpdateProfileInput struct {
+func (c *LogoutCommand) Validate(v *validation.Validator) {
+    v.Field(c.SessionID, "session_id").Required()
+}
+
+func (s *AuthService) Logout(ctx context.Context, command *LogoutCommand) error {
+    if err := validation.Validate(command); err != nil {
+        return err
+    }
+	return s.Sessions.Delete(command.SessionID)
+}
+
+type UpdateProfileCommand struct {
 	UserID int64  `json:"-"`
 	Name   string `json:"name"`
 }
 
-func (i *UpdateProfileInput) Validate(v *validation.Validator) {
+func (i *UpdateProfileCommand) Validate(v *validation.Validator) {
 	v.Field(i.UserID, "user_id").Required().EntityID()
-	v.Field(i.Name, "name").Required().MinLength(2).MaxLength(80)
+	v.Field(i.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
 }
 
-// UpdateProfile updates a user's profile information.
-func (s *AuthService) UpdateProfile(ctx context.Context, input *UpdateProfileInput) (*domain.User, error) {
-	if err := validation.New().Validate(input); err != nil {
+func (s *AuthService) UpdateProfile(ctx context.Context, command *UpdateProfileCommand) (*domain.User, error) {
+	if err := validation.New().Validate(command); err != nil {
 		return nil, err
 	}
 
-	user, ok := s.Users.GetByID(ctx, input.UserID)
+	user, ok := s.Users.GetByID(ctx, command.UserID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
-
-	user.Name = strings.TrimSpace(input.Name)
 
 	if err := s.Users.Update(ctx, user); err != nil {
 		return nil, err
@@ -161,21 +176,20 @@ func (s *AuthService) UpdateProfile(ctx context.Context, input *UpdateProfileInp
 	return user, nil
 }
 
-// RequestPasswordResetInput contains the data needed to request a password reset.
-type RequestPasswordResetInput struct {
+type RequestPasswordResetCommand struct {
 	Email string `json:"email"`
 }
 
-func (i *RequestPasswordResetInput) Validate(v *validation.Validator) {
-	v.Field(i.Email, "email").Required().Email().MaxLength(254)
+func (i *RequestPasswordResetCommand) Validate(v *validation.Validator) {
+	v.Field(i.Email, "email").Required().Email()
 }
 
-// RequestPasswordReset initiates the password reset flow.
-// Always returns nil to prevent email enumeration.
-func (s *AuthService) RequestPasswordReset(ctx context.Context, input *RequestPasswordResetInput) error {
-	email := strings.ToLower(strings.TrimSpace(input.Email))
+func (s *AuthService) RequestPasswordReset(ctx context.Context, command *RequestPasswordResetCommand) error {
+    if err := validation.Validate(command); err != nil {
+        return err
+    }
 
-	user, ok := s.Users.GetByEmail(ctx, email)
+	user, ok := s.Users.GetByEmail(ctx, command.Email)
 	if !ok {
 		return nil
 	}
@@ -193,34 +207,32 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, input *RequestPa
 		return err
 	}
 
-	if err := s.Email.SendPasswordResetEmail(ctx, email); err != nil {
+	if err := s.Email.SendPasswordResetEmail(ctx, command.Email); err != nil {
 		return err
 	}
 
-	event := domain.NewPasswordResetRequestedEvent(user.ID, email)
+	event := domain.NewPasswordResetRequestedEvent(user.ID, command.Email)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil
 }
 
-// ConfirmPasswordResetInput contains the data needed to confirm a password reset.
-type ConfirmPasswordResetInput struct {
+type ConfirmPasswordResetCommand struct {
 	Token       string `json:"token"`
 	NewPassword string `json:"new_password"`
 }
 
-func (i *ConfirmPasswordResetInput) Validate(v *validation.Validator) {
+func (i *ConfirmPasswordResetCommand) Validate(v *validation.Validator) {
 	v.Field(i.Token, "token").Required()
-	v.Field(i.NewPassword, "new_password").Required().MinLength(1)
+	v.Field(i.NewPassword, "new_password").Required().Password()
 }
 
-// ConfirmPasswordReset completes the password reset flow.
-func (s *AuthService) ConfirmPasswordReset(ctx context.Context, input *ConfirmPasswordResetInput) error {
-	if err := validation.New().Validate(input); err != nil {
+func (s *AuthService) ConfirmPasswordReset(ctx context.Context, command *ConfirmPasswordResetCommand) error {
+	if err := validation.New().Validate(command); err != nil {
 		return err
 	}
 
-	hash := sha256.Sum256([]byte(input.Token))
+	hash := sha256.Sum256([]byte(command.Token))
 
 	userID, ok := s.Resets.ConsumeResetToken(ctx, hash[:], time.Now())
 	if !ok {
@@ -232,7 +244,7 @@ func (s *AuthService) ConfirmPasswordReset(ctx context.Context, input *ConfirmPa
 		return errors.ErrNotFound
 	}
 
-	passwordHash, err := auth.HashPassword(input.NewPassword)
+	passwordHash, err := auth.HashPassword(command.NewPassword)
 	if err != nil {
 		return err
 	}
@@ -248,7 +260,6 @@ func (s *AuthService) ConfirmPasswordReset(ctx context.Context, input *ConfirmPa
 	return nil
 }
 
-// GetCurrentUser retrieves the current user by ID.
 func (s *AuthService) GetCurrentUser(ctx context.Context, userID int64) (*domain.User, error) {
 	user, ok := s.Users.GetByID(ctx, userID)
 	if !ok {

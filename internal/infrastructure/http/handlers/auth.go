@@ -9,12 +9,12 @@ import (
 )
 
 type AuthHandler struct {
-	authService *services.AuthService
+	Service *services.AuthService
 }
 
 func NewAuthHandler(authService *services.AuthService) *AuthHandler {
 	return &AuthHandler{
-		authService: authService,
+		Service: authService,
 	}
 }
 
@@ -38,7 +38,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.authService.Register(r.Context(), request.ToMessage())
+	user, err := h.Service.Register(r.Context(), request.ToMessage())
 	if err != nil {
 		handleError(w, err)
 		return
@@ -65,7 +65,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.authService.Login(r.Context(), request.ToMessage())
+	result, err := h.Service.Login(r.Context(), request.ToMessage())
 	if err != nil {
 		handleError(w, err)
 		return
@@ -86,7 +86,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionID, ok := middleware.SessionFromContext(r.Context())
 	if ok && sessionID != "" {
-		_ = h.authService.Logout(r.Context(), sessionID)
+		_ = h.Service.Logout(r.Context(), &services.LogoutCommand{
+			SessionID: strings.TrimSpace(sessionID),
+		})
 	}
 
 	http.SetCookie(w, &http.Cookie{
@@ -104,12 +106,18 @@ func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-
 	writeJSON(w, http.StatusOK, user)
 }
 
-type updateProfileRequest struct {
+type UpdateProfileRequest struct {
 	Name string `json:"name"`
+}
+
+func (r *UpdateProfileRequest) ToMessage(userID int64) *services.UpdateProfileCommand {
+	return &services.UpdateProfileCommand{
+		Name:   strings.TrimSpace(r.Name),
+		UserID: userID,
+	}
 }
 
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
@@ -118,15 +126,12 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateProfileRequest
-	if !decodeJSON(w, r, &req) {
+	var request UpdateProfileRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	updated, err := h.authService.UpdateProfile(r.Context(), &services.UpdateProfileInput{
-		UserID: user.ID,
-		Name:   req.Name,
-	})
+	updated, err := h.Service.UpdateProfile(r.Context(), request.ToMessage(user.ID))
 	if err != nil {
 		handleError(w, err)
 		return
@@ -135,40 +140,48 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, updated)
 }
 
-type requestPasswordResetRequest struct {
+type RequestPasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
+func (r *RequestPasswordResetRequest) ToMessage() *services.RequestPasswordResetCommand {
+	return &services.RequestPasswordResetCommand{
+		Email: strings.ToLower(strings.TrimSpace(r.Email)),
+	}
+}
+
 func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var req requestPasswordResetRequest
-	if !decodeJSON(w, r, &req) {
+	var request RequestPasswordResetRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
 	// Always return 202 Accepted to avoid email enumeration
 	w.WriteHeader(http.StatusAccepted)
 
-	_ = h.authService.RequestPasswordReset(r.Context(), &services.RequestPasswordResetInput{
-		Email: req.Email,
-	})
+	_ = h.Service.RequestPasswordReset(r.Context(), request.ToMessage())
 }
 
-type confirmPasswordResetRequest struct {
+type ConfirmPasswordResetRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
+func (r *ConfirmPasswordResetRequest) ToMessage(token string) *services.ConfirmPasswordResetCommand {
+	return &services.ConfirmPasswordResetCommand{
+		Token:       token,
+		NewPassword: strings.TrimSpace(r.NewPassword),
+	}
+}
+
 func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var req confirmPasswordResetRequest
-	if !decodeJSON(w, r, &req) {
+	var request ConfirmPasswordResetRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
 	token := r.URL.Query().Get("token")
 
-	if err := h.authService.ConfirmPasswordReset(r.Context(), &services.ConfirmPasswordResetInput{
-		Token:       token,
-		NewPassword: req.NewPassword,
-	}); err != nil {
+	if err := h.Service.ConfirmPasswordReset(r.Context(), request.ToMessage(token)); err != nil {
 		handleError(w, err)
 		return
 	}

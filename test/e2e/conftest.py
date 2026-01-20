@@ -27,7 +27,7 @@ def admin_session(api_url):
     return session
 
 
-def register_and_login(api_url: str, email: str, password: str, name: str):
+def register_and_login(api_url: str, email: str, password: str, name: str = "Name"):
     session = requests.Session()
     payload = {"email": email, "password": password, "name": name}
     r = session.post(f"{api_url}/register", json=payload)

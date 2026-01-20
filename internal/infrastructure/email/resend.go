@@ -22,6 +22,10 @@ func NewResendSender(apiKey, fromEmail string) *ResendSender {
 	}
 }
 
+var (
+    _ Sender = (*ResendSender)(nil)
+)
+
 type resendRequest struct {
 	From    string `json:"from"`
 	To      string `json:"to"`

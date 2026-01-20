@@ -15,7 +15,7 @@ type EventBus interface {
 }
 
 var (
-    _ EventBus = (*InMemoryEventBus)(nil)
+	_ EventBus = (*InMemoryEventBus)(nil)
 )
 
 type InMemoryEventBus struct {

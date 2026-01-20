@@ -1,44 +1,100 @@
 package main
 
 import (
-	"bytecourses/internal/app"
-	"bytecourses/internal/auth"
 	"context"
 	"flag"
-	"golang.org/x/crypto/bcrypt"
-	"log"
-	"net/http"
+	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"golang.org/x/crypto/bcrypt"
+
+	"bytecourses/internal/bootstrap"
+	infraauth "bytecourses/internal/infrastructure/auth"
+	infrahttp "bytecourses/internal/infrastructure/http"
 )
 
 func main() {
 	storage := flag.String("storage", "memory", "storage backend: memory|sql")
 	bcryptCost := flag.Int("bcrypt-cost", bcrypt.DefaultCost, "bcrypt cost factor")
 	emailService := flag.String("email-service", "none", "email service provider: resend|none")
-	seedUsers := flag.Bool("seed-users", false, "seed system test users")
-	seedProposals := flag.Bool("seed-proposals", false, "seed system test proposals")
 	flag.Parse()
 
-	ctx := context.Background()
-	cfg := app.Config{
-		Storage:       app.StorageBackend(*storage),
-		BcryptCost:    *bcryptCost,
-		SeedUsers:     *seedUsers,
-		SeedProposals: *seedProposals,
-		EmailService:  app.EmailServiceProvider(*emailService),
-	}
-	auth.SetBcryptCost(*bcryptCost)
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
 
-	a, err := app.New(ctx, cfg)
-	if err != nil {
-		log.Fatal(err)
+	infraauth.SetBcryptCost(*bcryptCost)
+
+	var storageType bootstrap.StorageType
+	switch *storage {
+	case "memory":
+		storageType = bootstrap.StorageMemory
+	case "sql", "postgres":
+		storageType = bootstrap.StoragePostgres
+	default:
+		logger.Error("unknown storage type", "storage", *storage)
+		os.Exit(1)
 	}
-	defer a.Close()
+
+	var emailServiceType bootstrap.EmailService
+	switch *emailService {
+	case "resend":
+		emailServiceType = bootstrap.EmailServiceResend
+	case "none":
+		emailServiceType = bootstrap.EmailServiceNone
+	default:
+		logger.Error("unknown email service", "email-service", *emailService)
+		os.Exit(1)
+	}
+
+	cfg := bootstrap.Config{
+		Storage:      storageType,
+		EmailService: emailServiceType,
+		BCryptCost:   *bcryptCost,
+	}
+
+	ctx := context.Background()
+
+	container, err := bootstrap.NewContainer(ctx, cfg)
+	if err != nil {
+		logger.Error("failed to create container", "error", err)
+		os.Exit(1)
+	}
+	defer container.Close()
+
+	router := infrahttp.NewRouter(container, "web/templates")
 
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = "8080"
 	}
-	addr := "0.0.0.0:" + port
-	log.Fatal(http.ListenAndServe(addr, a.Router()))
+
+	server := infrahttp.NewServer(router, port, logger)
+
+	done := make(chan os.Signal, 1)
+	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		if err := server.Start(); err != nil {
+			logger.Error("server error", "error", err)
+		}
+	}()
+
+	logger.Info("server started", "port", port, "storage", storageType)
+
+	<-done
+	logger.Info("shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := server.Shutdown(ctx); err != nil {
+		logger.Error("server shutdown error", "error", err)
+		os.Exit(1)
+	}
+
+	logger.Info("server stopped")
 }

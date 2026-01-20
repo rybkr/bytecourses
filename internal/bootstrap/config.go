@@ -15,9 +15,7 @@ const (
 )
 
 type Config struct {
-	Storage       StorageType
-	EmailService  EmailService
-	BCryptCost    int
-	SeedUsers     bool
-	SeedProposals bool
+	Storage      StorageType
+	EmailService EmailService
+	BCryptCost   int
 }

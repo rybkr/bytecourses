@@ -27,10 +27,10 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 		}
 
 		c := domain.Course{
-			Title:      "Test Course",
-			Summary:    "A test course",
+			Title:        "Test Course",
+			Summary:      "A test course",
 			InstructorID: u.ID,
-			Status:     domain.CourseStatusDraft,
+			Status:       domain.CourseStatusDraft,
 		}
 		if err := courses.Create(ctx, &c); err != nil {
 			t.Fatalf("courses.Create failed: %v", err)
@@ -393,7 +393,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 		originalInstructorID := v.InstructorID
 		v.ID++
 		v.Title = "Modified Title"
-		v.InstructorID = -1 
+		v.InstructorID = -1
 		if c.ID != v.ID-1 || c.Title != "Test Course" || c.InstructorID != originalInstructorID {
 			t.Fatalf("CourseRepository: external modification affected persisted value")
 		}

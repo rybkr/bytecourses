@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	dbCache      = make(map[string]*DB)
-	resetCache   = make(map[string]bool)
-	dbMutex      sync.Mutex
+	dbCache    = make(map[string]*DB)
+	resetCache = make(map[string]bool)
+	dbMutex    sync.Mutex
 )
 
 func TestUserRepository(t *testing.T) {
@@ -58,7 +58,7 @@ func TestPasswordResetRepository(t *testing.T) {
 
 func getOrOpenTestDB(t *testing.T) *DB {
 	t.Helper()
-	
+
 	testName := t.Name()
 	parentTestName := testName
 	for i := 0; i < len(testName); i++ {
@@ -67,15 +67,15 @@ func getOrOpenTestDB(t *testing.T) *DB {
 			break
 		}
 	}
-	
+
 	dbMutex.Lock()
 	defer dbMutex.Unlock()
-	
+
 	db, ok := dbCache[parentTestName]
 	if !ok {
 		db = openTestDB(t)
 		dbCache[parentTestName] = db
-		
+
 		t.Cleanup(func() {
 			dbMutex.Lock()
 			delete(dbCache, parentTestName)
@@ -87,12 +87,12 @@ func getOrOpenTestDB(t *testing.T) *DB {
 			dbMutex.Unlock()
 		})
 	}
-	
+
 	if !resetCache[testName] {
 		resetTestDB(t, db)
 		resetCache[testName] = true
 	}
-	
+
 	return db
 }
 

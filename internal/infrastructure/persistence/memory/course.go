@@ -2,10 +2,13 @@ package memory
 
 import (
 	"bytecourses/internal/domain"
+	"bytecourses/internal/infrastructure/persistence"
 	"context"
 	"sync"
 	"time"
 )
+
+var _ persistence.CourseRepository = (*CourseRepository)(nil)
 
 type CourseRepository struct {
 	mu      sync.RWMutex
@@ -64,7 +67,7 @@ func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, er
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-    result := make([]domain.Course, 0)
+	result := make([]domain.Course, 0)
 	for _, c := range r.courses {
 		if c.Status == domain.CourseStatusLive {
 			result = append(result, *c)

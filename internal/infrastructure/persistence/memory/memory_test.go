@@ -8,9 +8,9 @@ import (
 )
 
 func TestUserRepository(t *testing.T) {
-    test.TestUserRepository(t, func(t *testing.T) persistence.UserRepository {
-        return NewUserRepository()
-    })
+	test.TestUserRepository(t, func(t *testing.T) persistence.UserRepository {
+		return NewUserRepository()
+	})
 }
 
 func TestProposalRepository(t *testing.T) {

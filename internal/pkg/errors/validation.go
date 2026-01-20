@@ -1,12 +1,12 @@
 package errors
 
 import (
-    "fmt"
+	"fmt"
 )
 
 var (
-    _ error = (*ValidationError)(nil)
-    _ error = (*ValidationErrors)(nil)
+	_ error = (*ValidationError)(nil)
+	_ error = (*ValidationErrors)(nil)
 )
 
 type ValidationError struct {

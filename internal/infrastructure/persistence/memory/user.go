@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"bytecourses/internal/domain"
-	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/infrastructure/persistence"
+	"bytecourses/internal/pkg/errors"
 )
 
 var (
@@ -33,9 +33,9 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-    if _, exists := r.byEmail[u.Email]; exists {
-        return errors.ErrConflict
-    }
+	if _, exists := r.byEmail[u.Email]; exists {
+		return errors.ErrConflict
+	}
 
 	u.ID = r.nextID
 	r.nextID++
@@ -81,9 +81,9 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 	}
 
 	if existing.Email != u.Email {
-        if _, exists := r.byEmail[u.Email]; exists {
-            return errors.ErrConflict
-        }
+		if _, exists := r.byEmail[u.Email]; exists {
+			return errors.ErrConflict
+		}
 		delete(r.byEmail, existing.Email)
 		r.byEmail[u.Email] = u.ID
 	}

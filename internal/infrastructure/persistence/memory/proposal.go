@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	_ persistence.UserRepository = (*UserRepository)(nil)
+	_ persistence.UserRepository     = (*UserRepository)(nil)
+	_ persistence.ProposalRepository = (*ProposalRepository)(nil)
 )
 
 type ProposalRepository struct {
@@ -57,7 +58,7 @@ func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64)
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-    result := make([]domain.Proposal, 0)
+	result := make([]domain.Proposal, 0)
 	for _, p := range r.proposals {
 		if p.AuthorID == authorID {
 			result = append(result, *p)
@@ -70,7 +71,7 @@ func (r *ProposalRepository) ListAllSubmitted(ctx context.Context) ([]domain.Pro
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
-    result := make([]domain.Proposal, 0)
+	result := make([]domain.Proposal, 0)
 	for _, p := range r.proposals {
 		if p.Status == domain.ProposalStatusSubmitted ||
 			p.Status == domain.ProposalStatusApproved ||

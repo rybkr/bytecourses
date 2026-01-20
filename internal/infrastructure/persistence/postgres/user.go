@@ -8,8 +8,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 
 	"bytecourses/internal/domain"
-	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/infrastructure/persistence"
+	"bytecourses/internal/pkg/errors"
 )
 
 var (
@@ -118,15 +118,15 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 	if err != nil {
 		return err
 	}
-	
+
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
-	
+
 	if rowsAffected == 0 {
 		return errors.ErrNotFound
 	}
-	
+
 	return nil
 }

@@ -27,10 +27,10 @@ func TestProposalRepository(t *testing.T, newProposalRepo NewProposalRepository,
 		}
 
 		p := domain.Proposal{
-			Title:      "Test Proposal",
-			Summary:    "A test proposal",
-			AuthorID:   u.ID,
-			Status:     domain.ProposalStatusDraft,
+			Title:    "Test Proposal",
+			Summary:  "A test proposal",
+			AuthorID: u.ID,
+			Status:   domain.ProposalStatusDraft,
 		}
 		if err := proposals.Create(ctx, &p); err != nil {
 			t.Fatalf("proposals.Create failed: %v", err)
@@ -60,10 +60,10 @@ func TestProposalRepository(t *testing.T, newProposalRepo NewProposalRepository,
 		}
 
 		p := domain.Proposal{
-			Title:      "Test Proposal",
-			Summary:    "A test proposal",
-			AuthorID:   u.ID,
-			Status:     domain.ProposalStatusDraft,
+			Title:    "Test Proposal",
+			Summary:  "A test proposal",
+			AuthorID: u.ID,
+			Status:   domain.ProposalStatusDraft,
 		}
 		if err := proposals.Create(ctx, &p); err != nil {
 			t.Fatalf("proposals.Create failed: %v", err)
@@ -384,11 +384,11 @@ func TestProposalRepository(t *testing.T, newProposalRepo NewProposalRepository,
 		}
 
 		p := domain.Proposal{
-			ID:        -1,
-			Title:     "Non-existent",
-			Summary:   "Does not exist",
-			AuthorID:  u.ID,
-			Status:    domain.ProposalStatusDraft,
+			ID:       -1,
+			Title:    "Non-existent",
+			Summary:  "Does not exist",
+			AuthorID: u.ID,
+			Status:   domain.ProposalStatusDraft,
 		}
 
 		err := proposals.Update(ctx, &p)
@@ -472,7 +472,7 @@ func TestProposalRepository(t *testing.T, newProposalRepo NewProposalRepository,
 		originalAuthorID := v.AuthorID
 		v.ID++
 		v.Title = "Modified Title"
-		v.AuthorID = -1 
+		v.AuthorID = -1
 		if p.ID != v.ID-1 || p.Title != "Test Proposal" || p.AuthorID != originalAuthorID {
 			t.Fatalf("ProposalRepository: external modification affected persisted value")
 		}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -29,11 +28,11 @@ func NewServer(handler http.Handler, port string, logger *slog.Logger) *Server {
 
 func (s *Server) Start() error {
 	s.logger.Info("starting http server", "addr", s.httpServer.Addr)
-	
+
 	if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return fmt.Errorf("http server error: %w", err)
 	}
-	
+
 	return nil
 }
 

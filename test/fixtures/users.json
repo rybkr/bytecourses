@@ -1,0 +1,14 @@
+[
+  {
+    "id": 1,
+    "email": "user@bytecourses.org"
+    "name": "Guest User"
+    "role": "student",
+  },
+  {
+    "id": 2,
+    "email": "admin@bytecourses.org"
+    "name": "Admin User"
+    "role": "admin",
+  }
+]

@@ -2,10 +2,13 @@ package postgres
 
 import (
 	"bytecourses/internal/domain"
+	"bytecourses/internal/infrastructure/persistence"
 	"context"
 	"database/sql"
 	"time"
 )
+
+var _ persistence.CourseRepository = (*CourseRepository)(nil)
 
 type CourseRepository struct {
 	db *sql.DB
@@ -120,7 +123,7 @@ func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, er
 	}
 	defer rows.Close()
 
-    courses := make([]domain.Course, 0)
+	courses := make([]domain.Course, 0)
 	for rows.Next() {
 		var c domain.Course
 		var status string

@@ -10,13 +10,13 @@
 
 **In `ListMine` (line 171):**
 ```go
-response, _ := h.proposals.ListProposalsByAuthorID(r.Context(), u.ID)
+response, _ := h.proposals.ListByAuthorID(r.Context(), u.ID)
 ```
 Errors are silently ignored.
 
 **In `List` (line 154):**
 ```go
-response, _ := h.proposals.ListAllSubmittedProposals(r.Context())
+response, _ := h.proposals.ListAllSubmitted(r.Context())
 ```
 Errors are silently ignored.
 
@@ -116,7 +116,7 @@ Handlers decode JSON without verifying `Content-Type` header. Could accept non-J
 ### 15. Database Transaction Safety
 **Location:** `internal/store/sqlstore/proposals.go`
 
-`UpdateProposal` performs multiple field updates but doesn't use transactions. If update partially fails, data could be inconsistent.
+`Update` performs multiple field updates but doesn't use transactions. If update partially fails, data could be inconsistent.
 
 **Note:** PostgreSQL UPDATE is atomic, so this is lower risk, but worth noting for future complex operations.
 

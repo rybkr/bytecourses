@@ -2,82 +2,46 @@ package validation
 
 import (
 	"bytecourses/internal/pkg/errors"
-	"strconv"
-	"strings"
 )
 
-type Validator struct{}
+type Validator struct {
+	errs *errors.ValidationErrors
+}
 
 func New() *Validator {
-	return &Validator{}
+	return &Validator{
+		errs: errors.NewValidationErrors(),
+	}
 }
 
 func (v *Validator) Validate(value interface{}) error {
-	errs := errors.NewValidationErrors()
-
 	switch val := value.(type) {
 	case interface {
-		Validate(*errors.ValidationErrors)
+		Validate(*Validator)
 	}:
-		val.Validate(errs)
+		val.Validate(v)
 
 	default:
 		return nil
 	}
 
-	if errs.HasErrors() {
-		return errs
+	if v.errs.HasErrors() {
+		return v.errs
 	}
 	return nil
 }
 
-func Required(value string, field string) *errors.ValidationError {
-	if strings.TrimSpace(value) == "" {
-		return &errors.ValidationError{
-			Field:   field,
-			Message: "required",
-		}
+func (v *Validator) Errors() error {
+	if v.errs.HasErrors() {
+		return v.errs
 	}
 	return nil
 }
 
-func MinLength(value string, min int, field string) *errors.ValidationError {
-	if len(strings.TrimSpace(value)) < min {
-		return &errors.ValidationError{
-			Field:   field,
-			Message: "must be at least " + strconv.Itoa(min) + " characters",
-		}
+func (v *Validator) Field(value interface{}, name string) *FieldValidator {
+	return &FieldValidator{
+		value: value,
+		name:  name,
+		errs:  v.errs,
 	}
-	return nil
-}
-
-func MaxLength(value string, max int, field string) *errors.ValidationError {
-	if len(value) > max {
-		return &errors.ValidationError{
-			Field:   field,
-			Message: "must be at most " + strconv.Itoa(max) + " characters",
-		}
-	}
-	return nil
-}
-
-func Email(value string, field string) *errors.ValidationError {
-	value = strings.TrimSpace(value)
-	if value == "" || !strings.Contains(value, "@") {
-		return &errors.ValidationError{
-			Field:   field,
-			Message: "invalid email format",
-		}
-	}
-	return nil
-}
-
-func EntityID(value int64, field string) *errors.ValidationError {
-	if value <= 0 {
-		return &errors.ValidationError{
-			Field:   field,
-			Message: "must be a valid id",
-		}
-	}
-	return nil
 }

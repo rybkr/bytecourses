@@ -7,28 +7,28 @@ import (
 	"bytecourses/internal/domain"
 )
 
+type Repository[T any] interface {
+    Create(context.Context, *T) error
+    GetByID(context.Context, int64) (*T, bool)
+    Update(context.Context, *T) error
+}
+
 type UserRepository interface {
-	Create(context.Context, *domain.User) error
-	GetByID(context.Context, int64) (*domain.User, bool)
+    Repository[domain.User]
 	GetByEmail(context.Context, string) (*domain.User, bool)
-	Update(context.Context, *domain.User) error
 }
 
 type ProposalRepository interface {
-	Create(context.Context, *domain.Proposal) error
-	GetByID(context.Context, int64) (*domain.Proposal, bool)
+    Repository[domain.Proposal]
 	ListByAuthorID(context.Context, int64) ([]domain.Proposal, error)
 	ListAllSubmitted(context.Context) ([]domain.Proposal, error)
-	Update(context.Context, *domain.Proposal) error
 	DeleteByID(context.Context, int64) error
 }
 
 type CourseRepository interface {
-	Create(ctx context.Context, c *domain.Course) error
-	GetByID(ctx context.Context, id int64) (*domain.Course, bool)
+    Repository[domain.Course]
 	GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool)
 	ListAllLive(ctx context.Context) ([]domain.Course, error)
-	Update(ctx context.Context, c *domain.Course) error
 }
 
 type PasswordResetRepository interface {

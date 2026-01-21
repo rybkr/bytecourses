@@ -10,19 +10,18 @@ import (
 )
 
 var (
-	_ persistence.UserRepository     = (*UserRepository)(nil)
 	_ persistence.ProposalRepository = (*ProposalRepository)(nil)
 )
 
 type ProposalRepository struct {
 	mu        sync.RWMutex
-	proposals map[int64]*domain.Proposal
+	proposals map[int64]domain.Proposal
 	nextID    int64
 }
 
 func NewProposalRepository() *ProposalRepository {
 	return &ProposalRepository{
-		proposals: make(map[int64]*domain.Proposal),
+		proposals: make(map[int64]domain.Proposal),
 		nextID:    1,
 	}
 }
@@ -36,8 +35,7 @@ func (r *ProposalRepository) Create(ctx context.Context, p *domain.Proposal) err
 	p.CreatedAt = time.Now()
 	p.UpdatedAt = time.Now()
 
-	copy := *p
-	r.proposals[p.ID] = &copy
+	r.proposals[p.ID] = *p
 
 	return nil
 }
@@ -50,8 +48,8 @@ func (r *ProposalRepository) GetByID(ctx context.Context, id int64) (*domain.Pro
 	if !ok {
 		return nil, false
 	}
-	copy := *p
-	return &copy, true
+
+    return &p, true
 }
 
 func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64) ([]domain.Proposal, error) {
@@ -61,7 +59,7 @@ func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64)
 	result := make([]domain.Proposal, 0)
 	for _, p := range r.proposals {
 		if p.AuthorID == authorID {
-			result = append(result, *p)
+			result = append(result, p)
 		}
 	}
 	return result, nil
@@ -77,9 +75,10 @@ func (r *ProposalRepository) ListAllSubmitted(ctx context.Context) ([]domain.Pro
 			p.Status == domain.ProposalStatusApproved ||
 			p.Status == domain.ProposalStatusRejected ||
 			p.Status == domain.ProposalStatusChangesRequested {
-			result = append(result, *p)
+			result = append(result, p)
 		}
 	}
+
 	return result, nil
 }
 
@@ -92,8 +91,7 @@ func (r *ProposalRepository) Update(ctx context.Context, p *domain.Proposal) err
 	}
 
 	p.UpdatedAt = time.Now()
-	copy := *p
-	r.proposals[p.ID] = &copy
+	r.proposals[p.ID] = *p
 
 	return nil
 }

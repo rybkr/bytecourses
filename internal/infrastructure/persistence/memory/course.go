@@ -1,24 +1,27 @@
 package memory
 
 import (
-	"bytecourses/internal/domain"
-	"bytecourses/internal/infrastructure/persistence"
 	"context"
 	"sync"
 	"time"
+
+	"bytecourses/internal/domain"
+	"bytecourses/internal/infrastructure/persistence"
 )
 
-var _ persistence.CourseRepository = (*CourseRepository)(nil)
+var (
+	_ persistence.CourseRepository = (*CourseRepository)(nil)
+)
 
 type CourseRepository struct {
 	mu      sync.RWMutex
-	courses map[int64]*domain.Course
+	courses map[int64]domain.Course
 	nextID  int64
 }
 
 func NewCourseRepository() *CourseRepository {
 	return &CourseRepository{
-		courses: make(map[int64]*domain.Course),
+		courses: make(map[int64]domain.Course),
 		nextID:  1,
 	}
 }
@@ -32,8 +35,7 @@ func (r *CourseRepository) Create(ctx context.Context, c *domain.Course) error {
 	c.CreatedAt = time.Now()
 	c.UpdatedAt = time.Now()
 
-	copy := *c
-	r.courses[c.ID] = &copy
+	r.courses[c.ID] = *c
 
 	return nil
 }
@@ -46,8 +48,8 @@ func (r *CourseRepository) GetByID(ctx context.Context, id int64) (*domain.Cours
 	if !ok {
 		return nil, false
 	}
-	copy := *c
-	return &copy, true
+
+	return &c, true
 }
 
 func (r *CourseRepository) GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
@@ -56,10 +58,10 @@ func (r *CourseRepository) GetByProposalID(ctx context.Context, proposalID int64
 
 	for _, c := range r.courses {
 		if c.ProposalID != nil && *c.ProposalID == proposalID {
-			copy := *c
-			return &copy, true
+			return &c, true
 		}
 	}
+
 	return nil, false
 }
 
@@ -70,7 +72,7 @@ func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, er
 	result := make([]domain.Course, 0)
 	for _, c := range r.courses {
 		if c.Status == domain.CourseStatusLive {
-			result = append(result, *c)
+			result = append(result, c)
 		}
 	}
 	return result, nil
@@ -85,8 +87,7 @@ func (r *CourseRepository) Update(ctx context.Context, c *domain.Course) error {
 	}
 
 	c.UpdatedAt = time.Now()
-	copy := *c
-	r.courses[c.ID] = &copy
+	r.courses[c.ID] = *c
 
 	return nil
 }

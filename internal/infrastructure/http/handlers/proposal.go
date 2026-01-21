@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 
@@ -30,6 +31,19 @@ type CreateProposalRequest struct {
 	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
+func (r *CreateProposalRequest) ToCommand(authorID int64) *services.CreateProposalCommand {
+	return &services.CreateProposalCommand{
+		AuthorID:             authorID,
+		Title:                strings.TrimSpace(r.Title),
+		Summary:              strings.TrimSpace(r.Summary),
+		Qualifications:       strings.TrimSpace(r.Qualifications),
+		TargetAudience:       strings.TrimSpace(r.TargetAudience),
+		LearningObjectives:   strings.TrimSpace(r.LearningObjectives),
+		Outline:              strings.TrimSpace(r.Outline),
+		AssumedPrerequisites: strings.TrimSpace(r.AssumedPrerequisites),
+	}
+}
+
 func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
@@ -41,16 +55,7 @@ func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := h.Service.Create(r.Context(), &services.CreateProposalCommand{
-		AuthorID:             user.ID,
-		Title:                request.Title,
-		Summary:              request.Summary,
-		Qualifications:       request.Qualifications,
-		TargetAudience:       request.TargetAudience,
-		LearningObjectives:   request.LearningObjectives,
-		Outline:              request.Outline,
-		AssumedPrerequisites: request.AssumedPrerequisites,
-	})
+	p, err := h.Service.Create(r.Context(), request.ToCommand(user.ID))
 	if err != nil {
 		handleError(w, err)
 		return
@@ -67,6 +72,20 @@ type UpdateProposalRequest struct {
 	LearningObjectives   string `json:"learning_objectives"`
 	Outline              string `json:"outline"`
 	AssumedPrerequisites string `json:"assumed_prerequisites"`
+}
+
+func (r *UpdateProposalRequest) ToCommand(proposalID, userID int64) *services.UpdateProposalCommand {
+	return &services.UpdateProposalCommand{
+		ProposalID:           proposalID,
+		UserID:               userID,
+		Title:                strings.TrimSpace(r.Title),
+		Summary:              strings.TrimSpace(r.Summary),
+		Qualifications:       strings.TrimSpace(r.Qualifications),
+		TargetAudience:       strings.TrimSpace(r.TargetAudience),
+		LearningObjectives:   strings.TrimSpace(r.LearningObjectives),
+		Outline:              strings.TrimSpace(r.Outline),
+		AssumedPrerequisites: strings.TrimSpace(r.AssumedPrerequisites),
+	}
 }
 
 func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
@@ -96,19 +115,7 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	command := &services.UpdateProposalCommand{
-		ProposalID:           id,
-		UserID:               user.ID,
-		Title:                request.Title,
-		Summary:              request.Summary,
-		Qualifications:       request.Qualifications,
-		TargetAudience:       request.TargetAudience,
-		LearningObjectives:   request.LearningObjectives,
-		Outline:              request.Outline,
-		AssumedPrerequisites: request.AssumedPrerequisites,
-	}
-
-	_, err = h.Service.Update(r.Context(), command)
+	_, err = h.Service.Update(r.Context(), request.ToCommand(id, user.ID))
 	if err != nil {
 		handleError(w, err)
 		return

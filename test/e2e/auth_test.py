@@ -243,7 +243,7 @@ class TestUpdateProfile:
         userID = r.json()["id"]
 
         r = user_session.patch(f"{api_url}/me", json={"name": "New Name"})
-        assert r.status_code == HTTPStatus.OK
+        assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = user_session.get(f"{api_url}/me")
         assert r.json()["name"] == "New Name"

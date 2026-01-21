@@ -4,6 +4,10 @@ import (
     "bytecourses/internal/pkg/validation"
 )
 
-type Message interface {
+type Command interface {
     Validate(v *validation.Validator)
+}
+
+type Message interface {
+    Command
 }

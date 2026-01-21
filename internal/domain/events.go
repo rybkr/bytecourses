@@ -81,13 +81,15 @@ type PasswordResetRequestedEvent struct {
 	BaseEvent
 	UserID int64
 	Email  string
+    Token  string
 }
 
-func NewPasswordResetRequestedEvent(userID int64, email string) *PasswordResetRequestedEvent {
+func NewPasswordResetRequestedEvent(userID int64, email, token string) *PasswordResetRequestedEvent {
 	return &PasswordResetRequestedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 		Email:     email,
+        Token:     token,
 	}
 }
 

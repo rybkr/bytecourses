@@ -130,7 +130,7 @@ class TestProposalUpdate:
 
         r = session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -146,13 +146,13 @@ class TestProposalUpdate:
 
         r = user_session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = user_session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["title"] == "New Title"
-        assert r.json()["summary"] == ""
+        assert r.json()["summary"] == "New Summary"
         assert r.json()["outline"] == ""
 
     def test_rejects_update_on_submitted_proposal(self, api_url, user_session):
@@ -166,7 +166,7 @@ class TestProposalUpdate:
 
         r = user_session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.CONFLICT
 

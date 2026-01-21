@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"bytecourses/internal/infrastructure/http/middleware"
+	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/services"
 )
 
@@ -33,18 +34,18 @@ func (r *RegisterRequest) ToCommand() *services.RegisterCommand {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	var request RegisterRequest
-	if !decodeJSON(w, r, &request) {
+	var req RegisterRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	user, err := h.Service.Register(r.Context(), request.ToCommand())
+    user, err := h.Service.Register(r.Context(), req.ToCommand())
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, user)
+    writeJSON(w, http.StatusCreated, user)
 }
 
 type LoginRequest struct {
@@ -60,12 +61,12 @@ func (r *LoginRequest) ToCommand() *services.LoginCommand {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	var request LoginRequest
-	if !decodeJSON(w, r, &request) {
+	var req LoginRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	result, err := h.Service.Login(r.Context(), request.ToCommand())
+	sessionID, err := h.Service.Login(r.Context(), req.ToCommand())
 	if err != nil {
 		handleError(w, err)
 		return
@@ -73,11 +74,12 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session",
-		Value:    result.SessionID,
+		Value:    sessionID,
 		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
 		Secure:   isHTTPS(r),
+		MaxAge:   60 * 60 * 24, // 1 day
 	})
 
 	w.WriteHeader(http.StatusOK)
@@ -97,7 +99,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: http.SameSiteStrictMode,
 		Secure:   isHTTPS(r),
 	})
 
@@ -105,10 +107,12 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
+
 	writeJSON(w, http.StatusOK, user)
 }
 
@@ -124,23 +128,24 @@ func (r *UpdateProfileRequest) ToCommand(userID int64) *services.UpdateProfileCo
 }
 
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
 
-	var request UpdateProfileRequest
-	if !decodeJSON(w, r, &request) {
+	var req UpdateProfileRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	updated, err := h.Service.UpdateProfile(r.Context(), request.ToCommand(user.ID))
+	err := h.Service.UpdateProfile(r.Context(), req.ToCommand(user.ID))
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, updated)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 type RequestPasswordResetRequest struct {
@@ -154,15 +159,15 @@ func (r *RequestPasswordResetRequest) ToCommand() *services.RequestPasswordReset
 }
 
 func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var request RequestPasswordResetRequest
-	if !decodeJSON(w, r, &request) {
+	var req RequestPasswordResetRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
 	// Always return 202 Accepted to avoid email enumeration
 	w.WriteHeader(http.StatusAccepted)
 
-	_ = h.Service.RequestPasswordReset(r.Context(), request.ToCommand())
+	_ = h.Service.RequestPasswordReset(r.Context(), req.ToCommand())
 }
 
 type ConfirmPasswordResetRequest struct {
@@ -171,20 +176,19 @@ type ConfirmPasswordResetRequest struct {
 
 func (r *ConfirmPasswordResetRequest) ToCommand(token string) *services.ConfirmPasswordResetCommand {
 	return &services.ConfirmPasswordResetCommand{
-		Token:       token,
+		Token:       strings.TrimSpace(token),
 		NewPassword: strings.TrimSpace(r.NewPassword),
 	}
 }
 
 func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Request) {
-	var request ConfirmPasswordResetRequest
-	if !decodeJSON(w, r, &request) {
+	var req ConfirmPasswordResetRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
 	token := r.URL.Query().Get("token")
-
-	if err := h.Service.ConfirmPasswordReset(r.Context(), request.ToCommand(token)); err != nil {
+	if err := h.Service.ConfirmPasswordReset(r.Context(), req.ToCommand(token)); err != nil {
 		handleError(w, err)
 		return
 	}

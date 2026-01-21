@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
 
@@ -19,10 +20,19 @@ func writeJSON(w http.ResponseWriter, status int, val any) {
 }
 
 func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
-	if err := json.NewDecoder(r.Body).Decode(dst); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+	decoder := json.NewDecoder(r.Body)
+	decoder.DisallowUnknownFields()
+
+	if err := decoder.Decode(dst); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return false
 	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return false
+	}
+
 	return true
 }
 
@@ -30,13 +40,13 @@ func userFromRequest(r *http.Request) (*domain.User, bool) {
 	return middleware.UserFromContext(r.Context())
 }
 
-func requireUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
-	u, ok := userFromRequest(r)
+func requireAuthenticatedUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "internal error", http.StatusInternalServerError)
+        handleError(w, errors.ErrUnauthorized)
 		return nil, false
 	}
-	return u, true
+	return user, true
 }
 
 func handleError(w http.ResponseWriter, err error) {

@@ -15,27 +15,28 @@ func userFromRequest(r *http.Request, sessions auth.SessionStore, users persiste
 		return nil, "", false
 	}
 
-	uid, ok := sessions.Get(c.Value)
+	userID, ok := sessions.Get(c.Value)
+	if !ok {
+		return nil, "", false
+	}
+	user, ok := users.GetByID(r.Context(), userID)
 	if !ok {
 		return nil, "", false
 	}
 
-	u, ok := users.GetByID(r.Context(), uid)
-	if !ok {
-		return nil, "", false
-	}
-	return u, c.Value, true
+	return user, c.Value, true
 }
 
 func RequireUser(sessions auth.SessionStore, users persistence.UserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, sessionID, ok := userFromRequest(r, sessions, users)
+			user, sessionID, ok := userFromRequest(r, sessions, users)
 			if !ok {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
-			ctx := WithUser(r.Context(), u)
+
+			ctx := WithUser(r.Context(), user)
 			ctx = WithSession(ctx, sessionID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -45,16 +46,18 @@ func RequireUser(sessions auth.SessionStore, users persistence.UserRepository) f
 func RequireAdmin(sessions auth.SessionStore, users persistence.UserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, sessionID, ok := userFromRequest(r, sessions, users)
+			user, sessionID, ok := userFromRequest(r, sessions, users)
 			if !ok {
 				http.Error(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
-			if u.Role != domain.UserRoleAdmin {
+
+			if !user.IsAdmin() {
 				http.Error(w, "forbidden", http.StatusForbidden)
 				return
 			}
-			ctx := WithUser(r.Context(), u)
+
+			ctx := WithUser(r.Context(), user)
 			ctx = WithSession(ctx, sessionID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -64,12 +67,13 @@ func RequireAdmin(sessions auth.SessionStore, users persistence.UserRepository) 
 func RequireLogin(sessions auth.SessionStore, users persistence.UserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, sessionID, ok := userFromRequest(r, sessions, users)
+			user, sessionID, ok := userFromRequest(r, sessions, users)
 			if !ok {
 				http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
 				return
 			}
-			ctx := WithUser(r.Context(), u)
+
+			ctx := WithUser(r.Context(), user)
 			ctx = WithSession(ctx, sessionID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -79,9 +83,9 @@ func RequireLogin(sessions auth.SessionStore, users persistence.UserRepository) 
 func OptionalUser(sessions auth.SessionStore, users persistence.UserRepository) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			u, sessionID, ok := userFromRequest(r, sessions, users)
+			user, sessionID, ok := userFromRequest(r, sessions, users)
 			if ok {
-				ctx := WithUser(r.Context(), u)
+				ctx := WithUser(r.Context(), user)
 				ctx = WithSession(ctx, sessionID)
 				r = r.WithContext(ctx)
 			}

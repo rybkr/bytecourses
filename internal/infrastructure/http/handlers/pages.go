@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/yuin/goldmark"
+
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/http/middleware"
-
-	"github.com/yuin/goldmark"
 )
 
 // PageData is the standard data structure passed to all page templates.

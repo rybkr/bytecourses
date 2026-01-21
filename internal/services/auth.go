@@ -166,6 +166,8 @@ func (s *AuthService) UpdateProfile(ctx context.Context, command *UpdateProfileC
 		return nil, errors.ErrNotFound
 	}
 
+    user.Name = command.Name
+
 	if err := s.Users.Update(ctx, user); err != nil {
 		return nil, err
 	}

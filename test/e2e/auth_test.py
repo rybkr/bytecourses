@@ -94,6 +94,7 @@ class TestLogin:
         }
         requests.post(f"{api_url}/register", json=payload)
 
+        del payload["name"]
         r = requests.post(f"{api_url}/login", json=payload)
         assert r.status_code == HTTPStatus.OK
 
@@ -105,6 +106,7 @@ class TestLogin:
         }
         requests.post(f"{api_url}/register", json=payload)
 
+        del payload["name"]
         for _ in range(3):
             r = requests.post(f"{api_url}/login", json=payload)
             assert r.status_code == HTTPStatus.OK
@@ -232,3 +234,16 @@ class TestUserRoles:
         r = user_session.get(f"{api_url}/me")
         assert r.status_code == HTTPStatus.OK
         assert r.json()["role"] == "student"
+
+
+class TestUpdateProfile:
+    def test_update_user_name(self, api_url, user_session):
+        r = user_session.get(f"{api_url}/me")
+        assert r.json()["name"] == "Guest User"
+        userID = r.json()["id"]
+
+        r = user_session.patch(f"{api_url}/me", json={"name": "New Name"})
+        assert r.status_code == HTTPStatus.OK
+
+        r = user_session.get(f"{api_url}/me")
+        assert r.json()["name"] == "New Name"

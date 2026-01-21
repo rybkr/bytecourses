@@ -1,25 +1,26 @@
 package handlers
 
 import (
-	"bytecourses/internal/domain"
-	"bytecourses/internal/services"
 	"net/http"
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+
+	"bytecourses/internal/domain"
+	"bytecourses/internal/services"
 )
 
 type ProposalHandler struct {
-	proposalService *services.ProposalService
+	Service *services.ProposalService
 }
 
 func NewProposalHandler(proposalService *services.ProposalService) *ProposalHandler {
 	return &ProposalHandler{
-		proposalService: proposalService,
+		Service: proposalService,
 	}
 }
 
-type createProposalRequest struct {
+type CreateProposalRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`
 	Qualifications       string `json:"qualifications"`
@@ -30,25 +31,25 @@ type createProposalRequest struct {
 }
 
 func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
 
-	var req createProposalRequest
-	if !decodeJSON(w, r, &req) {
+	var request CreateProposalRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	p, err := h.proposalService.Create(r.Context(), &services.CreateProposalInput{
+	p, err := h.Service.Create(r.Context(), &services.CreateProposalCommand{
 		AuthorID:             user.ID,
-		Title:                req.Title,
-		Summary:              req.Summary,
-		Qualifications:       req.Qualifications,
-		TargetAudience:       req.TargetAudience,
-		LearningObjectives:   req.LearningObjectives,
-		Outline:              req.Outline,
-		AssumedPrerequisites: req.AssumedPrerequisites,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		Qualifications:       request.Qualifications,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		Outline:              request.Outline,
+		AssumedPrerequisites: request.AssumedPrerequisites,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -58,18 +59,18 @@ func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, p)
 }
 
-type updateProposalRequest struct {
-	Title                *string `json:"title"`
-	Summary              *string `json:"summary"`
-	Qualifications       *string `json:"qualifications"`
-	TargetAudience       *string `json:"target_audience"`
-	LearningObjectives   *string `json:"learning_objectives"`
-	Outline              *string `json:"outline"`
-	AssumedPrerequisites *string `json:"assumed_prerequisites"`
+type UpdateProposalRequest struct {
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	Qualifications       string `json:"qualifications"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	Outline              string `json:"outline"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
 func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -80,13 +81,12 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateProposalRequest
-	if !decodeJSON(w, r, &req) {
+	var request UpdateProposalRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	// First get the existing proposal to support partial updates
-	existing, err := h.proposalService.GetByID(r.Context(), &services.GetByIDInput{
+	_, err = h.Service.GetByID(r.Context(), &services.GetProposalByIDQuery{
 		ProposalID: id,
 		UserID:     user.ID,
 		IsAdmin:    user.IsAdmin(),
@@ -96,43 +96,19 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Merge request fields with existing proposal
-	input := &services.UpdateProposalInput{
+	command := &services.UpdateProposalCommand{
 		ProposalID:           id,
 		UserID:               user.ID,
-		Title:                existing.Title,
-		Summary:              existing.Summary,
-		Qualifications:       existing.Qualifications,
-		TargetAudience:       existing.TargetAudience,
-		LearningObjectives:   existing.LearningObjectives,
-		Outline:              existing.Outline,
-		AssumedPrerequisites: existing.AssumedPrerequisites,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		Qualifications:       request.Qualifications,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		Outline:              request.Outline,
+		AssumedPrerequisites: request.AssumedPrerequisites,
 	}
 
-	// Override with provided values
-	if req.Title != nil {
-		input.Title = *req.Title
-	}
-	if req.Summary != nil {
-		input.Summary = *req.Summary
-	}
-	if req.Qualifications != nil {
-		input.Qualifications = *req.Qualifications
-	}
-	if req.TargetAudience != nil {
-		input.TargetAudience = *req.TargetAudience
-	}
-	if req.LearningObjectives != nil {
-		input.LearningObjectives = *req.LearningObjectives
-	}
-	if req.Outline != nil {
-		input.Outline = *req.Outline
-	}
-	if req.AssumedPrerequisites != nil {
-		input.AssumedPrerequisites = *req.AssumedPrerequisites
-	}
-
-	_, err = h.proposalService.Update(r.Context(), input)
+	_, err = h.Service.Update(r.Context(), command)
 	if err != nil {
 		handleError(w, err)
 		return
@@ -142,7 +118,7 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -153,7 +129,7 @@ func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.proposalService.Submit(r.Context(), &services.SubmitProposalInput{
+	_, err = h.Service.Submit(r.Context(), &services.SubmitProposalCommand{
 		ProposalID: id,
 		UserID:     user.ID,
 	})
@@ -166,7 +142,7 @@ func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -177,7 +153,7 @@ func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.proposalService.Withdraw(r.Context(), &services.WithdrawProposalInput{
+	_, err = h.Service.Withdraw(r.Context(), &services.WithdrawProposalCommand{
 		ProposalID: id,
 		UserID:     user.ID,
 	})
@@ -189,13 +165,13 @@ func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type reviewProposalRequest struct {
+type ReviewProposalRequest struct {
 	Decision string `json:"decision"`
 	Notes    string `json:"notes"`
 }
 
 func (h *ProposalHandler) Review(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -206,16 +182,16 @@ func (h *ProposalHandler) Review(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req reviewProposalRequest
-	if !decodeJSON(w, r, &req) {
+	var request ReviewProposalRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	p, err := h.proposalService.Review(r.Context(), &services.ReviewProposalInput{
+	p, err := h.Service.Review(r.Context(), &services.ReviewProposalCommand{
 		ProposalID: id,
 		ReviewerID: user.ID,
-		Decision:   services.ReviewDecision(req.Decision),
-		Notes:      req.Notes,
+		Decision:   services.ReviewDecision(request.Decision),
+		Notes:      request.Notes,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -226,7 +202,7 @@ func (h *ProposalHandler) Review(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -237,7 +213,7 @@ func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.proposalService.Delete(r.Context(), &services.DeleteProposalInput{
+	if err := h.Service.Delete(r.Context(), &services.DeleteProposalCommand{
 		ProposalID: id,
 		UserID:     user.ID,
 	}); err != nil {
@@ -249,7 +225,7 @@ func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -260,7 +236,7 @@ func (h *ProposalHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	p, err := h.proposalService.GetByID(r.Context(), &services.GetByIDInput{
+	p, err := h.Service.GetByID(r.Context(), &services.GetProposalByIDQuery{
 		ProposalID: id,
 		UserID:     user.ID,
 		IsAdmin:    user.IsAdmin(),
@@ -274,12 +250,12 @@ func (h *ProposalHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) ListAll(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
 
-	proposals, err := h.proposalService.ListAll(r.Context(), user.IsAdmin())
+	proposals, err := h.Service.ListAll(r.Context(), user.IsAdmin())
 	if err != nil {
 		handleError(w, err)
 		return
@@ -289,30 +265,29 @@ func (h *ProposalHandler) ListAll(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) ListMine(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
 
-	proposals, err := h.proposalService.ListMine(r.Context(), user.ID)
+	proposals, err := h.Service.ListMine(r.Context(), user.ID)
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	// Ensure we return [] instead of null for empty list
 	if proposals == nil {
 		proposals = []domain.Proposal{}
 	}
 	writeJSON(w, http.StatusOK, proposals)
 }
 
-type reviewActionRequest struct {
+type ReviewActionRequest struct {
 	Notes string `json:"notes"`
 }
 
 func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -323,16 +298,16 @@ func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req reviewActionRequest
-	if !decodeJSON(w, r, &req) {
+	var request ReviewActionRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	_, err = h.proposalService.Review(r.Context(), &services.ReviewProposalInput{
+	_, err = h.Service.Review(r.Context(), &services.ReviewProposalCommand{
 		ProposalID: id,
 		ReviewerID: user.ID,
 		Decision:   services.ReviewDecisionApprove,
-		Notes:      req.Notes,
+		Notes:      request.Notes,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -343,7 +318,7 @@ func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -354,16 +329,16 @@ func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req reviewActionRequest
-	if !decodeJSON(w, r, &req) {
+	var request ReviewActionRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	_, err = h.proposalService.Review(r.Context(), &services.ReviewProposalInput{
+	_, err = h.Service.Review(r.Context(), &services.ReviewProposalCommand{
 		ProposalID: id,
 		ReviewerID: user.ID,
 		Decision:   services.ReviewDecisionReject,
-		Notes:      req.Notes,
+		Notes:      request.Notes,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -374,7 +349,7 @@ func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -385,16 +360,16 @@ func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	var req reviewActionRequest
-	if !decodeJSON(w, r, &req) {
+	var request ReviewActionRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	_, err = h.proposalService.Review(r.Context(), &services.ReviewProposalInput{
+	_, err = h.Service.Review(r.Context(), &services.ReviewProposalCommand{
 		ProposalID: id,
 		ReviewerID: user.ID,
 		Decision:   services.ReviewDecisionRequestChanges,
-		Notes:      req.Notes,
+		Notes:      request.Notes,
 	})
 	if err != nil {
 		handleError(w, err)

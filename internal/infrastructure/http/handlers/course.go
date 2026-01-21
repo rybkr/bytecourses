@@ -10,16 +10,16 @@ import (
 )
 
 type CourseHandler struct {
-	courseService *services.CourseService
+	Service *services.CourseService
 }
 
 func NewCourseHandler(courseService *services.CourseService) *CourseHandler {
 	return &CourseHandler{
-		courseService: courseService,
+		Service: courseService,
 	}
 }
 
-type createCourseRequest struct {
+type CreateCourseRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`
 	TargetAudience       string `json:"target_audience"`
@@ -28,23 +28,23 @@ type createCourseRequest struct {
 }
 
 func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
 
-	var req createCourseRequest
-	if !decodeJSON(w, r, &req) {
+	var request CreateCourseRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	c, err := h.courseService.Create(r.Context(), &services.CreateCourseInput{
+	c, err := h.Service.Create(r.Context(), &services.CreateCourseCommand{
 		InstructorID:         user.ID,
-		Title:                req.Title,
-		Summary:              req.Summary,
-		TargetAudience:       req.TargetAudience,
-		LearningObjectives:   req.LearningObjectives,
-		AssumedPrerequisites: req.AssumedPrerequisites,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		AssumedPrerequisites: request.AssumedPrerequisites,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -54,7 +54,7 @@ func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, c)
 }
 
-type updateCourseRequest struct {
+type UpdateCourseRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`
 	TargetAudience       string `json:"target_audience"`
@@ -63,7 +63,7 @@ type updateCourseRequest struct {
 }
 
 func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -74,19 +74,19 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req updateCourseRequest
-	if !decodeJSON(w, r, &req) {
+	var request UpdateCourseRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	_, err = h.courseService.Update(r.Context(), &services.UpdateCourseInput{
+	_, err = h.Service.Update(r.Context(), &services.UpdateCourseCommand{
 		CourseID:             id,
 		UserID:               user.ID,
-		Title:                req.Title,
-		Summary:              req.Summary,
-		TargetAudience:       req.TargetAudience,
-		LearningObjectives:   req.LearningObjectives,
-		AssumedPrerequisites: req.AssumedPrerequisites,
+		Title:                request.Title,
+		Summary:              request.Summary,
+		TargetAudience:       request.TargetAudience,
+		LearningObjectives:   request.LearningObjectives,
+		AssumedPrerequisites: request.AssumedPrerequisites,
 	})
 	if err != nil {
 		handleError(w, err)
@@ -97,7 +97,7 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -108,7 +108,7 @@ func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := h.courseService.Publish(r.Context(), &services.PublishCourseInput{
+	c, err := h.Service.Publish(r.Context(), &services.PublishCourseCommand{
 		CourseID: id,
 		UserID:   user.ID,
 	})
@@ -120,23 +120,23 @@ func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, c)
 }
 
-type createFromProposalRequest struct {
+type CreateFromProposalRequest struct {
 	ProposalID int64 `json:"proposal_id"`
 }
 
 func (h *CourseHandler) CreateFromProposal(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
 
-	var req createFromProposalRequest
-	if !decodeJSON(w, r, &req) {
+	var request CreateFromProposalRequest
+	if !decodeJSON(w, r, &request) {
 		return
 	}
 
-	c, err := h.courseService.CreateFromProposal(r.Context(), &services.CreateFromProposalInput{
-		ProposalID: req.ProposalID,
+	c, err := h.Service.CreateFromProposal(r.Context(), &services.CreateCourseFromProposalCommand{
+		ProposalID: request.ProposalID,
 		UserID:     user.ID,
 	})
 	if err != nil {
@@ -148,7 +148,7 @@ func (h *CourseHandler) CreateFromProposal(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireUser(w, r)
+	user, ok := requireAuthenticatedUser(w, r)
 	if !ok {
 		return
 	}
@@ -159,7 +159,7 @@ func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	c, err := h.courseService.GetByID(r.Context(), &services.GetCourseByIDInput{
+	c, err := h.Service.GetByID(r.Context(), &services.GetCourseByIDQuery{
 		CourseID: id,
 		UserID:   user.ID,
 		IsAdmin:  user.IsAdmin(),
@@ -173,15 +173,15 @@ func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) ListLive(w http.ResponseWriter, r *http.Request) {
-	courses, err := h.courseService.ListLive(r.Context())
+	courses, err := h.Service.ListLive(r.Context())
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	// Ensure we return [] instead of null for empty list
 	if courses == nil {
 		courses = []domain.Course{}
 	}
+
 	writeJSON(w, http.StatusOK, courses)
 }

@@ -11,11 +11,20 @@ import (
 	"bytecourses/internal/pkg/validation"
 )
 
-// ProposalService handles all proposal operations.
+var (
+	_ Message = (*CreateProposalCommand)(nil)
+	_ Message = (*UpdateProposalCommand)(nil)
+	_ Message = (*SubmitProposalCommand)(nil)
+	_ Message = (*WithdrawProposalCommand)(nil)
+	_ Message = (*ReviewProposalCommand)(nil)
+	_ Message = (*DeleteProposalCommand)(nil)
+	_ Message = (*GetProposalByIDQuery)(nil)
+)
+
 type ProposalService struct {
-	proposals persistence.ProposalRepository
-	users     persistence.UserRepository
-	events    events.EventBus
+	Proposals persistence.ProposalRepository
+	Users     persistence.UserRepository
+	Events    events.EventBus
 }
 
 // NewProposalService creates a new ProposalService with the given dependencies.
@@ -25,14 +34,14 @@ func NewProposalService(
 	eventBus events.EventBus,
 ) *ProposalService {
 	return &ProposalService{
-		proposals: proposals,
-		users:     users,
-		events:    eventBus,
+		Proposals: proposals,
+		Users:     users,
+		Events:    eventBus,
 	}
 }
 
-// CreateProposalInput contains the data needed to create a proposal.
-type CreateProposalInput struct {
+// CreateProposalCommand contains the data needed to create a proposal.
+type CreateProposalCommand struct {
 	AuthorID             int64
 	Title                string
 	Summary              string
@@ -43,7 +52,7 @@ type CreateProposalInput struct {
 	AssumedPrerequisites string
 }
 
-func (i *CreateProposalInput) Validate(v *validation.Validator) {
+func (i *CreateProposalCommand) Validate(v *validation.Validator) {
 	v.Field(i.AuthorID, "author_id").EntityID()
 	v.Field(i.Title, "title").Required().MinLength(4).MaxLength(128)
 	v.Field(i.Summary, "summary").Required().MaxLength(2048)
@@ -55,7 +64,7 @@ func (i *CreateProposalInput) Validate(v *validation.Validator) {
 }
 
 // Create creates a new proposal.
-func (s *ProposalService) Create(ctx context.Context, input *CreateProposalInput) (*domain.Proposal, error) {
+func (s *ProposalService) Create(ctx context.Context, input *CreateProposalCommand) (*domain.Proposal, error) {
 	if err := validation.New().Validate(input); err != nil {
 		return nil, err
 	}
@@ -72,18 +81,18 @@ func (s *ProposalService) Create(ctx context.Context, input *CreateProposalInput
 		Status:               domain.ProposalStatusDraft,
 	}
 
-	if err := s.proposals.Create(ctx, proposal); err != nil {
+	if err := s.Proposals.Create(ctx, proposal); err != nil {
 		return nil, err
 	}
 
 	event := domain.NewProposalCreatedEvent(proposal.ID, proposal.AuthorID)
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return proposal, nil
 }
 
-// UpdateProposalInput contains the data needed to update a proposal.
-type UpdateProposalInput struct {
+// UpdateProposalCommand contains the data needed to update a proposal.
+type UpdateProposalCommand struct {
 	ProposalID           int64
 	UserID               int64
 	Title                string
@@ -95,7 +104,7 @@ type UpdateProposalInput struct {
 	AssumedPrerequisites string
 }
 
-func (i *UpdateProposalInput) Validate(v *validation.Validator) {
+func (i *UpdateProposalCommand) Validate(v *validation.Validator) {
 	v.Field(i.ProposalID, "proposal_id").EntityID()
 	v.Field(i.UserID, "user_id").EntityID()
 	v.Field(i.Title, "title").Required().MinLength(4).MaxLength(128)
@@ -108,12 +117,12 @@ func (i *UpdateProposalInput) Validate(v *validation.Validator) {
 }
 
 // Update updates an existing proposal.
-func (s *ProposalService) Update(ctx context.Context, input *UpdateProposalInput) (*domain.Proposal, error) {
+func (s *ProposalService) Update(ctx context.Context, input *UpdateProposalCommand) (*domain.Proposal, error) {
 	if err := validation.New().Validate(input); err != nil {
 		return nil, err
 	}
 
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
@@ -134,25 +143,30 @@ func (s *ProposalService) Update(ctx context.Context, input *UpdateProposalInput
 	proposal.Outline = strings.TrimSpace(input.Outline)
 	proposal.AssumedPrerequisites = strings.TrimSpace(input.AssumedPrerequisites)
 
-	if err := s.proposals.Update(ctx, proposal); err != nil {
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
 		return nil, err
 	}
 
 	event := domain.NewProposalUpdatedEvent(proposal.ID, proposal.AuthorID)
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return proposal, nil
 }
 
-// SubmitProposalInput contains the data needed to submit a proposal.
-type SubmitProposalInput struct {
+// SubmitProposalCommand contains the data needed to submit a proposal.
+type SubmitProposalCommand struct {
 	ProposalID int64
 	UserID     int64
 }
 
+func (c *SubmitProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
 // Submit submits a proposal for review.
-func (s *ProposalService) Submit(ctx context.Context, input *SubmitProposalInput) (*domain.Proposal, error) {
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+func (s *ProposalService) Submit(ctx context.Context, input *SubmitProposalCommand) (*domain.Proposal, error) {
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
@@ -168,25 +182,30 @@ func (s *ProposalService) Submit(ctx context.Context, input *SubmitProposalInput
 	oldStatus := proposal.Status
 	proposal.Status = domain.ProposalStatusSubmitted
 
-	if err := s.proposals.Update(ctx, proposal); err != nil {
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
 		return nil, err
 	}
 
 	event := domain.NewProposalSubmittedEvent(proposal.ID, proposal.AuthorID, proposal.Title, oldStatus)
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return proposal, nil
 }
 
-// WithdrawProposalInput contains the data needed to withdraw a proposal.
-type WithdrawProposalInput struct {
+// WithdrawProposalCommand contains the data needed to withdraw a proposal.
+type WithdrawProposalCommand struct {
 	ProposalID int64
 	UserID     int64
 }
 
+func (c *WithdrawProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
 // Withdraw withdraws a submitted proposal.
-func (s *ProposalService) Withdraw(ctx context.Context, input *WithdrawProposalInput) (*domain.Proposal, error) {
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+func (s *ProposalService) Withdraw(ctx context.Context, input *WithdrawProposalCommand) (*domain.Proposal, error) {
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
@@ -201,12 +220,12 @@ func (s *ProposalService) Withdraw(ctx context.Context, input *WithdrawProposalI
 
 	proposal.Status = domain.ProposalStatusWithdrawn
 
-	if err := s.proposals.Update(ctx, proposal); err != nil {
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
 		return nil, err
 	}
 
 	event := domain.NewProposalWithdrawnEvent(proposal.ID, proposal.AuthorID)
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return proposal, nil
 }
@@ -220,15 +239,15 @@ const (
 	ReviewDecisionRequestChanges ReviewDecision = "request_changes"
 )
 
-// ReviewProposalInput contains the data needed to review a proposal.
-type ReviewProposalInput struct {
+// ReviewProposalCommand contains the data needed to review a proposal.
+type ReviewProposalCommand struct {
 	ProposalID int64
 	ReviewerID int64
 	Decision   ReviewDecision
 	Notes      string
 }
 
-func (i *ReviewProposalInput) Validate(v *validation.Validator) {
+func (i *ReviewProposalCommand) Validate(v *validation.Validator) {
 	v.Field(i.ProposalID, "proposal_id").EntityID()
 	v.Field(i.ReviewerID, "reviewer_id").EntityID()
 	if i.Decision != ReviewDecisionApprove && i.Decision != ReviewDecisionReject && i.Decision != ReviewDecisionRequestChanges {
@@ -237,12 +256,12 @@ func (i *ReviewProposalInput) Validate(v *validation.Validator) {
 }
 
 // Review reviews a submitted proposal.
-func (s *ProposalService) Review(ctx context.Context, input *ReviewProposalInput) (*domain.Proposal, error) {
+func (s *ProposalService) Review(ctx context.Context, input *ReviewProposalCommand) (*domain.Proposal, error) {
 	if err := validation.New().Validate(input); err != nil {
 		return nil, err
 	}
 
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
@@ -267,24 +286,29 @@ func (s *ProposalService) Review(ctx context.Context, input *ReviewProposalInput
 		event = domain.NewProposalChangesRequestedEvent(proposal.ID, proposal.AuthorID, input.ReviewerID, proposal.Title)
 	}
 
-	if err := s.proposals.Update(ctx, proposal); err != nil {
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
 		return nil, err
 	}
 
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return proposal, nil
 }
 
-// DeleteProposalInput contains the data needed to delete a proposal.
-type DeleteProposalInput struct {
+// DeleteProposalCommand contains the data needed to delete a proposal.
+type DeleteProposalCommand struct {
 	ProposalID int64
 	UserID     int64
 }
 
+func (c *DeleteProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
 // Delete deletes a draft proposal.
-func (s *ProposalService) Delete(ctx context.Context, input *DeleteProposalInput) error {
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+func (s *ProposalService) Delete(ctx context.Context, input *DeleteProposalCommand) error {
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return errors.ErrNotFound
 	}
@@ -297,26 +321,31 @@ func (s *ProposalService) Delete(ctx context.Context, input *DeleteProposalInput
 		return errors.ErrInvalidStatusTransition
 	}
 
-	if err := s.proposals.DeleteByID(ctx, input.ProposalID); err != nil {
+	if err := s.Proposals.DeleteByID(ctx, input.ProposalID); err != nil {
 		return err
 	}
 
 	event := domain.NewProposalDeletedEvent(proposal.ID, proposal.AuthorID, proposal.Status)
-	_ = s.events.Publish(ctx, event)
+	_ = s.Events.Publish(ctx, event)
 
 	return nil
 }
 
-// GetByIDInput contains the data needed to get a proposal by ID.
-type GetByIDInput struct {
+// GetProposalByIDQuery contains the data needed to get a proposal by ID.
+type GetProposalByIDQuery struct {
 	ProposalID int64
 	UserID     int64
 	IsAdmin    bool
 }
 
+func (q *GetProposalByIDQuery) Validate(v *validation.Validator) {
+	v.Field(q.ProposalID, "proposal_id").EntityID()
+	v.Field(q.UserID, "user_id").EntityID()
+}
+
 // GetByID retrieves a proposal by ID with access control.
-func (s *ProposalService) GetByID(ctx context.Context, input *GetByIDInput) (*domain.Proposal, error) {
-	proposal, ok := s.proposals.GetByID(ctx, input.ProposalID)
+func (s *ProposalService) GetByID(ctx context.Context, input *GetProposalByIDQuery) (*domain.Proposal, error) {
+	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
@@ -340,7 +369,7 @@ func (s *ProposalService) ListAll(ctx context.Context, isAdmin bool) ([]Proposal
 		return nil, errors.ErrForbidden
 	}
 
-	proposals, err := s.proposals.ListAllSubmitted(ctx)
+	proposals, err := s.Proposals.ListAllSubmitted(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +377,7 @@ func (s *ProposalService) ListAll(ctx context.Context, isAdmin bool) ([]Proposal
 	result := make([]ProposalWithAuthor, 0, len(proposals))
 	for i := range proposals {
 		p := &proposals[i]
-		author, _ := s.users.GetByID(ctx, p.AuthorID)
+		author, _ := s.Users.GetByID(ctx, p.AuthorID)
 		result = append(result, ProposalWithAuthor{
 			Proposal: p,
 			Author:   author,
@@ -360,5 +389,5 @@ func (s *ProposalService) ListAll(ctx context.Context, isAdmin bool) ([]Proposal
 
 // ListMine retrieves all proposals for a specific user.
 func (s *ProposalService) ListMine(ctx context.Context, userID int64) ([]domain.Proposal, error) {
-	return s.proposals.ListByAuthorID(ctx, userID)
+	return s.Proposals.ListByAuthorID(ctx, userID)
 }

@@ -1,8 +1,9 @@
 package middleware
 
 import (
-	"bytecourses/internal/domain"
 	"context"
+
+	"bytecourses/internal/domain"
 )
 
 type contextKey string
@@ -17,8 +18,8 @@ func WithUser(ctx context.Context, u *domain.User) context.Context {
 }
 
 func UserFromContext(ctx context.Context) (*domain.User, bool) {
-	u, ok := ctx.Value(userContextKey).(*domain.User)
-	return u, ok
+	user, ok := ctx.Value(userContextKey).(*domain.User)
+	return user, ok
 }
 
 func WithSession(ctx context.Context, sessionID string) context.Context {
@@ -26,6 +27,6 @@ func WithSession(ctx context.Context, sessionID string) context.Context {
 }
 
 func SessionFromContext(ctx context.Context) (string, bool) {
-	s, ok := ctx.Value(sessionContextKey).(string)
-	return s, ok
+	sessionID, ok := ctx.Value(sessionContextKey).(string)
+	return sessionID, ok
 }

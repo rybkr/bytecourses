@@ -6,7 +6,6 @@ import (
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/auth"
-	"bytecourses/internal/infrastructure/email"
 	"bytecourses/internal/infrastructure/persistence"
 	"bytecourses/internal/pkg/events"
 	"bytecourses/internal/pkg/errors"
@@ -17,7 +16,6 @@ type AuthService struct {
 	Users    persistence.UserRepository
 	Resets   persistence.PasswordResetRepository
 	Sessions auth.SessionStore
-	Email    email.Sender
 	Events   events.EventBus
 }
 
@@ -25,14 +23,12 @@ func NewAuthService(
 	userRepo persistence.UserRepository,
 	resetRepo persistence.PasswordResetRepository,
 	sessionStore auth.SessionStore,
-	emailSender email.Sender,
 	eventBus events.EventBus,
 ) *AuthService {
 	return &AuthService{
 		Users:    userRepo,
 		Resets:   resetRepo,
 		Sessions: sessionStore,
-		Email:    emailSender,
 		Events:   eventBus,
 	}
 }

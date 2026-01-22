@@ -22,7 +22,6 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
-	requireAdmin := middleware.RequireAdmin(c.SessionStore, c.UserRepo)
 	optionalUser := middleware.OptionalUser(c.SessionStore, c.UserRepo)
 
 	r.Route("/api", func(r chi.Router) {
@@ -43,18 +42,12 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 		r.Route("/proposals", func(r chi.Router) {
 			r.Use(requireUser)
 			r.Post("/", proposalHandler.Create)
-			r.Get("/", proposalHandler.ListMine)
-			r.Get("/{id}", proposalHandler.GetByID)
+			r.Get("/", proposalHandler.List)
 			r.Patch("/{id}", proposalHandler.Update)
 			r.Delete("/{id}", proposalHandler.Delete)
-			r.Post("/{id}/actions/submit", proposalHandler.Submit)
-			r.Post("/{id}/actions/withdraw", proposalHandler.Withdraw)
+            r.Get("/{id}", proposalHandler.Get)
+            r.Post("/{id}/status", proposalHandler.UpdateStatus)
 		})
-
-		r.With(requireAdmin).Get("/admin/proposals", proposalHandler.ListAll)
-		r.With(requireAdmin).Post("/proposals/{id}/actions/approve", proposalHandler.Approve)
-		r.With(requireAdmin).Post("/proposals/{id}/actions/reject", proposalHandler.Reject)
-		r.With(requireAdmin).Post("/proposals/{id}/actions/request-changes", proposalHandler.RequestChanges)
 
 		r.Route("/courses", func(r chi.Router) {
 			r.With(optionalUser).Get("/", courseHandler.ListLive)

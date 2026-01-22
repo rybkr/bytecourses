@@ -132,7 +132,6 @@ func (c *Container) wireServices() {
 		c.UserRepo,
 		c.PasswordResetRepo,
 		c.SessionStore,
-		c.EmailSender,
 		c.EventBus,
 	)
 

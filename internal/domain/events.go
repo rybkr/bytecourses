@@ -154,16 +154,14 @@ type ProposalSubmittedEvent struct {
 	ProposalID int64
 	AuthorID   int64
 	Title      string
-	OldStatus  ProposalStatus
 }
 
-func NewProposalSubmittedEvent(proposalID int64, authorID int64, title string, oldStatus ProposalStatus) *ProposalSubmittedEvent {
+func NewProposalSubmittedEvent(proposalID int64, authorID int64, title string) *ProposalSubmittedEvent {
 	return &ProposalSubmittedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
 		Title:      title,
-		OldStatus:  oldStatus,
 	}
 }
 
@@ -259,15 +257,13 @@ type ProposalDeletedEvent struct {
 	BaseEvent
 	ProposalID int64
 	AuthorID   int64
-	Status     ProposalStatus
 }
 
-func NewProposalDeletedEvent(proposalID int64, authorID int64, status ProposalStatus) *ProposalDeletedEvent {
+func NewProposalDeletedEvent(proposalID int64, authorID int64) *ProposalDeletedEvent {
 	return &ProposalDeletedEvent{
 		BaseEvent:  NewBaseEvent(),
 		ProposalID: proposalID,
 		AuthorID:   authorID,
-		Status:     status,
 	}
 }
 

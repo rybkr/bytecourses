@@ -156,7 +156,7 @@ func (c *Container) setupEventSubscribers() {
 
 	c.EventBus.Subscribe("user.password_reset_requested", func(ctx context.Context, e domain.Event) error {
 		event := e.(*domain.PasswordResetRequestedEvent)
-		return c.EmailSender.SendPasswordResetEmail(ctx, event.Email, event.BaseURL, event.Token)
+		return c.EmailSender.SendPasswordResetEmail(ctx, event.Email, event.ResetURL, event.Token)
 	})
 }
 

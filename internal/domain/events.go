@@ -79,18 +79,18 @@ func (e *UserProfileUpdatedEvent) EventName() string {
 
 type PasswordResetRequestedEvent struct {
 	BaseEvent
-	UserID  int64
-	Email   string
-	BaseURL string
-	Token   string
+	UserID   int64
+	Email    string
+	ResetURL string
+	Token    string
 }
 
-func NewPasswordResetRequestedEvent(userID int64, email, baseURL, token string) *PasswordResetRequestedEvent {
+func NewPasswordResetRequestedEvent(userID int64, email, resetURL, token string) *PasswordResetRequestedEvent {
 	return &PasswordResetRequestedEvent{
 		BaseEvent: NewBaseEvent(),
 		UserID:    userID,
 		Email:     email,
-		BaseURL:   baseURL,
+		ResetURL:  resetURL,
 		Token:     token,
 	}
 }

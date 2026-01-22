@@ -191,7 +191,8 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, cmd *RequestPass
 		return err
 	}
 
-	event := domain.NewPasswordResetRequestedEvent(user.ID, cmd.Email, cmd.BaseURL, token)
+    resetURL := cmd.BaseURL + "/reset-password"
+	event := domain.NewPasswordResetRequestedEvent(user.ID, cmd.Email, resetURL, token)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil

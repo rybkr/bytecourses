@@ -80,19 +80,19 @@ func (s *ResendSender) SendWelcomeEmail(ctx context.Context, email, name string)
 	return s.sendEmail(ctx, email, subject, buf.String())
 }
 
-func (s *ResendSender) SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error {
+func (s *ResendSender) SendPasswordResetEmail(ctx context.Context, email, resetURL, token string) error {
 	subject := "Reset Your Password"
 
-    u, err := url.Parse(baseURL)
+    u, err := url.Parse(resetURL)
     if err != nil || u.Scheme == "" || u.Host == "" {
-        return fmt.Errorf("resend: invalid base url %s", baseURL)
+        return fmt.Errorf("resend: invalid base url %s", resetURL)
     }
 
     query := u.Query()
     query.Set("token", token)
     query.Set("email", email)
     u.RawQuery = query.Encode()
-    resetURL := u.String()
+    resetURL = u.String()
 
     var buf bytes.Buffer
     data := struct { ResetURL string }{ResetURL: resetURL}

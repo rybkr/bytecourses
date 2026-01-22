@@ -102,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
         publishBtn.disabled = true;
 
         try {
-            const res = await fetch(`/api/courses/${courseId}/actions/publish`, {
+            const res = await fetch(`/api/courses/${courseId}/publish`, {
                 method: "POST",
             });
 

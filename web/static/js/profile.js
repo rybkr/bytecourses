@@ -29,7 +29,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.textContent = "Saving...";
 
         try {
-            const response = await fetch("/api/profile", {
+            const response = await fetch("/api/me", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
@@ -45,8 +45,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 const errorText = await response.text();
                 throw new Error(errorText || "Failed to update profile");
             }
-
-            const user = await response.json();
 
             statusDiv.textContent = "Profile updated successfully";
             statusDiv.className = "success-message";

@@ -4,11 +4,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const proposalId = Number(form.dataset.proposalId);
-    if (!Number.isFinite(proposalId) || proposalId <= 0) {
-        console.warn("Missing or invalid proposal id");
-        return;
-    }
+    let proposalId = Number(form.dataset.proposalId);
+    const isNewProposal = !Number.isFinite(proposalId) || proposalId <= 0;
 
     const saveDelay = Number(form.dataset.autosaveDelay);
 
@@ -31,6 +28,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let dirty = false;
     let saveInFlight = false;
     let lastSavedJson = null;
+    let createInFlight = false;
 
     function nowLabel() {
         const d = new Date();
@@ -50,6 +48,22 @@ document.addEventListener("DOMContentLoaded", () => {
             assumed_prerequisites:
                 document.getElementById("assumed_prerequisites")?.value ?? "",
         };
+    }
+
+    async function createProposal(payload) {
+        const res = await fetch(`/api/proposals`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) {
+            const txt = await res.text();
+            throw new Error(txt || "Create failed");
+        }
+
+        const proposal = await res.json();
+        return proposal.id;
     }
 
     async function patchProposal(payload) {
@@ -75,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function saveNow() {
         clearTimeout(saveTimer);
-        if (!dirty || saveInFlight) {
+        if (!dirty || saveInFlight || createInFlight) {
             return;
         }
 
@@ -92,24 +106,35 @@ document.addEventListener("DOMContentLoaded", () => {
         errorDiv.style.display = "none";
 
         try {
-            await patchProposal(payload);
+            // If this is a new proposal, create it first
+            if (isNewProposal || proposalId <= 0) {
+                createInFlight = true;
+                const newId = await createProposal(payload);
+                proposalId = newId;
+                form.dataset.proposalId = proposalId.toString();
+                createInFlight = false;
+            } else {
+                await patchProposal(payload);
+            }
             lastSavedJson = json;
             dirty = false;
             statusDiv.textContent = `Saved at ${nowLabel()}`;
         } catch (e) {
             errorDiv.textContent = e.message || "Autosave failed";
             errorDiv.style.display = "block";
+            createInFlight = false;
         } finally {
             saveInFlight = false;
         }
     }
 
     async function submit() {
+        // Ensure proposal is created/saved first
         await saveNow();
-        if (dirty || saveInFlight) {
+        if (dirty || saveInFlight || createInFlight) {
             await new Promise((resolve) => {
                 const checkInterval = setInterval(() => {
-                    if (!dirty && !saveInFlight) {
+                    if (!dirty && !saveInFlight && !createInFlight) {
                         clearInterval(checkInterval);
                         resolve();
                     }
@@ -117,8 +142,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     clearInterval(checkInterval);
                     resolve();
-                }, 500);
+                }, 1000);
             });
+        }
+
+        // If still no proposal ID, create it now
+        if (isNewProposal || proposalId <= 0) {
+            const payload = readPayload();
+            try {
+                const newId = await createProposal(payload);
+                proposalId = newId;
+                form.dataset.proposalId = proposalId.toString();
+            } catch (e) {
+                errorDiv.textContent = e.message || "Failed to create proposal";
+                errorDiv.style.display = "block";
+                return;
+            }
         }
 
         errorDiv.textContent = "";
@@ -139,11 +178,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function saveDraftAndExit() {
+        // Ensure proposal is created/saved first
         await saveNow();
-        if (dirty || saveInFlight) {
+        if (dirty || saveInFlight || createInFlight) {
             await new Promise((resolve) => {
                 const checkInterval = setInterval(() => {
-                    if (!dirty && !saveInFlight) {
+                    if (!dirty && !saveInFlight && !createInFlight) {
                         clearInterval(checkInterval);
                         resolve();
                     }
@@ -151,9 +191,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 setTimeout(() => {
                     clearInterval(checkInterval);
                     resolve();
-                }, 500);
+                }, 1000);
             });
         }
+
+        // If still no proposal ID, create it now
+        if (isNewProposal || proposalId <= 0) {
+            const payload = readPayload();
+            try {
+                const newId = await createProposal(payload);
+                proposalId = newId;
+                form.dataset.proposalId = proposalId.toString();
+            } catch (e) {
+                errorDiv.textContent = e.message || "Failed to create proposal";
+                errorDiv.style.display = "block";
+                return;
+            }
+        }
+
         window.location.href = `/proposals/${proposalId}`;
     }
 
@@ -187,6 +242,10 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         if (!dirty) {
+            return;
+        }
+        // Don't try to save new proposals via sendBeacon (can't create via beacon)
+        if (isNewProposal || proposalId <= 0) {
             return;
         }
 

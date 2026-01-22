@@ -7,12 +7,16 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/yuin/goldmark"
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/http/middleware"
+	"bytecourses/internal/pkg/errors"
+	"bytecourses/internal/services"
 )
 
 // PageData is the standard data structure passed to all page templates.
@@ -22,22 +26,31 @@ type PageData struct {
 	Data any
 }
 
+// ProposalPageData is the data structure for proposal pages.
+// Templates access User and Proposal directly at root level.
+type ProposalPageData struct {
+	User     *domain.User
+	Proposal *domain.Proposal
+}
+
 // PageHandler handles rendering of HTML page templates.
 type PageHandler struct {
-	templates map[string]*template.Template
-	funcMap   template.FuncMap
+	templates      map[string]*template.Template
+	funcMap        template.FuncMap
+	proposalService *services.ProposalService
 }
 
 // NewPageHandler creates a new PageHandler by parsing all page templates.
 // Each page template is combined with the layout template.
-func NewPageHandler(templatesDir string) *PageHandler {
+func NewPageHandler(templatesDir string, proposalService *services.ProposalService) *PageHandler {
 	funcMap := template.FuncMap{
 		"markdown": renderMarkdown,
 	}
 
 	h := &PageHandler{
-		templates: make(map[string]*template.Template),
-		funcMap:   funcMap,
+		templates:       make(map[string]*template.Template),
+		funcMap:         funcMap,
+		proposalService: proposalService,
 	}
 
 	layoutPath := filepath.Join(templatesDir, "layout.html")
@@ -165,12 +178,134 @@ func (h *PageHandler) Proposals(w http.ResponseWriter, r *http.Request) {
 
 // ProposalView renders a single proposal page.
 func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, "proposal_view.html", nil)
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	proposal, err := h.proposalService.Get(r.Context(), &services.GetProposalQuery{
+		ProposalID: proposalID,
+		UserID:     user.ID,
+		UserRole:   user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "proposal not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching proposal: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, ok := h.templates["proposal_view.html"]
+	if !ok {
+		log.Printf("template not found: proposal_view.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	pd := ProposalPageData{
+		User:     user,
+		Proposal: proposal,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "proposal_view.html", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }
 
 // ProposalEdit renders the proposal edit page.
 func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, "proposal_edit.html", nil)
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Check if this is a new proposal (no ID in URL) or editing existing one
+	proposalIDStr := chi.URLParam(r, "id")
+	if proposalIDStr == "" {
+		// New proposal - create empty proposal data
+		tmpl, ok := h.templates["proposal_edit.html"]
+		if !ok {
+			log.Printf("template not found: proposal_edit.html")
+			http.Error(w, "page not found", http.StatusNotFound)
+			return
+		}
+
+		pd := ProposalPageData{
+			User: user,
+			Proposal: &domain.Proposal{
+				ID:     0,
+				Status: domain.ProposalStatusDraft,
+			},
+		}
+
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		var buf bytes.Buffer
+		if err := tmpl.ExecuteTemplate(&buf, "proposal_edit.html", pd); err != nil {
+			log.Printf("template execution error: %v", err)
+			http.Error(w, "internal server error", http.StatusInternalServerError)
+			return
+		}
+		buf.WriteTo(w)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(proposalIDStr, 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	proposal, err := h.proposalService.Get(r.Context(), &services.GetProposalQuery{
+		ProposalID: proposalID,
+		UserID:     user.ID,
+		UserRole:   user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "proposal not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching proposal: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	tmpl, ok := h.templates["proposal_edit.html"]
+	if !ok {
+		log.Printf("template not found: proposal_edit.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	pd := ProposalPageData{
+		User:     user,
+		Proposal: proposal,
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "proposal_edit.html", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }
 
 // LectureView renders a single lecture page.

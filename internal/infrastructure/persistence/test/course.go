@@ -210,7 +210,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 			Title:        "Live Course 1",
 			Summary:      "Live",
 			InstructorID: u1.ID,
-			Status:       domain.CourseStatusLive,
+			Status:       domain.CourseStatusPublished,
 		}
 		if err := courses.Create(ctx, &c2); err != nil {
 			t.Fatalf("courses.Create failed: %v", err)
@@ -220,7 +220,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 			Title:        "Live Course 2",
 			Summary:      "Live",
 			InstructorID: u2.ID,
-			Status:       domain.CourseStatusLive,
+			Status:       domain.CourseStatusPublished,
 		}
 		if err := courses.Create(ctx, &c3); err != nil {
 			t.Fatalf("courses.Create failed: %v", err)
@@ -234,7 +234,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 			t.Fatalf("courses.ListAllLive: expected 2 courses, got %d", len(list))
 		}
 		for _, course := range list {
-			if course.Status != domain.CourseStatusLive {
+			if course.Status != domain.CourseStatusPublished {
 				t.Fatalf("courses.ListAllLive: found course with non-live status")
 			}
 		}
@@ -308,7 +308,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 
 		v.Title = "Updated Title"
 		v.Summary = "Updated Summary"
-		v.Status = domain.CourseStatusLive
+		v.Status = domain.CourseStatusPublished
 		if c.Title != "Original Title" {
 			t.Fatalf("CourseRepository: external modification affected persisted value")
 		}
@@ -327,7 +327,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 		if w.Summary != "Updated Summary" {
 			t.Fatalf("courses.Update: summary not updated")
 		}
-		if w.Status != domain.CourseStatusLive {
+		if w.Status != domain.CourseStatusPublished {
 			t.Fatalf("courses.Update: status not updated")
 		}
 		if !w.UpdatedAt.After(originalUpdatedAt) {
@@ -444,7 +444,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 			Title:        "Live Course",
 			Summary:      "Live",
 			InstructorID: u.ID,
-			Status:       domain.CourseStatusLive,
+			Status:       domain.CourseStatusPublished,
 		}
 		if err := courses.Create(ctx, &c3); err != nil {
 			t.Fatalf("courses.Create failed: %v", err)
@@ -457,7 +457,7 @@ func TestCourseRepository(t *testing.T, newCourseRepo NewCourseRepository, newUs
 		if len(list) != 1 {
 			t.Fatalf("courses.ListAllLive: expected 1 live course, got %d", len(list))
 		}
-		if list[0].Status != domain.CourseStatusLive {
+		if list[0].Status != domain.CourseStatusPublished {
 			t.Fatalf("courses.ListAllLive: returned course is not live")
 		}
 		if list[0].ID != c3.ID {

@@ -8,7 +8,7 @@ type CourseStatus string
 
 const (
 	CourseStatusDraft CourseStatus = "draft"
-	CourseStatusLive  CourseStatus = "live"
+	CourseStatusPublished  CourseStatus = "published"
 )
 
 type Course struct {
@@ -19,7 +19,6 @@ type Course struct {
 	LearningObjectives   string       `json:"learning_objectives"`
 	AssumedPrerequisites string       `json:"assumed_prerequisites"`
 	InstructorID         int64        `json:"instructor_id"`
-	ProposalID           *int64       `json:"proposal_id"`
 	Status               CourseStatus `json:"status"`
 	CreatedAt            time.Time    `json:"created_at"`
 	UpdatedAt            time.Time    `json:"updated_at"`
@@ -33,13 +32,12 @@ func CourseFromProposal(p *Proposal) *Course {
 		LearningObjectives:   p.LearningObjectives,
 		AssumedPrerequisites: p.AssumedPrerequisites,
 		InstructorID:         p.AuthorID,
-		ProposalID:           &p.ID,
 		Status:               CourseStatusDraft,
 	}
 }
 
 func (c *Course) IsLive() bool {
-	return c.Status == CourseStatusLive
+	return c.Status == CourseStatusPublished
 }
 
 func (c *Course) IsTaughtBy(u *User) bool {
@@ -48,8 +46,4 @@ func (c *Course) IsTaughtBy(u *User) bool {
 
 func (c *Course) IsViewableBy(u *User) bool {
 	return u.IsAdmin() || c.IsLive() || c.IsTaughtBy(u)
-}
-
-func (c *Course) IsAmendable() bool {
-	return c.Status == CourseStatusDraft
 }

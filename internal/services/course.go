@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"strings"
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/persistence"
@@ -12,11 +11,9 @@ import (
 )
 
 var (
-	_ Message = (*CreateCourseCommand)(nil)
-	_ Message = (*UpdateCourseCommand)(nil)
-	_ Message = (*PublishCourseCommand)(nil)
-	_ Message = (*CreateCourseFromProposalCommand)(nil)
-	_ Message = (*GetCourseByIDQuery)(nil)
+	_ Command = (*CreateCourseCommand)(nil)
+	_ Command = (*UpdateCourseCommand)(nil)
+	_ Command = (*PublishCourseCommand)(nil)
 )
 
 type CourseService struct {
@@ -37,102 +34,99 @@ func NewCourseService(
 	}
 }
 
-// CreateCourseCommand contains the data needed to create a course.
 type CreateCourseCommand struct {
-	InstructorID         int64
-	Title                string
-	Summary              string
-	TargetAudience       string
-	LearningObjectives   string
-	AssumedPrerequisites string
+	InstructorID         int64  `json:"instructor_id"`
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
-func (i *CreateCourseCommand) Validate(v *validation.Validator) {
-	v.Field(i.InstructorID, "instructor_id").EntityID()
-	v.Field(i.Title, "title").Required().MinLength(4).MaxLength(128)
-	v.Field(i.Summary, "summary").Required().MaxLength(2048)
+func (c *CreateCourseCommand) Validate(v *validation.Validator) {
+	v.Field(c.InstructorID, "instructor_id").EntityID()
+	v.Field(c.Title, "title").Required().MinLength(4).MaxLength(128).IsTrimmed()
+	v.Field(c.Summary, "summary").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.TargetAudience, "target_audience").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.LearningObjectives, "learning_objectives").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.AssumedPrerequisites, "assumed_prerequisites").Required().MaxLength(2048).IsTrimmed()
 }
 
-// Create creates a new course.
-func (s *CourseService) Create(ctx context.Context, input *CreateCourseCommand) (*domain.Course, error) {
-	if err := validation.New().Validate(input); err != nil {
+func (s *CourseService) Create(ctx context.Context, cmd *CreateCourseCommand) (*domain.Course, error) {
+	if err := validation.Validate(cmd); err != nil {
 		return nil, err
 	}
 
-	course := &domain.Course{
-		InstructorID:         input.InstructorID,
-		Title:                strings.TrimSpace(input.Title),
-		Summary:              strings.TrimSpace(input.Summary),
-		TargetAudience:       strings.TrimSpace(input.TargetAudience),
-		LearningObjectives:   strings.TrimSpace(input.LearningObjectives),
-		AssumedPrerequisites: strings.TrimSpace(input.AssumedPrerequisites),
+	course := domain.Course{
+		InstructorID:         cmd.InstructorID,
+		Title:                cmd.Title,
+		Summary:              cmd.Summary,
+		TargetAudience:       cmd.TargetAudience,
+		LearningObjectives:   cmd.LearningObjectives,
+		AssumedPrerequisites: cmd.AssumedPrerequisites,
 		Status:               domain.CourseStatusDraft,
 	}
-
-	if err := s.Courses.Create(ctx, course); err != nil {
+	if err := s.Courses.Create(ctx, &course); err != nil {
 		return nil, err
 	}
 
-	return course, nil
+	event := domain.NewCourseCreatedEvent(course.ID, cmd.InstructorID)
+	_ = s.Events.Publish(ctx, event)
+
+	return &course, nil
 }
 
-// UpdateCourseCommand contains the data needed to update a course.
 type UpdateCourseCommand struct {
-	CourseID             int64
-	UserID               int64
-	Title                string
-	Summary              string
-	TargetAudience       string
-	LearningObjectives   string
-	AssumedPrerequisites string
+	CourseID             int64  `json:"course_id"`
+	Title                string `json:"title"`
+	Summary              string `json:"summary"`
+	TargetAudience       string `json:"target_audience"`
+	LearningObjectives   string `json:"learning_objectives"`
+	AssumedPrerequisites string `json:"assumed_prerequisites"`
+	UserID               int64  `json:"user_id"`
 }
 
-func (i *UpdateCourseCommand) Validate(v *validation.Validator) {
-	v.Field(i.CourseID, "course_id").EntityID()
-	v.Field(i.UserID, "user_id").EntityID()
-	v.Field(i.Title, "title").Required().MinLength(4).MaxLength(128)
-	v.Field(i.Summary, "summary").Required().MaxLength(2048)
+func (c *UpdateCourseCommand) Validate(v *validation.Validator) {
+	v.Field(c.CourseID, "instructor_id").EntityID()
+	v.Field(c.Title, "title").Required().MinLength(4).MaxLength(128).IsTrimmed()
+	v.Field(c.Summary, "summary").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.TargetAudience, "target_audience").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.LearningObjectives, "learning_objectives").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.AssumedPrerequisites, "assumed_prerequisites").Required().MaxLength(2048).IsTrimmed()
+	v.Field(c.UserID, "user_id").EntityID()
 }
 
-// Update updates an existing course.
-func (s *CourseService) Update(ctx context.Context, input *UpdateCourseCommand) (*domain.Course, error) {
-	if err := validation.New().Validate(input); err != nil {
-		return nil, err
+func (s *CourseService) Update(ctx context.Context, cmd *UpdateCourseCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
 	}
 
-	course, ok := s.Courses.GetByID(ctx, input.CourseID)
+	course, ok := s.Courses.GetByID(ctx, cmd.CourseID)
 	if !ok {
-		return nil, errors.ErrNotFound
+		return errors.ErrNotFound
+	}
+	if course.InstructorID != cmd.UserID {
+		return errors.ErrNotFound
 	}
 
-	if course.InstructorID != input.UserID {
-		return nil, errors.ErrForbidden
-	}
-
-	if !course.IsAmendable() {
-		return nil, errors.ErrInvalidStatusTransition
-	}
-
-	course.Title = strings.TrimSpace(input.Title)
-	course.Summary = strings.TrimSpace(input.Summary)
-	course.TargetAudience = strings.TrimSpace(input.TargetAudience)
-	course.LearningObjectives = strings.TrimSpace(input.LearningObjectives)
-	course.AssumedPrerequisites = strings.TrimSpace(input.AssumedPrerequisites)
-
+	course.Title = cmd.Title
+	course.Summary = cmd.Summary
+	course.TargetAudience = cmd.TargetAudience
+	course.LearningObjectives = cmd.LearningObjectives
+	course.AssumedPrerequisites = cmd.AssumedPrerequisites
 	if err := s.Courses.Update(ctx, course); err != nil {
-		return nil, err
+		return err
 	}
 
 	event := domain.NewCourseUpdatedEvent(course.ID, course.InstructorID)
 	_ = s.Events.Publish(ctx, event)
 
-	return course, nil
+	return nil
 }
 
-// PublishCourseCommand contains the data needed to publish a course.
 type PublishCourseCommand struct {
-	CourseID int64
-	UserID   int64
+    CourseID int64`json:"course_id"`
+    UserID   int64`json:"user_id"`
 }
 
 func (c *PublishCourseCommand) Validate(v *validation.Validator) {
@@ -140,105 +134,61 @@ func (c *PublishCourseCommand) Validate(v *validation.Validator) {
 	v.Field(c.UserID, "user_id").EntityID()
 }
 
-// Publish publishes a draft course.
-func (s *CourseService) Publish(ctx context.Context, input *PublishCourseCommand) (*domain.Course, error) {
-	course, ok := s.Courses.GetByID(ctx, input.CourseID)
+func (s *CourseService) Publish(ctx context.Context, cmd *PublishCourseCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	course, ok := s.Courses.GetByID(ctx, cmd.CourseID)
 	if !ok {
-		return nil, errors.ErrNotFound
+		return errors.ErrNotFound
 	}
-
-	if course.InstructorID != input.UserID {
-		return nil, errors.ErrForbidden
+	if course.InstructorID != cmd.UserID {
+		return errors.ErrNotFound
 	}
-
 	if course.Status != domain.CourseStatusDraft {
-		return nil, errors.ErrInvalidStatusTransition
+		return errors.ErrInvalidStatusTransition
 	}
 
-	course.Status = domain.CourseStatusLive
-
+	course.Status = domain.CourseStatusPublished
 	if err := s.Courses.Update(ctx, course); err != nil {
-		return nil, err
+		return err
 	}
 
 	event := domain.NewCoursePublishedEvent(course.ID, course.InstructorID)
 	_ = s.Events.Publish(ctx, event)
 
-	return course, nil
+	return nil
 }
 
-// CreateCourseFromProposalCommand contains the data needed to create a course from a proposal.
-type CreateCourseFromProposalCommand struct {
-	ProposalID int64
-	UserID     int64
+type GetCourseQuery struct {
+    CourseID int64`json:"course_id"`
+    UserID   int64`json:"user_id"`
+    UserRole domain.UserRole`json:"user_role"`
 }
 
-func (c *CreateCourseFromProposalCommand) Validate(v *validation.Validator) {
-	v.Field(c.ProposalID, "proposal_id").EntityID()
-	v.Field(c.UserID, "user_id").EntityID()
-}
-
-// CreateFromProposal creates a course from an approved proposal.
-func (s *CourseService) CreateFromProposal(ctx context.Context, input *CreateCourseFromProposalCommand) (*domain.Course, error) {
-	proposal, ok := s.Proposals.GetByID(ctx, input.ProposalID)
+func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain.Course, error) {
+	course, ok := s.Courses.GetByID(ctx, query.CourseID)
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
 
-	if proposal.AuthorID != input.UserID {
-		return nil, errors.ErrForbidden
-	}
+    switch query.UserRole {
+    case domain.UserRoleStudent,
+        domain.UserRoleInstructor:
+        if course.InstructorID != query.UserID {
+            return nil, errors.ErrNotFound
+        }
 
-	if proposal.Status != domain.ProposalStatusApproved {
-		return nil, errors.ErrInvalidStatusTransition
-	}
+    case domain.UserRoleAdmin:
 
-	// Check if course already exists for this proposal
-	if _, ok := s.Courses.GetByProposalID(ctx, proposal.ID); ok {
-		return nil, errors.ErrConflict
-	}
-
-	course := domain.CourseFromProposal(proposal)
-
-	if err := s.Courses.Create(ctx, course); err != nil {
-		return nil, err
-	}
-
-	event := domain.NewCourseCreatedFromProposalEvent(course.ID, proposal.ID, course.InstructorID)
-	_ = s.Events.Publish(ctx, event)
+    default:
+        return nil, errors.ErrForbidden
+    }
 
 	return course, nil
 }
 
-// GetCourseByIDQuery contains the data needed to get a course by ID.
-type GetCourseByIDQuery struct {
-	CourseID int64
-	UserID   int64
-	IsAdmin  bool
-}
-
-func (q *GetCourseByIDQuery) Validate(v *validation.Validator) {
-	v.Field(q.CourseID, "course_id").EntityID()
-	v.Field(q.UserID, "user_id").EntityID()
-}
-
-// GetByID retrieves a course by ID with access control.
-func (s *CourseService) GetByID(ctx context.Context, input *GetCourseByIDQuery) (*domain.Course, error) {
-	course, ok := s.Courses.GetByID(ctx, input.CourseID)
-	if !ok {
-		return nil, errors.ErrNotFound
-	}
-
-	// Check visibility
-	isOwner := course.InstructorID == input.UserID
-	if !course.IsLive() && !isOwner && !input.IsAdmin {
-		return nil, errors.ErrForbidden
-	}
-
-	return course, nil
-}
-
-// ListLive retrieves all live courses.
-func (s *CourseService) ListLive(ctx context.Context) ([]domain.Course, error) {
+func (s *CourseService) List(ctx context.Context) ([]domain.Course, error) {
 	return s.Courses.ListAllLive(ctx)
 }

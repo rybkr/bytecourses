@@ -22,7 +22,7 @@ var (
 	_ Event = (*ProposalRejectedEvent)(nil)
 	_ Event = (*ProposalChangesRequestedEvent)(nil)
 	_ Event = (*ProposalDeletedEvent)(nil)
-	_ Event = (*CourseCreatedFromProposalEvent)(nil)
+	_ Event = (*CourseCreatedEvent)(nil)
 	_ Event = (*CourseUpdatedEvent)(nil)
 	_ Event = (*CoursePublishedEvent)(nil)
 )
@@ -273,23 +273,21 @@ func (e *ProposalDeletedEvent) EventName() string {
 	return "proposal.deleted"
 }
 
-type CourseCreatedFromProposalEvent struct {
+type CourseCreatedEvent struct {
 	BaseEvent
 	CourseID     int64
-	ProposalID   int64
 	InstructorID int64
 }
 
-func NewCourseCreatedFromProposalEvent(courseID int64, proposalID int64, instructorID int64) *CourseCreatedFromProposalEvent {
-	return &CourseCreatedFromProposalEvent{
+func NewCourseCreatedEvent(courseID, instructorID int64) *CourseCreatedEvent {
+	return &CourseCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
 		CourseID:     courseID,
-		ProposalID:   proposalID,
 		InstructorID: instructorID,
 	}
 }
 
-func (e *CourseCreatedFromProposalEvent) EventName() string {
+func (e *CourseCreatedEvent) EventName() string {
 	return "course.created_from_proposal"
 }
 

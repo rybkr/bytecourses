@@ -52,26 +52,13 @@ func (r *CourseRepository) GetByID(ctx context.Context, id int64) (*domain.Cours
 	return &c, true
 }
 
-func (r *CourseRepository) GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	for _, c := range r.courses {
-		if c.ProposalID != nil && *c.ProposalID == proposalID {
-			return &c, true
-		}
-	}
-
-	return nil, false
-}
-
 func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 
 	result := make([]domain.Course, 0)
 	for _, c := range r.courses {
-		if c.Status == domain.CourseStatusLive {
+		if c.Status == domain.CourseStatusPublished {
 			result = append(result, c)
 		}
 	}

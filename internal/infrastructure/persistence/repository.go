@@ -27,7 +27,6 @@ type ProposalRepository interface {
 
 type CourseRepository interface {
     Repository[domain.Course]
-	GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool)
 	ListAllLive(ctx context.Context) ([]domain.Course, error)
 }
 

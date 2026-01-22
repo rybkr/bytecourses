@@ -1,12 +1,16 @@
 package handlers
 
 import (
-	"bytecourses/internal/domain"
-	"bytecourses/internal/services"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
+
+	"bytecourses/internal/domain"
+	"bytecourses/internal/infrastructure/http/middleware"
+	"bytecourses/internal/pkg/errors"
+	"bytecourses/internal/services"
 )
 
 type CourseHandler struct {
@@ -27,31 +31,36 @@ type CreateCourseRequest struct {
 	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
+func (r *CreateCourseRequest) ToCommand(instructorID int64) *services.CreateCourseCommand {
+	return &services.CreateCourseCommand{
+		InstructorID:         instructorID,
+		Title:                strings.TrimSpace(r.Title),
+		Summary:              strings.TrimSpace(r.Summary),
+		TargetAudience:       strings.TrimSpace(r.TargetAudience),
+		LearningObjectives:   strings.TrimSpace(r.LearningObjectives),
+		AssumedPrerequisites: strings.TrimSpace(r.AssumedPrerequisites),
+	}
+}
+
 func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
 
-	var request CreateCourseRequest
-	if !decodeJSON(w, r, &request) {
+	var req CreateCourseRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	c, err := h.Service.Create(r.Context(), &services.CreateCourseCommand{
-		InstructorID:         user.ID,
-		Title:                request.Title,
-		Summary:              request.Summary,
-		TargetAudience:       request.TargetAudience,
-		LearningObjectives:   request.LearningObjectives,
-		AssumedPrerequisites: request.AssumedPrerequisites,
-	})
+	course, err := h.Service.Create(r.Context(), req.ToCommand(user.ID))
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, c)
+	writeJSON(w, http.StatusCreated, course)
 }
 
 type UpdateCourseRequest struct {
@@ -62,33 +71,37 @@ type UpdateCourseRequest struct {
 	AssumedPrerequisites string `json:"assumed_prerequisites"`
 }
 
+func (r *UpdateCourseRequest) ToCommand(courseID, userID int64) *services.UpdateCourseCommand {
+	return &services.UpdateCourseCommand{
+		CourseID:             courseID,
+		Title:                strings.TrimSpace(r.Title),
+		Summary:              strings.TrimSpace(r.Summary),
+		TargetAudience:       strings.TrimSpace(r.TargetAudience),
+		LearningObjectives:   strings.TrimSpace(r.LearningObjectives),
+		AssumedPrerequisites: strings.TrimSpace(r.AssumedPrerequisites),
+		UserID:               userID,
+	}
+}
+
 func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
 
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
-	var request UpdateCourseRequest
-	if !decodeJSON(w, r, &request) {
+	var req UpdateCourseRequest
+	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	_, err = h.Service.Update(r.Context(), &services.UpdateCourseCommand{
-		CourseID:             id,
-		UserID:               user.ID,
-		Title:                request.Title,
-		Summary:              request.Summary,
-		TargetAudience:       request.TargetAudience,
-		LearningObjectives:   request.LearningObjectives,
-		AssumedPrerequisites: request.AssumedPrerequisites,
-	})
-	if err != nil {
+	if err := h.Service.Update(r.Context(), req.ToCommand(courseID, user.ID)); err != nil {
 		handleError(w, err)
 		return
 	}
@@ -97,90 +110,63 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
 
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
-	c, err := h.Service.Publish(r.Context(), &services.PublishCourseCommand{
-		CourseID: id,
+	if err := h.Service.Publish(r.Context(), &services.PublishCourseCommand{
+		CourseID: courseID,
 		UserID:   user.ID,
-	})
-	if err != nil {
+	}); err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, c)
+	w.WriteHeader(http.StatusNoContent)
 }
 
-type CreateFromProposalRequest struct {
-	ProposalID int64 `json:"proposal_id"`
-}
-
-func (h *CourseHandler) CreateFromProposal(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
+func (h *CourseHandler) Get(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
 		return
 	}
 
-	var request CreateFromProposalRequest
-	if !decodeJSON(w, r, &request) {
-		return
-	}
-
-	c, err := h.Service.CreateFromProposal(r.Context(), &services.CreateCourseFromProposalCommand{
-		ProposalID: request.ProposalID,
-		UserID:     user.ID,
-	})
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, c)
-}
-
-func (h *CourseHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	user, ok := requireAuthenticatedUser(w, r)
-	if !ok {
-		return
-	}
-
-	id, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
 
-	c, err := h.Service.GetByID(r.Context(), &services.GetCourseByIDQuery{
-		CourseID: id,
+	course, err := h.Service.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
 		UserID:   user.ID,
-		IsAdmin:  user.IsAdmin(),
+		UserRole: user.Role,
 	})
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, c)
+	writeJSON(w, http.StatusOK, course)
 }
 
-func (h *CourseHandler) ListLive(w http.ResponseWriter, r *http.Request) {
-	courses, err := h.Service.ListLive(r.Context())
+func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) {
+	courses, err := h.Service.List(r.Context())
 	if err != nil {
 		handleError(w, err)
 		return
 	}
-
 	if courses == nil {
-		courses = []domain.Course{}
+		courses = make([]domain.Course, 0)
 	}
 
 	writeJSON(w, http.StatusOK, courses)

@@ -158,10 +158,7 @@ class TestProposalUpdate:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
-            json={
-                "status": "submitted",
-            },
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = user_session.patch(
@@ -197,7 +194,7 @@ class TestProposalUpdateStatus:
         proposal_id = r.json()["id"]
 
         r = session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -214,9 +211,9 @@ class TestProposalUpdateStatus:
         proposal_id = r.json()["id"]
 
         r = session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "unknown"}
+            f"{api_url}/proposals/{proposal_id}/actions/invalid-action"
         )
-        assert r.status_code == HTTPStatus.BAD_REQUEST
+        assert r.status_code == HTTPStatus.NOT_FOUND
 
 
 class TestProposalPermissions:
@@ -271,7 +268,7 @@ class TestAdminProposalAccess:
         )
         submitted_id = r.json()["id"]
         user.post(
-            f"{api_url}/proposals/{submitted_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{submitted_id}/actions/submit"
         )
 
         r = admin_session.get(f"{api_url}/proposals")
@@ -301,7 +298,7 @@ class TestAdminProposalAccess:
         )
         proposal_id = r.json()["id"]
         user.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
@@ -324,7 +321,7 @@ class TestProposalWorkflowHappyPath:
         assert r.status_code == HTTPStatus.NOT_FOUND
 
         r = user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -338,8 +335,8 @@ class TestProposalWorkflowHappyPath:
         assert r.status_code == HTTPStatus.CONFLICT
 
         r = admin_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
-            json={"review_notes": "Looks good!", "status": "approved"},
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Looks good!"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -363,14 +360,13 @@ class TestProposalWorkflowChangesRequested:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = admin_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
             json={
                 "review_notes": "Please add more detail",
-                "status": "changes_requested",
             },
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
@@ -393,15 +389,15 @@ class TestProposalWorkflowChangesRequested:
         assert r.json()["title"] == "Updated Title"
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["status"] == "submitted"
 
         admin_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
-            json={"review_notes": "Approved", "status": "approved"},
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
         )
 
         r = user_session.get(f"{api_url}/proposals/{proposal_id}")
@@ -417,12 +413,12 @@ class TestProposalWorkflowRejection:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = admin_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
-            json={"review_notes": "Not suitable", "status": "rejected"},
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Not suitable"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -439,11 +435,11 @@ class TestProposalWorkflowRejection:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"stauts": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
         admin_session.post(
-            f"{api_url}/proposals/{proposal_id}/status",
-            json={"review_notes": "Rejected", "status": "rejected"},
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
         )
 
         r = user_session.patch(
@@ -462,11 +458,11 @@ class TestProposalWorkflowWithdrawal:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
 
         r = user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "withdrawn"}
+            f"{api_url}/proposals/{proposal_id}/actions/withdraw"
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -483,10 +479,10 @@ class TestProposalWorkflowWithdrawal:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "withdrawn"}
+            f"{api_url}/proposals/{proposal_id}/actions/withdraw"
         )
 
         r = admin_session.get(f"{api_url}/proposals/{proposal_id}")
@@ -500,10 +496,10 @@ class TestProposalWorkflowWithdrawal:
         proposal_id = r.json()["id"]
 
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "submitted"}
+            f"{api_url}/proposals/{proposal_id}/actions/submit"
         )
         user_session.post(
-            f"{api_url}/proposals/{proposal_id}/status", json={"status": "withdrawn"}
+            f"{api_url}/proposals/{proposal_id}/actions/withdraw"
         )
 
         r = user_session.patch(

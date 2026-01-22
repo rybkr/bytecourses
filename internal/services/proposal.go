@@ -31,7 +31,9 @@ func NewProposalService(
 var (
 	_ Command = (*CreateProposalCommand)(nil)
 	_ Command = (*UpdateProposalCommand)(nil)
-	_ Command = (*UpdateProposalStatusCommand)(nil)
+	_ Command = (*SubmitProposalCommand)(nil)
+	_ Command = (*WithdrawProposalCommand)(nil)
+	_ Command = (*ReviewProposalCommand)(nil)
 	_ Command = (*DeleteProposalCommand)(nil)
 )
 
@@ -140,29 +142,87 @@ func (s *ProposalService) Update(ctx context.Context, cmd *UpdateProposalCommand
 	return nil
 }
 
-type UpdateProposalStatusCommand struct {
-	ProposalID  int64                 `json:"proposal_id`
-	Status      domain.ProposalStatus `json:"status"`
-	ReviewNotes string                `json:"review_notes"`
-	UserID      int64                 `json:"user_id"`
-	UserRole    domain.UserRole       `json:"user_role"`
+type SubmitProposalCommand struct {
+	ProposalID int64 `json:"proposal_id"`
+	UserID     int64 `json:"user_id"`
 }
 
-func (c *UpdateProposalStatusCommand) Validate(v *validation.Validator) {
+func (c *SubmitProposalCommand) Validate(v *validation.Validator) {
 	v.Field(c.ProposalID, "proposal_id").EntityID()
-	v.Field(c.Status, "status").Required().IsTrimmed()
-	if c.Status != domain.ProposalStatusSubmitted &&
-		c.Status != domain.ProposalStatusWithdrawn &&
-		c.Status != domain.ProposalStatusApproved &&
-		c.Status != domain.ProposalStatusRejected &&
-		c.Status != domain.ProposalStatusChangesRequested {
-		v.Field("", "status").Required()
-	}
-	v.Field(c.ReviewNotes, "review_notes").IsTrimmed()
 	v.Field(c.UserID, "user_id").EntityID()
 }
 
-func (s *ProposalService) UpdateStatus(ctx context.Context, cmd *UpdateProposalStatusCommand) error {
+func (s *ProposalService) Submit(ctx context.Context, cmd *SubmitProposalCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	proposal, ok := s.Proposals.GetByID(ctx, cmd.ProposalID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+	if proposal.AuthorID != cmd.UserID {
+		return errors.ErrForbidden
+	}
+
+	proposal.Status = domain.ProposalStatusSubmitted
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
+		return err
+	}
+
+	event := domain.NewProposalSubmittedEvent(cmd.ProposalID, cmd.UserID, proposal.Title)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+type WithdrawProposalCommand struct {
+	ProposalID int64 `json:"proposal_id"`
+	UserID     int64 `json:"user_id"`
+}
+
+func (c *WithdrawProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
+func (s *ProposalService) Withdraw(ctx context.Context, cmd *WithdrawProposalCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	proposal, ok := s.Proposals.GetByID(ctx, cmd.ProposalID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+	if proposal.AuthorID != cmd.UserID {
+		return errors.ErrForbidden
+	}
+
+	proposal.Status = domain.ProposalStatusWithdrawn
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
+		return err
+	}
+
+	event := domain.NewProposalWithdrawnEvent(cmd.ProposalID, cmd.UserID)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+type ReviewProposalCommand struct {
+	ProposalID  int64  `json:"proposal_id"`
+	ReviewNotes string `json:"review_notes"`
+	ReviewerID  int64  `json:"reviewer_id"`
+}
+
+func (c *ReviewProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.ReviewNotes, "review_notes").IsTrimmed()
+	v.Field(c.ReviewerID, "reviewer_id").EntityID()
+}
+
+func (s *ProposalService) Approve(ctx context.Context, cmd *ReviewProposalCommand) error {
 	if err := validation.Validate(cmd); err != nil {
 		return err
 	}
@@ -172,43 +232,60 @@ func (s *ProposalService) UpdateStatus(ctx context.Context, cmd *UpdateProposalS
 		return errors.ErrNotFound
 	}
 
-	switch cmd.Status {
-	case domain.ProposalStatusSubmitted,
-		domain.ProposalStatusWithdrawn:
-		if proposal.AuthorID != cmd.UserID {
-			return errors.ErrForbidden
-		}
-		proposal.Status = cmd.Status
-
-	case domain.ProposalStatusApproved,
-		domain.ProposalStatusRejected,
-		domain.ProposalStatusChangesRequested:
-		if cmd.UserRole != domain.UserRoleAdmin {
-			return errors.ErrForbidden
-		}
-		proposal.Status = cmd.Status
-		proposal.ReviewerID = &cmd.UserID
-		proposal.ReviewNotes = cmd.ReviewNotes
-	}
-
+	proposal.Status = domain.ProposalStatusApproved
+	proposal.ReviewerID = &cmd.ReviewerID
+	proposal.ReviewNotes = cmd.ReviewNotes
 	if err := s.Proposals.Update(ctx, proposal); err != nil {
 		return err
 	}
 
-	var event domain.Event
-	switch cmd.Status {
-	case domain.ProposalStatusSubmitted:
-		event = domain.NewProposalSubmittedEvent(cmd.ProposalID, cmd.UserID, proposal.Title)
-	case domain.ProposalStatusWithdrawn:
-		event = domain.NewProposalWithdrawnEvent(cmd.ProposalID, cmd.UserID)
-	case domain.ProposalStatusApproved:
-		event = domain.NewProposalApprovedEvent(cmd.ProposalID, proposal.AuthorID, cmd.UserID, proposal.Title)
-	case domain.ProposalStatusRejected:
-		event = domain.NewProposalRejectedEvent(cmd.ProposalID, proposal.AuthorID, cmd.UserID, proposal.Title)
-	case domain.ProposalStatusChangesRequested:
-		event = domain.NewProposalChangesRequestedEvent(cmd.ProposalID, proposal.AuthorID, cmd.UserID, proposal.Title)
+	event := domain.NewProposalApprovedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+func (s *ProposalService) Reject(ctx context.Context, cmd *ReviewProposalCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
 	}
 
+	proposal, ok := s.Proposals.GetByID(ctx, cmd.ProposalID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	proposal.Status = domain.ProposalStatusRejected
+	proposal.ReviewerID = &cmd.ReviewerID
+	proposal.ReviewNotes = cmd.ReviewNotes
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
+		return err
+	}
+
+	event := domain.NewProposalRejectedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+func (s *ProposalService) RequestChanges(ctx context.Context, cmd *ReviewProposalCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	proposal, ok := s.Proposals.GetByID(ctx, cmd.ProposalID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	proposal.Status = domain.ProposalStatusChangesRequested
+	proposal.ReviewerID = &cmd.ReviewerID
+	proposal.ReviewNotes = cmd.ReviewNotes
+	if err := s.Proposals.Update(ctx, proposal); err != nil {
+		return err
+	}
+
+	event := domain.NewProposalChangesRequestedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil

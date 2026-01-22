@@ -22,6 +22,7 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
+	requireAdmin := middleware.RequireAdmin(c.SessionStore, c.UserRepo)
 	optionalUser := middleware.OptionalUser(c.SessionStore, c.UserRepo)
 
 	r.Route("/api", func(r chi.Router) {
@@ -45,8 +46,12 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 			r.Get("/", proposalHandler.List)
 			r.Patch("/{id}", proposalHandler.Update)
 			r.Delete("/{id}", proposalHandler.Delete)
-            r.Get("/{id}", proposalHandler.Get)
-            r.Post("/{id}/status", proposalHandler.UpdateStatus)
+			r.Get("/{id}", proposalHandler.Get)
+			r.Post("/{id}/actions/submit", proposalHandler.Submit)
+			r.Post("/{id}/actions/withdraw", proposalHandler.Withdraw)
+			r.With(requireAdmin).Post("/{id}/actions/approve", proposalHandler.Approve)
+			r.With(requireAdmin).Post("/{id}/actions/reject", proposalHandler.Reject)
+			r.With(requireAdmin).Post("/{id}/actions/request-changes", proposalHandler.RequestChanges)
 		})
 
 		r.Route("/courses", func(r chi.Router) {

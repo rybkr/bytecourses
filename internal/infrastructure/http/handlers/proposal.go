@@ -7,7 +7,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 
-	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/http/middleware"
 	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/services"
@@ -117,22 +116,7 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type UpdateProposalStatusRequest struct {
-	Status      domain.ProposalStatus `json:"status"`
-	ReviewNotes string                `json:"review_notes"`
-}
-
-func (r *UpdateProposalStatusRequest) ToCommand(proposalID, userID int64, userRole domain.UserRole) *services.UpdateProposalStatusCommand {
-	return &services.UpdateProposalStatusCommand{
-		ProposalID:  proposalID,
-		Status:      r.Status,
-		ReviewNotes: strings.TrimSpace(r.ReviewNotes),
-		UserID:      userID,
-		UserRole:    userRole,
-	}
-}
-
-func (h *ProposalHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
+func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -145,12 +129,128 @@ func (h *ProposalHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req UpdateProposalStatusRequest
+	if err := h.Service.Submit(r.Context(), &services.SubmitProposalCommand{
+		ProposalID: proposalID,
+		UserID:     user.ID,
+	}); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.Service.Withdraw(r.Context(), &services.WithdrawProposalCommand{
+		ProposalID: proposalID,
+		UserID:     user.ID,
+	}); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type ReviewProposalRequest struct {
+	ReviewNotes string `json:"review_notes"`
+}
+
+func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req ReviewProposalRequest
 	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	if err := h.Service.UpdateStatus(r.Context(), req.ToCommand(proposalID, user.ID, user.Role)); err != nil {
+	if err := h.Service.Approve(r.Context(), &services.ReviewProposalCommand{
+		ProposalID:  proposalID,
+		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
+		ReviewerID:  user.ID,
+	}); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req ReviewProposalRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	if err := h.Service.Reject(r.Context(), &services.ReviewProposalCommand{
+		ProposalID:  proposalID,
+		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
+		ReviewerID:  user.ID,
+	}); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req ReviewProposalRequest
+	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	if err := h.Service.RequestChanges(r.Context(), &services.ReviewProposalCommand{
+		ProposalID:  proposalID,
+		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
+		ReviewerID:  user.ID,
+	}); err != nil {
 		handleError(w, err)
 		return
 	}

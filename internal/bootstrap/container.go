@@ -38,7 +38,7 @@ type Container struct {
 }
 
 func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
-	c := &Container{}
+	c := Container{}
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -68,7 +68,7 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		}
 	}
 
-	return c, nil
+	return &c, nil
 }
 
 func (c *Container) setupEmailSender(cfg Config) error {
@@ -156,7 +156,7 @@ func (c *Container) setupEventSubscribers() {
 
 	c.EventBus.Subscribe("user.password_reset_requested", func(ctx context.Context, e domain.Event) error {
 		event := e.(*domain.PasswordResetRequestedEvent)
-		return c.EmailSender.SendPasswordResetEmail(ctx, event.Email)
+		return c.EmailSender.SendPasswordResetEmail(ctx, event.Email, event.BaseURL, event.Token)
 	})
 }
 

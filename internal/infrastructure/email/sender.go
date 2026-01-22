@@ -6,7 +6,7 @@ import (
 
 type Sender interface {
 	SendWelcomeEmail(ctx context.Context, email string, name string) error
-	SendPasswordResetEmail(ctx context.Context, email string) error
+	SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error
 }
 
 var (
@@ -24,6 +24,6 @@ func (s *NullSender) SendWelcomeEmail(ctx context.Context, email string, name st
 	return nil
 }
 
-func (s *NullSender) SendPasswordResetEmail(ctx context.Context, email string) error {
+func (s *NullSender) SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error {
 	return nil
 }

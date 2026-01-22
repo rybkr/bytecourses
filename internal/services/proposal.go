@@ -37,6 +37,11 @@ var (
 	_ Command = (*DeleteProposalCommand)(nil)
 )
 
+var (
+    _ Query = (*GetProposalQuery)(nil)
+    _ Query = (*ListProposalsQuery)(nil)
+)
+
 type CreateProposalCommand struct {
 	AuthorID             int64  `json:"author_id"`
 	Title                string `json:"title"`

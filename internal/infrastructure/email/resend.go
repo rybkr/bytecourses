@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+    "net/url"
 )
 
 type ResendSender struct {
@@ -23,7 +24,7 @@ func NewResendSender(apiKey, fromEmail string) *ResendSender {
 }
 
 var (
-    _ Sender = (*ResendSender)(nil)
+	_ Sender = (*ResendSender)(nil)
 )
 
 type resendRequest struct {
@@ -68,24 +69,36 @@ func (s *ResendSender) sendEmail(ctx context.Context, to, subject, html string) 
 }
 
 func (s *ResendSender) SendWelcomeEmail(ctx context.Context, email, name string) error {
-	subject := "Welcome to Bytecourses!"
-	html := fmt.Sprintf(`
-		<h1>Welcome, %s!</h1>
-		<p>Thank you for joining Bytecourses. We're excited to have you!</p>
-		<p>You can now start creating and submitting course proposals.</p>
-	`, name)
+	subject := "Welcome to ByteCourses!"
 
-	return s.sendEmail(ctx, email, subject, html)
+	var buf bytes.Buffer
+	data := struct{ Name string }{Name: name}
+	if err := welcomeTemplate.Execute(&buf, data); err != nil {
+		return fmt.Errorf("failed to execute welcome template: %w", err)
+	}
+
+	return s.sendEmail(ctx, email, subject, buf.String())
 }
 
-func (s *ResendSender) SendPasswordResetEmail(ctx context.Context, email string) error {
+func (s *ResendSender) SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error {
 	subject := "Reset Your Password"
-	html := `
-		<h1>Password Reset Request</h1>
-		<p>We received a request to reset your password.</p>
-		<p>If you didn't make this request, you can ignore this email.</p>
-		<p>This link will expire in 1 hour.</p>
-	`
 
-	return s.sendEmail(ctx, email, subject, html)
+    u, err := url.Parse(baseURL)
+    if err != nil || u.Scheme == "" || u.Host == "" {
+        return fmt.Errorf("resend: invalid base url %s", baseURL)
+    }
+
+    query := u.Query()
+    query.Set("token", token)
+    query.Set("email", email)
+    u.RawQuery = query.Encode()
+    resetURL := u.String()
+
+    var buf bytes.Buffer
+    data := struct { ResetURL string }{ResetURL: resetURL}
+    if err := passwordResetTemplate.Execute(&buf, data); err != nil {
+		return fmt.Errorf("failed to execute password reset template: %w", err)
+    }
+
+	return s.sendEmail(ctx, email, subject, buf.String())
 }

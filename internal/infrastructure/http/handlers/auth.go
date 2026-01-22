@@ -39,13 +39,13 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-    user, err := h.Service.Register(r.Context(), req.ToCommand())
+	user, err := h.Service.Register(r.Context(), req.ToCommand())
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-    writeJSON(w, http.StatusCreated, user)
+	writeJSON(w, http.StatusCreated, user)
 }
 
 type LoginRequest struct {
@@ -152,9 +152,10 @@ type RequestPasswordResetRequest struct {
 	Email string `json:"email"`
 }
 
-func (r *RequestPasswordResetRequest) ToCommand() *services.RequestPasswordResetCommand {
+func (r *RequestPasswordResetRequest) ToCommand(baseURL string) *services.RequestPasswordResetCommand {
 	return &services.RequestPasswordResetCommand{
-		Email: strings.ToLower(strings.TrimSpace(r.Email)),
+		Email:   strings.ToLower(strings.TrimSpace(r.Email)),
+		BaseURL: strings.TrimSpace(baseURL),
 	}
 }
 
@@ -167,7 +168,7 @@ func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 	// Always return 202 Accepted to avoid email enumeration
 	w.WriteHeader(http.StatusAccepted)
 
-	_ = h.Service.RequestPasswordReset(r.Context(), req.ToCommand())
+	_ = h.Service.RequestPasswordReset(r.Context(), req.ToCommand(baseURL(r)))
 }
 
 type ConfirmPasswordResetRequest struct {

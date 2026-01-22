@@ -1,9 +1,11 @@
 package validation
 
 import (
-	"bytecourses/internal/pkg/errors"
 	"net/mail"
+	"strconv"
 	"strings"
+
+	"bytecourses/internal/pkg/errors"
 )
 
 type FieldValidator struct {
@@ -22,19 +24,19 @@ func (fv *FieldValidator) Required() *FieldValidator {
 	return fv
 }
 
-func (fv *FieldValidator) MinLength(min int) *FieldValidator {
+func (fv *FieldValidator) MinLength(minLen int) *FieldValidator {
 	if s, ok := fv.value.(string); ok {
-		if len(strings.TrimSpace(s)) < min {
-			fv.errs.Add(fv.name, "must be at least "+string(rune(min))+" characters")
+		if len(s) < minLen {
+			fv.errs.Add(fv.name, "must be at least "+strconv.Itoa(minLen)+" characters")
 		}
 	}
 	return fv
 }
 
-func (fv *FieldValidator) MaxLength(max int) *FieldValidator {
+func (fv *FieldValidator) MaxLength(maxLen int) *FieldValidator {
 	if s, ok := fv.value.(string); ok {
-		if len(s) > max {
-			fv.errs.Add(fv.name, "must be at most "+string(rune(max))+" characters")
+		if len(s) > maxLen {
+			fv.errs.Add(fv.name, "must be at most "+strconv.Itoa(maxLen)+" characters")
 		}
 	}
 	return fv
@@ -68,7 +70,7 @@ func (fv *FieldValidator) Email() *FieldValidator {
 }
 
 func (fv *FieldValidator) Password() *FieldValidator {
-    return fv.MinLength(1).IsTrimmed()
+	return fv.MinLength(1).IsTrimmed()
 }
 
 func (fv *FieldValidator) EntityID() *FieldValidator {

@@ -7,8 +7,8 @@ import (
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/auth"
 	"bytecourses/internal/infrastructure/persistence"
-	"bytecourses/internal/pkg/events"
 	"bytecourses/internal/pkg/errors"
+	"bytecourses/internal/pkg/events"
 	"bytecourses/internal/pkg/validation"
 )
 
@@ -135,9 +135,9 @@ type UpdateProfileCommand struct {
 	Name   string `json:"name"`
 }
 
-func (i *UpdateProfileCommand) Validate(v *validation.Validator) {
-	v.Field(i.UserID, "user_id").Required().EntityID()
-	v.Field(i.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
+func (c *UpdateProfileCommand) Validate(v *validation.Validator) {
+	v.Field(c.UserID, "user_id").Required().EntityID()
+	v.Field(c.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
 }
 
 func (s *AuthService) UpdateProfile(ctx context.Context, cmd *UpdateProfileCommand) error {
@@ -162,11 +162,12 @@ func (s *AuthService) UpdateProfile(ctx context.Context, cmd *UpdateProfileComma
 }
 
 type RequestPasswordResetCommand struct {
-	Email string `json:"email"`
+	Email   string `json:"email"`
+	BaseURL string `json:"-"`
 }
 
-func (i *RequestPasswordResetCommand) Validate(v *validation.Validator) {
-	v.Field(i.Email, "email").Required().Email()
+func (c *RequestPasswordResetCommand) Validate(v *validation.Validator) {
+	v.Field(c.Email, "email").Required().Email()
 }
 
 func (s *AuthService) RequestPasswordReset(ctx context.Context, cmd *RequestPasswordResetCommand) error {
@@ -180,9 +181,9 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, cmd *RequestPass
 	}
 
 	token, err := auth.GenerateToken()
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 
 	tokenHash := auth.HashToken(token)
 	expiresAt := time.Now().Add(1 * time.Hour)
@@ -190,7 +191,7 @@ func (s *AuthService) RequestPasswordReset(ctx context.Context, cmd *RequestPass
 		return err
 	}
 
-	event := domain.NewPasswordResetRequestedEvent(user.ID, cmd.Email, token)
+	event := domain.NewPasswordResetRequestedEvent(user.ID, cmd.Email, cmd.BaseURL, token)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil
@@ -201,9 +202,9 @@ type ConfirmPasswordResetCommand struct {
 	NewPassword string `json:"new_password"`
 }
 
-func (i *ConfirmPasswordResetCommand) Validate(v *validation.Validator) {
-	v.Field(i.Token, "token").Required().IsTrimmed()
-	v.Field(i.NewPassword, "new_password").Required().Password()
+func (c *ConfirmPasswordResetCommand) Validate(v *validation.Validator) {
+	v.Field(c.Token, "token").Required().IsTrimmed()
+	v.Field(c.NewPassword, "new_password").Required().Password()
 }
 
 func (s *AuthService) ConfirmPasswordReset(ctx context.Context, cmd *ConfirmPasswordResetCommand) error {
@@ -217,10 +218,10 @@ func (s *AuthService) ConfirmPasswordReset(ctx context.Context, cmd *ConfirmPass
 	if !ok {
 		return errors.ErrInvalidToken
 	}
-    user, ok := s.Users.GetByID(ctx, userID)
-    if !ok {
-        return errors.ErrNotFound
-    }
+	user, ok := s.Users.GetByID(ctx, userID)
+	if !ok {
+		return errors.ErrNotFound
+	}
 
 	passwordHash, err := auth.HashPassword(cmd.NewPassword)
 	if err != nil {

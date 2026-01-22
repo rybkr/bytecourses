@@ -118,11 +118,11 @@ func (s *ProposalService) Update(ctx context.Context, cmd *UpdateProposalCommand
 	if !ok {
 		return errors.ErrNotFound
 	}
+	if proposal.AuthorID != cmd.UserID {
+		return errors.ErrNotFound
+	}
 	if !proposal.IsAmendable() {
 		return errors.ErrInvalidStatusTransition
-	}
-	if proposal.AuthorID != cmd.UserID {
-		return errors.ErrForbidden
 	}
 
 	proposal.Title = cmd.Title
@@ -162,8 +162,12 @@ func (s *ProposalService) Submit(ctx context.Context, cmd *SubmitProposalCommand
 		return errors.ErrNotFound
 	}
 	if proposal.AuthorID != cmd.UserID {
-		return errors.ErrForbidden
+		return errors.ErrNotFound
 	}
+    if proposal.Status != domain.ProposalStatusDraft &&
+        proposal.Status != domain.ProposalStatusChangesRequested {
+        return errors.ErrInvalidStatusTransition
+    }
 
 	proposal.Status = domain.ProposalStatusSubmitted
 	if err := s.Proposals.Update(ctx, proposal); err != nil {
@@ -196,8 +200,11 @@ func (s *ProposalService) Withdraw(ctx context.Context, cmd *WithdrawProposalCom
 		return errors.ErrNotFound
 	}
 	if proposal.AuthorID != cmd.UserID {
-		return errors.ErrForbidden
+		return errors.ErrNotFound
 	}
+    if proposal.Status != domain.ProposalStatusSubmitted {
+        return errors.ErrInvalidStatusTransition
+    }
 
 	proposal.Status = domain.ProposalStatusWithdrawn
 	if err := s.Proposals.Update(ctx, proposal); err != nil {
@@ -231,6 +238,9 @@ func (s *ProposalService) Approve(ctx context.Context, cmd *ReviewProposalComman
 	if !ok {
 		return errors.ErrNotFound
 	}
+    if proposal.Status != domain.ProposalStatusSubmitted {
+        return errors.ErrInvalidStatusTransition
+    }
 
 	proposal.Status = domain.ProposalStatusApproved
 	proposal.ReviewerID = &cmd.ReviewerID
@@ -254,6 +264,9 @@ func (s *ProposalService) Reject(ctx context.Context, cmd *ReviewProposalCommand
 	if !ok {
 		return errors.ErrNotFound
 	}
+    if proposal.Status != domain.ProposalStatusSubmitted {
+        return errors.ErrInvalidStatusTransition
+    }
 
 	proposal.Status = domain.ProposalStatusRejected
 	proposal.ReviewerID = &cmd.ReviewerID
@@ -277,6 +290,9 @@ func (s *ProposalService) RequestChanges(ctx context.Context, cmd *ReviewProposa
 	if !ok {
 		return errors.ErrNotFound
 	}
+    if proposal.Status != domain.ProposalStatusSubmitted {
+        return errors.ErrInvalidStatusTransition
+    }
 
 	proposal.Status = domain.ProposalStatusChangesRequested
 	proposal.ReviewerID = &cmd.ReviewerID
@@ -311,7 +327,7 @@ func (s *ProposalService) Delete(ctx context.Context, cmd *DeleteProposalCommand
 		return errors.ErrNotFound
 	}
 	if proposal.AuthorID != cmd.UserID {
-		return errors.ErrForbidden
+		return errors.ErrNotFound
 	}
 
 	if err := s.Proposals.DeleteByID(ctx, cmd.ProposalID); err != nil {

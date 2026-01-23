@@ -20,5 +20,6 @@ type Config struct {
 	BCryptCost    int
 	SeedUsers     string
 	SeedProposals string
+	SeedCourses   string
 	BaseURL       string
 }

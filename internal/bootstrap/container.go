@@ -71,6 +71,11 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 			return nil, fmt.Errorf("seeding proposals: %w", err)
 		}
 	}
+	if cfg.SeedCourses != "" {
+		if err := c.seedCourses(ctx, cfg.SeedCourses); err != nil {
+			return nil, fmt.Errorf("seeding courses: %w", err)
+		}
+	}
 
 	return &c, nil
 }
@@ -315,6 +320,59 @@ func (c *Container) seedProposals(ctx context.Context, path string) error {
 
 		if err := c.ProposalRepo.Create(ctx, proposal); err != nil {
 			return fmt.Errorf("creating proposal %q: %w", p.Title, err)
+		}
+	}
+
+	return nil
+}
+
+type seedCourse struct {
+	ID                   int64               `json:"id"`
+	Title                string              `json:"title"`
+	Summary              string              `json:"summary"`
+	TargetAudience       string              `json:"target_audience"`
+	LearningObjectives   string              `json:"learning_objectives"`
+	AssumedPrerequisites string              `json:"assumed_prerequisites"`
+	InstructorID         int64               `json:"instructor_id"`
+	ProposalID           *int64              `json:"proposal_id"`
+	Status               domain.CourseStatus `json:"status"`
+}
+
+func (c *Container) seedCourses(ctx context.Context, path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading file: %w", err)
+	}
+
+	var courses []seedCourse
+	if err := json.Unmarshal(data, &courses); err != nil {
+		return fmt.Errorf("parsing JSON: %w", err)
+	}
+
+	for _, sc := range courses {
+		if _, ok := c.CourseRepo.GetByID(ctx, sc.ID); ok {
+			continue
+		}
+
+		status := sc.Status
+		if status == "" {
+			status = domain.CourseStatusDraft
+		}
+
+		course := &domain.Course{
+			ID:                   sc.ID,
+			Title:                sc.Title,
+			Summary:              sc.Summary,
+			TargetAudience:       sc.TargetAudience,
+			LearningObjectives:   sc.LearningObjectives,
+			AssumedPrerequisites: sc.AssumedPrerequisites,
+			InstructorID:         sc.InstructorID,
+			ProposalID:           sc.ProposalID,
+			Status:               status,
+		}
+
+		if err := c.CourseRepo.Create(ctx, course); err != nil {
+			return fmt.Errorf("creating course %q: %w", sc.Title, err)
 		}
 	}
 

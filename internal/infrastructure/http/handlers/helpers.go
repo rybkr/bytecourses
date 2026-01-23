@@ -66,8 +66,8 @@ func handleError(w http.ResponseWriter, err error) {
 		http.Error(w, "invalid or expired token", http.StatusBadRequest)
 	case errors.ErrInvalidStatusTransition:
 		http.Error(w, "invalid status transition", http.StatusConflict)
-    case errors.ErrInvalidLogin:
-        http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+	case errors.ErrInvalidLogin:
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 	default:
 		http.Error(w, "internal error", http.StatusInternalServerError)
 	}

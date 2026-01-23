@@ -46,7 +46,9 @@ class TestCourseCreate:
 
 
 class TestCourseCreationFromProposalOnly:
-    def test_creates_course_from_approved_proposal_owned_by_user(self, api_url, admin_session):
+    def test_creates_course_from_approved_proposal_owned_by_user(
+        self, api_url, admin_session
+    ):
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(
@@ -103,7 +105,9 @@ class TestCourseCreationFromProposalOnly:
         assert r.status_code == HTTPStatus.CREATED
         assert r.json()["proposal_id"] == proposal_id
 
-    def test_created_course_has_correct_fields_from_proposal(self, api_url, admin_session):
+    def test_created_course_has_correct_fields_from_proposal(
+        self, api_url, admin_session
+    ):
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(
@@ -137,7 +141,9 @@ class TestCourseCreationFromProposalOnly:
         assert course["learning_objectives"] == proposal_data["learning_objectives"]
         assert course["assumed_prerequisites"] == proposal_data["assumed_prerequisites"]
 
-    def test_cannot_create_course_from_proposal_owned_by_other_user(self, api_url, admin_session):
+    def test_cannot_create_course_from_proposal_owned_by_other_user(
+        self, api_url, admin_session
+    ):
         author1 = register_and_login(api_url, "author1@example.com", "password123")
         author2 = register_and_login(api_url, "author2@example.com", "password123")
 
@@ -261,7 +267,9 @@ class TestCourseCreationFromProposalOnly:
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         assert r.status_code == HTTPStatus.CONFLICT
 
-    def test_cannot_create_course_from_changes_requested_proposal(self, api_url, admin_session):
+    def test_cannot_create_course_from_changes_requested_proposal(
+        self, api_url, admin_session
+    ):
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(
@@ -288,7 +296,9 @@ class TestCourseCreationFromProposalOnly:
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         assert r.status_code == HTTPStatus.CONFLICT
 
-    def test_cannot_create_second_course_from_same_proposal(self, api_url, admin_session):
+    def test_cannot_create_second_course_from_same_proposal(
+        self, api_url, admin_session
+    ):
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(
@@ -320,7 +330,9 @@ class TestCourseCreationFromProposalOnly:
         assert r.status_code == HTTPStatus.CONFLICT
         assert r.json()["course_id"] == course_id
 
-    def test_requires_authentication_to_create_course_from_proposal(self, api_url, admin_session):
+    def test_requires_authentication_to_create_course_from_proposal(
+        self, api_url, admin_session
+    ):
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(
@@ -634,7 +646,9 @@ class TestCoursePermissions:
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        r = instructor1.post(f"{api_url}/proposals/{proposal1_id}/actions/create-course")
+        r = instructor1.post(
+            f"{api_url}/proposals/{proposal1_id}/actions/create-course"
+        )
         instructor1_course_id = r.json()["id"]
 
         r = instructor2.post(
@@ -658,7 +672,9 @@ class TestCoursePermissions:
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        r = instructor2.post(f"{api_url}/proposals/{proposal2_id}/actions/create-course")
+        r = instructor2.post(
+            f"{api_url}/proposals/{proposal2_id}/actions/create-course"
+        )
 
         r = instructor2.get(f"{api_url}/courses/{instructor1_course_id}")
         assert r.status_code in (HTTPStatus.NOT_FOUND, HTTPStatus.OK)
@@ -1093,7 +1109,9 @@ class TestCourseAdminAccess:
         assert r.status_code == HTTPStatus.OK
         assert r.json()["title"] == "Instructor Course"
 
-    def test_admin_can_access_other_instructors_draft_course(self, api_url, admin_session):
+    def test_admin_can_access_other_instructors_draft_course(
+        self, api_url, admin_session
+    ):
         instructor = register_and_login(
             api_url, "instructor@example.com", "password123"
         )
@@ -1127,7 +1145,9 @@ class TestCourseAdminAccess:
         assert r.status_code == HTTPStatus.OK
         assert r.json()["status"] == "draft"
 
-    def test_admin_can_access_other_instructors_published_course(self, api_url, admin_session):
+    def test_admin_can_access_other_instructors_published_course(
+        self, api_url, admin_session
+    ):
         instructor = register_and_login(
             api_url, "instructor@example.com", "password123"
         )
@@ -1671,7 +1691,9 @@ class TestCourseList:
 
 
 class TestCourseGetPermissions:
-    def test_student_cannot_access_other_instructors_course(self, api_url, admin_session):
+    def test_student_cannot_access_other_instructors_course(
+        self, api_url, admin_session
+    ):
         instructor = register_and_login(
             api_url, "instructor@example.com", "password123"
         )

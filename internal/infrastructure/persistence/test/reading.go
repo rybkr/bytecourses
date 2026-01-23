@@ -40,10 +40,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -53,9 +53,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m.ID,
-				Title:     "Test Reading",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Test Reading",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content,
@@ -104,10 +104,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -117,9 +117,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m.ID,
-				Title:     "Test Reading",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Test Reading",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content,
@@ -180,10 +180,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m1 := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Module 1",
-			Description:  "Module 1",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Module 1",
+			Description: "Module 1",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m1); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -191,10 +191,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m2 := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Module 2",
-			Description:  "Module 2",
-			Order:        2,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Module 2",
+			Description: "Module 2",
+			Order:       2,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m2); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -204,9 +204,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r1 := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m1.ID,
-				Title:     "Reading 1",
-				Order:     2,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Reading 1",
+				Order:    2,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content1,
@@ -219,9 +219,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r2 := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m1.ID,
-				Title:     "Reading 2",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Reading 2",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content2,
@@ -234,9 +234,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r3 := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m2.ID,
-				Title:     "Reading 3",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Reading 3",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content3,
@@ -284,10 +284,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -332,10 +332,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -345,9 +345,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m.ID,
-				Title:     "Original Title",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Original Title",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &originalContent,
@@ -425,10 +425,10 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -438,9 +438,9 @@ func TestReadingRepository(t *testing.T, newReadingRepo NewReadingRepository, ne
 		r := domain.Reading{
 			BaseContentItem: domain.BaseContentItem{
 				ModuleID: m.ID,
-				Title:     "Test Reading",
-				Order:     1,
-				Status:    domain.ContentStatusDraft,
+				Title:    "Test Reading",
+				Order:    1,
+				Status:   domain.ContentStatusDraft,
 			},
 			Format:  domain.ReadingFormatMarkdown,
 			Content: &content,

@@ -337,8 +337,8 @@ func (e *CoursePublishedEvent) EventName() string {
 
 type ModuleCreatedEvent struct {
 	BaseEvent
-	ModuleID    int64
-	CourseID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -357,8 +357,8 @@ func (e *ModuleCreatedEvent) EventName() string {
 
 type ModuleUpdatedEvent struct {
 	BaseEvent
-	ModuleID    int64
-	CourseID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -377,8 +377,8 @@ func (e *ModuleUpdatedEvent) EventName() string {
 
 type ModuleDeletedEvent struct {
 	BaseEvent
-	ModuleID    int64
-	CourseID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -397,8 +397,8 @@ func (e *ModuleDeletedEvent) EventName() string {
 
 type ModulePublishedEvent struct {
 	BaseEvent
-	ModuleID    int64
-	CourseID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -417,9 +417,9 @@ func (e *ModulePublishedEvent) EventName() string {
 
 type ReadingCreatedEvent struct {
 	BaseEvent
-	ReadingID   int64
-	ModuleID    int64
-	CourseID    int64
+	ReadingID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -439,9 +439,9 @@ func (e *ReadingCreatedEvent) EventName() string {
 
 type ReadingUpdatedEvent struct {
 	BaseEvent
-	ReadingID   int64
-	ModuleID    int64
-	CourseID    int64
+	ReadingID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -461,9 +461,9 @@ func (e *ReadingUpdatedEvent) EventName() string {
 
 type ReadingDeletedEvent struct {
 	BaseEvent
-	ReadingID   int64
-	ModuleID    int64
-	CourseID    int64
+	ReadingID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 
@@ -483,9 +483,9 @@ func (e *ReadingDeletedEvent) EventName() string {
 
 type ReadingPublishedEvent struct {
 	BaseEvent
-	ReadingID   int64
-	ModuleID    int64
-	CourseID    int64
+	ReadingID    int64
+	ModuleID     int64
+	CourseID     int64
 	InstructorID int64
 }
 

@@ -13,5 +13,5 @@ var (
 	ErrInvalidCredentials      = errors.New("invalid credentials")
 	ErrInvalidToken            = errors.New("invalid or expired token")
 	ErrInvalidStatusTransition = errors.New("invalid status transition")
-    ErrInvalidLogin            = errors.New("invalid login")
+	ErrInvalidLogin            = errors.New("invalid login")
 )

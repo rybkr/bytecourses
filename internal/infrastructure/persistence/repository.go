@@ -43,7 +43,7 @@ type ModuleRepository interface {
 }
 
 type ReadingRepository interface {
-    Repository[domain.Reading]
+	Repository[domain.Reading]
 	ListByModuleID(ctx context.Context, moduleID int64) ([]domain.Reading, error)
 	DeleteByID(ctx context.Context, id int64) error
 }

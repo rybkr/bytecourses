@@ -39,10 +39,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -84,10 +84,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -148,10 +148,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m1 := domain.Module{
 			CourseID:    c1.ID,
-			Title:        "Module 1",
-			Description:  "Module 1",
-			Order:        2,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Module 1",
+			Description: "Module 1",
+			Order:       2,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m1); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -159,10 +159,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m2 := domain.Module{
 			CourseID:    c1.ID,
-			Title:        "Module 2",
-			Description:  "Module 2",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Module 2",
+			Description: "Module 2",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m2); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -170,10 +170,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m3 := domain.Module{
 			CourseID:    c2.ID,
-			Title:        "Module 3",
-			Description:  "Module 3",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Module 3",
+			Description: "Module 3",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m3); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -253,10 +253,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Original Title",
-			Description:  "Original Description",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Original Title",
+			Description: "Original Description",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)
@@ -329,10 +329,10 @@ func TestModuleRepository(t *testing.T, newModuleRepo NewModuleRepository, newCo
 
 		m := domain.Module{
 			CourseID:    c.ID,
-			Title:        "Test Module",
-			Description:  "A test module",
-			Order:        1,
-			Status:       domain.ModuleStatusDraft,
+			Title:       "Test Module",
+			Description: "A test module",
+			Order:       1,
+			Status:      domain.ModuleStatusDraft,
 		}
 		if err := modules.Create(ctx, &m); err != nil {
 			t.Fatalf("modules.Create failed: %v", err)

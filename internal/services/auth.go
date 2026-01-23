@@ -100,7 +100,7 @@ func (s *AuthService) Login(ctx context.Context, cmd *LoginCommand) (string, err
 
 	user, ok := s.Users.GetByEmail(ctx, cmd.Email)
 	if !ok {
-        auth.CheckPassword(make([]byte, 20), " ") // Always perform a password check to combat timing attacks
+		auth.CheckPassword(make([]byte, 20), " ") // Always perform a password check to combat timing attacks
 		return "", errors.ErrInvalidLogin
 	}
 	if err := auth.CheckPassword(user.PasswordHash, cmd.Password); err != nil {

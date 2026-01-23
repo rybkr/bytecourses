@@ -14,13 +14,13 @@ import (
 )
 
 type ProposalHandler struct {
-	Service      *services.ProposalService
+	Service       *services.ProposalService
 	CourseService *services.CourseService
 }
 
 func NewProposalHandler(proposalService *services.ProposalService, courseService *services.CourseService) *ProposalHandler {
 	return &ProposalHandler{
-		Service:      proposalService,
+		Service:       proposalService,
 		CourseService: courseService,
 	}
 }

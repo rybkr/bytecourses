@@ -209,7 +209,7 @@ func (s *ContentService) DeleteReading(ctx context.Context, cmd *DeleteReadingCo
 
 type PublishReadingCommand struct {
 	ReadingID int64 `json:"reading_id"`
-	UserID     int64 `json:"user_id"`
+	UserID    int64 `json:"user_id"`
 }
 
 func (c *PublishReadingCommand) Validate(v *validation.Validator) {

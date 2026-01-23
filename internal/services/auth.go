@@ -90,8 +90,7 @@ type LoginCommand struct {
 
 func (c *LoginCommand) Validate(v *validation.Validator) {
 	v.Field(c.Email, "email").Required().Email()
-	// Do not validate password rules on login, we cannot block users if policies change
-	v.Field(c.Password, "password").Required() // No .Password()
+	v.Field(c.Password, "password").Required() // Do not validate password rules on login
 }
 
 func (s *AuthService) Login(ctx context.Context, cmd *LoginCommand) (string, error) {
@@ -101,10 +100,11 @@ func (s *AuthService) Login(ctx context.Context, cmd *LoginCommand) (string, err
 
 	user, ok := s.Users.GetByEmail(ctx, cmd.Email)
 	if !ok {
-		return "", errors.ErrInvalidCredentials
+        auth.CheckPassword(make([]byte, 20), " ") // Always perform a password check to combat timing attacks
+		return "", errors.ErrInvalidLogin
 	}
 	if err := auth.CheckPassword(user.PasswordHash, cmd.Password); err != nil {
-		return "", errors.ErrInvalidCredentials
+		return "", errors.ErrInvalidLogin
 	}
 
 	sessionID, err := s.Sessions.Create(user.ID)

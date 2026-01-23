@@ -36,6 +36,18 @@ type PasswordResetRepository interface {
 	ConsumeResetToken(ctx context.Context, tokenHash []byte, now time.Time) (userID int64, ok bool)
 }
 
+type ModuleRepository interface {
+	Repository[domain.Module]
+	ListByCourseID(ctx context.Context, courseID int64) ([]domain.Module, error)
+	DeleteByID(ctx context.Context, id int64) error
+}
+
+type ReadingRepository interface {
+    Repository[domain.Reading]
+	ListByModuleID(ctx context.Context, moduleID int64) ([]domain.Reading, error)
+	DeleteByID(ctx context.Context, id int64) error
+}
+
 type DB interface {
 	Ping(context.Context) error
 	Close() error

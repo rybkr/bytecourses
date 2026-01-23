@@ -56,6 +56,35 @@ func TestPasswordResetRepository(t *testing.T) {
 	})
 }
 
+func TestModuleRepository(t *testing.T) {
+	test.TestModuleRepository(t, func(t *testing.T) persistence.ModuleRepository {
+		db := getOrOpenTestDB(t)
+		return NewModuleRepository(db)
+	}, func(t *testing.T) persistence.CourseRepository {
+		db := getOrOpenTestDB(t)
+		return NewCourseRepository(db)
+	}, func(t *testing.T) persistence.UserRepository {
+		db := getOrOpenTestDB(t)
+		return NewUserRepository(db)
+	})
+}
+
+func TestReadingRepository(t *testing.T) {
+	test.TestReadingRepository(t, func(t *testing.T) persistence.ReadingRepository {
+		db := getOrOpenTestDB(t)
+		return NewReadingRepository(db)
+	}, func(t *testing.T) persistence.ModuleRepository {
+		db := getOrOpenTestDB(t)
+		return NewModuleRepository(db)
+	}, func(t *testing.T) persistence.CourseRepository {
+		db := getOrOpenTestDB(t)
+		return NewCourseRepository(db)
+	}, func(t *testing.T) persistence.UserRepository {
+		db := getOrOpenTestDB(t)
+		return NewUserRepository(db)
+	})
+}
+
 func getOrOpenTestDB(t *testing.T) *DB {
 	t.Helper()
 
@@ -117,6 +146,9 @@ func resetTestDB(t *testing.T, db *DB) {
 	t.Helper()
 
 	_, err := db.db.ExecContext(context.Background(), `
+		TRUNCATE TABLE readings RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE content_items RESTART IDENTITY CASCADE;
+		TRUNCATE TABLE modules RESTART IDENTITY CASCADE;
 		TRUNCATE TABLE password_reset_tokens RESTART IDENTITY CASCADE;
 		TRUNCATE TABLE courses RESTART IDENTITY CASCADE;
 		TRUNCATE TABLE proposals RESTART IDENTITY CASCADE;

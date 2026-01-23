@@ -38,3 +38,25 @@ func TestPasswordResetRepository(t *testing.T) {
 		return NewUserRepository()
 	})
 }
+
+func TestModuleRepository(t *testing.T) {
+	test.TestModuleRepository(t, func(t *testing.T) persistence.ModuleRepository {
+		return NewModuleRepository()
+	}, func(t *testing.T) persistence.CourseRepository {
+		return NewCourseRepository()
+	}, func(t *testing.T) persistence.UserRepository {
+		return NewUserRepository()
+	})
+}
+
+func TestReadingRepository(t *testing.T) {
+	test.TestReadingRepository(t, func(t *testing.T) persistence.ReadingRepository {
+		return NewReadingRepository()
+	}, func(t *testing.T) persistence.ModuleRepository {
+		return NewModuleRepository()
+	}, func(t *testing.T) persistence.CourseRepository {
+		return NewCourseRepository()
+	}, func(t *testing.T) persistence.UserRepository {
+		return NewUserRepository()
+	})
+}

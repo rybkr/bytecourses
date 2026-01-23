@@ -19,6 +19,7 @@ var (
 
 var (
 	_ Query = (*ListReadingsQuery)(nil)
+	_ Query = (*GetReadingQuery)(nil)
 )
 
 type ContentService struct {
@@ -289,4 +290,47 @@ func (s *ContentService) ListReadings(ctx context.Context, query *ListReadingsQu
 	}
 
 	return readings, nil
+}
+
+type GetReadingQuery struct {
+	ReadingID int64           `json:"reading_id"`
+	ModuleID  int64           `json:"module_id"`
+	UserID    int64           `json:"user_id"`
+	UserRole  domain.UserRole `json:"user_role"`
+}
+
+func (s *ContentService) GetReading(ctx context.Context, query *GetReadingQuery) (*domain.Reading, error) {
+	module, ok := s.Modules.GetByID(ctx, query.ModuleID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	course, ok := s.Courses.GetByID(ctx, module.CourseID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	switch query.UserRole {
+	case domain.UserRoleStudent,
+		domain.UserRoleInstructor:
+		if course.InstructorID != query.UserID {
+			return nil, errors.ErrNotFound
+		}
+
+	case domain.UserRoleAdmin:
+
+	default:
+		return nil, errors.ErrForbidden
+	}
+
+	reading, ok := s.Readings.GetByID(ctx, query.ReadingID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	if reading.ModuleID != query.ModuleID {
+		return nil, errors.ErrNotFound
+	}
+
+	return reading, nil
 }

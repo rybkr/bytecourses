@@ -22,6 +22,8 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	authHandler := handlers.NewAuthHandler(c.AuthService)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
+	moduleHandler := handlers.NewModuleHandler(c.ModuleService)
+	contentHandler := handlers.NewContentHandler(c.ContentService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
 	requireAdmin := middleware.RequireAdmin(c.SessionStore, c.UserRepo)
@@ -63,6 +65,26 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 			r.With(requireUser).Get("/{id}", courseHandler.Get)
 			r.With(requireUser).Patch("/{id}", courseHandler.Update)
 			r.With(requireUser).Post("/{id}/publish", courseHandler.Publish)
+
+			r.Route("/{courseId}/modules", func(r chi.Router) {
+				r.Use(requireUser)
+				r.Post("/", moduleHandler.Create)
+				r.Get("/", moduleHandler.List)
+				r.Get("/{moduleId}", moduleHandler.Get)
+				r.Patch("/{moduleId}", moduleHandler.Update)
+				r.Delete("/{moduleId}", moduleHandler.Delete)
+				r.Post("/{moduleId}/publish", moduleHandler.Publish)
+			})
+		})
+
+		r.Route("/modules/{moduleId}/readings", func(r chi.Router) {
+			r.Use(requireUser)
+			r.Post("/", contentHandler.CreateReading)
+			r.Get("/", contentHandler.ListReadings)
+			r.Get("/{readingId}", contentHandler.GetReading)
+			r.Patch("/{readingId}", contentHandler.UpdateReading)
+			r.Delete("/{readingId}", contentHandler.DeleteReading)
+			r.Post("/{readingId}/publish", contentHandler.PublishReading)
 		})
 	})
 

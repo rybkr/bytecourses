@@ -19,6 +19,7 @@ var (
 
 var (
 	_ Query = (*ListModulesQuery)(nil)
+	_ Query = (*GetModuleQuery)(nil)
 )
 
 type ModuleService struct {
@@ -241,4 +242,42 @@ func (s *ModuleService) List(ctx context.Context, query *ListModulesQuery) ([]do
 	}
 
 	return modules, nil
+}
+
+type GetModuleQuery struct {
+	ModuleID int64           `json:"module_id"`
+	CourseID int64           `json:"course_id"`
+	UserID   int64           `json:"user_id"`
+	UserRole domain.UserRole `json:"user_role"`
+}
+
+func (s *ModuleService) Get(ctx context.Context, query *GetModuleQuery) (*domain.Module, error) {
+	course, ok := s.Courses.GetByID(ctx, query.CourseID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	switch query.UserRole {
+	case domain.UserRoleStudent,
+		domain.UserRoleInstructor:
+		if course.InstructorID != query.UserID {
+			return nil, errors.ErrNotFound
+		}
+
+	case domain.UserRoleAdmin:
+
+	default:
+		return nil, errors.ErrForbidden
+	}
+
+	module, ok := s.Modules.GetByID(ctx, query.ModuleID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	if module.CourseID != query.CourseID {
+		return nil, errors.ErrNotFound
+	}
+
+	return module, nil
 }

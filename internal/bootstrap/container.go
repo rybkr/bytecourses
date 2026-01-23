@@ -28,11 +28,15 @@ type Container struct {
 	UserRepo          persistence.UserRepository
 	ProposalRepo      persistence.ProposalRepository
 	CourseRepo        persistence.CourseRepository
+	ModuleRepo        persistence.ModuleRepository
+	ReadingRepo       persistence.ReadingRepository
 	PasswordResetRepo persistence.PasswordResetRepository
 
 	AuthService     *services.AuthService
 	ProposalService *services.ProposalService
 	CourseService   *services.CourseService
+	ModuleService   *services.ModuleService
+	ContentService  *services.ContentService
 
 	onClose func() error
 }
@@ -100,6 +104,8 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.UserRepo = memory.NewUserRepository()
 		c.ProposalRepo = memory.NewProposalRepository()
 		c.CourseRepo = memory.NewCourseRepository()
+		c.ModuleRepo = memory.NewModuleRepository()
+		c.ReadingRepo = memory.NewReadingRepository()
 		c.PasswordResetRepo = memory.NewPasswordResetRepository()
 
 	case StoragePostgres:
@@ -117,6 +123,8 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.UserRepo = postgres.NewUserRepository(db)
 		c.ProposalRepo = postgres.NewProposalRepository(db)
 		c.CourseRepo = postgres.NewCourseRepository(db)
+		c.ModuleRepo = postgres.NewModuleRepository(db)
+		c.ReadingRepo = postgres.NewReadingRepository(db)
 		c.PasswordResetRepo = postgres.NewPasswordResetRepository(db)
 		c.onClose = db.Close
 
@@ -144,6 +152,19 @@ func (c *Container) wireServices() {
 	c.CourseService = services.NewCourseService(
 		c.CourseRepo,
 		c.ProposalRepo,
+		c.EventBus,
+	)
+
+	c.ModuleService = services.NewModuleService(
+		c.ModuleRepo,
+		c.CourseRepo,
+		c.EventBus,
+	)
+
+	c.ContentService = services.NewContentService(
+		c.ReadingRepo,
+		c.ModuleRepo,
+		c.CourseRepo,
 		c.EventBus,
 	)
 }

@@ -16,7 +16,7 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
 
-	pageHandler := handlers.NewPageHandler(templatesDir, c.ProposalService)
+	pageHandler := handlers.NewPageHandler(templatesDir, c.ProposalService, c.CourseService, c.UserRepo)
 	authHandler := handlers.NewAuthHandler(c.AuthService)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)

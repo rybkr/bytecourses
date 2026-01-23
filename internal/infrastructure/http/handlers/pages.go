@@ -15,6 +15,7 @@ import (
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/http/middleware"
+	"bytecourses/internal/infrastructure/persistence"
 	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/services"
 )
@@ -33,16 +34,27 @@ type ProposalPageData struct {
 	Proposal *domain.Proposal
 }
 
+// CoursesPageData is the data structure for courses listing page.
+// Templates access User, Courses, Instructors, and ModuleCounts directly at root level.
+type CoursesPageData struct {
+	User         *domain.User
+	Courses      []domain.Course
+	Instructors  map[int64]*domain.User
+	ModuleCounts map[int64]int
+}
+
 // PageHandler handles rendering of HTML page templates.
 type PageHandler struct {
 	templates       map[string]*template.Template
 	funcMap         template.FuncMap
 	proposalService *services.ProposalService
+	courseService   *services.CourseService
+	userRepo        persistence.UserRepository
 }
 
 // NewPageHandler creates a new PageHandler by parsing all page templates.
 // Each page template is combined with the layout template.
-func NewPageHandler(templatesDir string, proposalService *services.ProposalService) *PageHandler {
+func NewPageHandler(templatesDir string, proposalService *services.ProposalService, courseService *services.CourseService, userRepo persistence.UserRepository) *PageHandler {
 	funcMap := template.FuncMap{
 		"markdown": renderMarkdown,
 	}
@@ -51,6 +63,8 @@ func NewPageHandler(templatesDir string, proposalService *services.ProposalServi
 		templates:       make(map[string]*template.Template),
 		funcMap:         funcMap,
 		proposalService: proposalService,
+		courseService:   courseService,
+		userRepo:        userRepo,
 	}
 
 	layoutPath := filepath.Join(templatesDir, "layout.html")
@@ -158,7 +172,49 @@ func (h *PageHandler) Profile(w http.ResponseWriter, r *http.Request) {
 
 // Courses renders the course listing page.
 func (h *PageHandler) Courses(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, "courses.html", nil)
+	courses, err := h.courseService.List(r.Context())
+	if err != nil {
+		log.Printf("error fetching courses: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	// Fetch instructors for all courses
+	instructors := make(map[int64]*domain.User)
+	instructorIDs := make(map[int64]bool)
+	for _, course := range courses {
+		if !instructorIDs[course.InstructorID] {
+			instructorIDs[course.InstructorID] = true
+			if instructor, ok := h.userRepo.GetByID(r.Context(), course.InstructorID); ok {
+				instructors[course.InstructorID] = instructor
+			}
+		}
+	}
+
+	user, _ := middleware.UserFromContext(r.Context())
+
+	pd := CoursesPageData{
+		User:         user,
+		Courses:      courses,
+		Instructors:  instructors,
+		ModuleCounts: make(map[int64]int), // TODO: implement module counts when modules are added
+	}
+
+	tmpl, ok := h.templates["courses.html"]
+	if !ok {
+		log.Printf("template not found: courses.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "courses.html", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	buf.WriteTo(w)
 }
 
 // CourseView renders a single course page.

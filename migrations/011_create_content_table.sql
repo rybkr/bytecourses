@@ -17,7 +17,7 @@ BEGIN
 END $$;
 -- +goose StatementEnd
 
-CREATE TABLE IF NOT EXISTS content_items (
+CREATE TABLE IF NOT EXISTS content (
     id            BIGSERIAL PRIMARY KEY,
     module_id     BIGINT NOT NULL REFERENCES modules(id) ON DELETE CASCADE,
     content_type  content_type NOT NULL,
@@ -28,16 +28,16 @@ CREATE TABLE IF NOT EXISTS content_items (
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS content_items_module_id_idx ON content_items(module_id);
-CREATE INDEX IF NOT EXISTS content_items_content_type_idx ON content_items(content_type);
-CREATE INDEX IF NOT EXISTS content_items_status_idx ON content_items(status);
-CREATE INDEX IF NOT EXISTS content_items_module_order_idx ON content_items(module_id, order_index);
+CREATE INDEX IF NOT EXISTS content_module_id_idx ON content(module_id);
+CREATE INDEX IF NOT EXISTS content_content_type_idx ON content(content_type);
+CREATE INDEX IF NOT EXISTS content_status_idx ON content(status);
+CREATE INDEX IF NOT EXISTS content_module_order_idx ON content(module_id, order_index);
 
 -- +goose Down
-DROP INDEX IF EXISTS content_items_module_order_idx;
-DROP INDEX IF EXISTS content_items_status_idx;
-DROP INDEX IF EXISTS content_items_content_type_idx;
-DROP INDEX IF EXISTS content_items_module_id_idx;
-DROP TABLE IF EXISTS content_items;
+DROP INDEX IF EXISTS content_module_order_idx;
+DROP INDEX IF EXISTS content_status_idx;
+DROP INDEX IF EXISTS content_content_type_idx;
+DROP INDEX IF EXISTS content_module_id_idx;
+DROP TABLE IF EXISTS content;
 DROP TYPE IF EXISTS content_type;
 DROP TYPE IF EXISTS content_status;

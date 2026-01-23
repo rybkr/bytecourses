@@ -11,7 +11,7 @@ END $$;
 -- +goose StatementEnd
 
 CREATE TABLE IF NOT EXISTS readings (
-    content_item_id BIGINT PRIMARY KEY REFERENCES content_items(id) ON DELETE CASCADE,
+    content_item_id BIGINT PRIMARY KEY REFERENCES content(id) ON DELETE CASCADE,
     format          reading_format NOT NULL,
     content         TEXT
 );

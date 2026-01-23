@@ -1,7 +1,8 @@
 {{template "layout" .}} {{define "title"}}Edit: {{.Reading.Title}} - ByteCourses{{end}} {{define "content"}}
 <div class="lecture-edit-container">
     <div class="page-header">
-        <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-outline">← Back to Course Edit</a>
+        <a href="/modules/{{.Module.ID}}/readings/{{.Reading.ID}}" class="btn btn-secondary">View</a>
     </div>
 
     <div class="lecture-edit-header">

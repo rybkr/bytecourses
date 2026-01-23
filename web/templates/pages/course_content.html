@@ -1,0 +1,180 @@
+{{template "layout" .}} {{define "title"}}{{if .CurrentReading}}{{.CurrentReading.Title}} - {{end}}{{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+<div class="page-header">
+    <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+    {{if .IsInstructor}}
+    <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
+    {{end}}
+</div>
+
+<div class="course-content-container">
+    <div class="course-content-sidebar">
+        <div class="course-content-sidebar-header">
+            <h3>{{.Course.Title}}</h3>
+            {{if .IsInstructor}}
+            <button type="button" id="add-module-btn" class="btn btn-small btn-primary">Add Module</button>
+            {{end}}
+        </div>
+        <div class="course-content-modules">
+            {{if .Modules}}
+                {{range .Modules}}
+                <div class="course-content-module" data-module-id="{{.ID}}" data-order="{{.Order}}">
+                <div class="course-content-module-header-wrapper">
+                    <button class="course-content-module-header" type="button">
+                        <h4>{{.Title}}</h4>
+                        <svg class="course-content-module-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    {{if $.IsInstructor}}
+                    <div class="course-content-module-actions">
+                        <button type="button" class="btn-edit-module btn-small btn-secondary" data-module-id="{{.ID}}">Edit</button>
+                        <button type="button" class="btn-delete-module btn-small btn-danger" data-module-id="{{.ID}}">Delete</button>
+                    </div>
+                    {{end}}
+                </div>
+                <div class="course-content-module-content">
+                    {{$readings := index $.ReadingsByModule .ID}}
+                    {{if $readings}}
+                        {{range $readings}}
+                        <a href="/courses/{{$.Course.ID}}/content?readingId={{.ID}}" class="course-content-reading {{if $.CurrentReading}}{{if eq .ID $.CurrentReading.ID}}active{{end}}{{end}}">
+                            {{.Title}}
+                        </a>
+                        {{end}}
+                    {{else}}
+                        <p class="text-muted" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">No readings</p>
+                    {{end}}
+                    {{if $.IsInstructor}}
+                    <button type="button" class="btn-add-reading btn-small btn-primary course-content-add-reading" data-module-id="{{.ID}}">+ Add Reading</button>
+                    {{end}}
+                </div>
+                </div>
+                {{end}}
+            {{else}}
+                <p class="text-muted" style="padding: 1rem; text-align: center; font-size: 0.875rem;">No modules yet.{{if .IsInstructor}} Click "Add Module" to get started.{{end}}</p>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="course-content-main">
+        {{if .CurrentReading}}
+        <div class="course-content-breadcrumb">
+            <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
+            <span> / </span>
+            <span>{{.CurrentModule.Title}}</span>
+            <span> / </span>
+            <span>{{.CurrentReading.Title}}</span>
+        </div>
+
+        <div class="course-content-reading-view">
+            <h1>{{.CurrentReading.Title}}</h1>
+            {{if .CurrentReading.Content}}
+            <div class="proposal-content-value">{{markdown .CurrentReading.Content}}</div>
+            {{else}}
+            <p class="text-muted">No content available yet.</p>
+            {{end}}
+        </div>
+
+        <div class="course-content-navigation">
+            {{if .PreviousReading}}
+            <a href="/courses/{{.Course.ID}}/content?readingId={{.PreviousReading.ID}}" class="btn btn-outline">← Previous</a>
+            {{else}}
+            <span></span>
+            {{end}}
+            {{if .NextReading}}
+            <a href="/courses/{{.Course.ID}}/content?readingId={{.NextReading.ID}}" class="btn btn-primary">Next →</a>
+            {{else}}
+            <span></span>
+            {{end}}
+        </div>
+        {{else}}
+        <div class="course-content-overview">
+            <h1>Course Content</h1>
+            <p class="text-muted">Select a reading from the sidebar to begin.</p>
+        </div>
+        {{end}}
+    </div>
+</div>
+
+{{if .IsInstructor}}
+<div id="module-form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Module</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="module-create-form">
+                <div class="form-group">
+                    <label for="module-title">Title</label>
+                    <input type="text" id="module-title" name="title" required />
+                </div>
+                <div class="form-group">
+                    <label for="module-description">Description</label>
+                    <textarea id="module-description" name="description" rows="4"></textarea>
+                </div>
+                <div id="module-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="module-edit-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Module</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="module-edit-form">
+                <input type="hidden" id="module-edit-id" name="module_id" />
+                <div class="form-group">
+                    <label for="module-edit-title">Title</label>
+                    <input type="text" id="module-edit-title" name="title" required />
+                </div>
+                <div class="form-group">
+                    <label for="module-edit-description">Description</label>
+                    <textarea id="module-edit-description" name="description" rows="4"></textarea>
+                </div>
+                <div id="module-edit-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="reading-form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Reading</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="reading-create-form">
+                <input type="hidden" id="reading-module-id" name="module_id" />
+                <div class="form-group">
+                    <label for="reading-title">Title</label>
+                    <input type="text" id="reading-title" name="title" required />
+                </div>
+                <div id="reading-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
+{{end}} {{define "scripts"}}
+<script type="module" src="/static/js/pages/course_content.js"></script>
+{{end}}

@@ -48,6 +48,38 @@ type CoursePageData struct {
 	ReadingsByModule map[int64][]domain.Reading
 }
 
+type CourseEditPageData struct {
+	User             *domain.User
+	Course           *domain.Course
+	Instructor       *domain.User
+	Modules          []domain.Module
+	ReadingsByModule map[int64][]domain.Reading
+}
+
+type CourseLearnPageData struct {
+	User             *domain.User
+	Course           *domain.Course
+	Module           *domain.Module
+	Reading          *domain.Reading
+	AllModules       []domain.Module
+	ReadingsByModule map[int64][]domain.Reading
+	PreviousReading  *domain.Reading
+	NextReading      *domain.Reading
+}
+
+type CourseContentPageData struct {
+	User             *domain.User
+	Course           *domain.Course
+	Instructor       *domain.User
+	IsInstructor     bool
+	Modules          []domain.Module
+	ReadingsByModule map[int64][]domain.Reading
+	CurrentReading   *domain.Reading
+	CurrentModule    *domain.Module
+	PreviousReading  *domain.Reading
+	NextReading      *domain.Reading
+}
+
 type PageHandler struct {
 	templates       map[string]*template.Template
 	funcMap         template.FuncMap
@@ -323,8 +355,359 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
-	courseID := chi.URLParam(r, "id")
-	http.Redirect(w, r, "/courses/"+courseID, http.StatusFound)
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "course not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching course: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	if !course.IsTaughtBy(user) {
+		http.Error(w, "forbidden", http.StatusForbidden)
+		return
+	}
+
+	var instructor *domain.User
+	if inst, ok := h.userRepo.GetByID(r.Context(), course.InstructorID); ok {
+		instructor = inst
+	}
+
+	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		log.Printf("error fetching modules: %v", err)
+		modulesList = []domain.Module{}
+	}
+
+	readingsByModule := make(map[int64][]domain.Reading)
+	for _, module := range modulesList {
+		readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+			ModuleID: module.ID,
+			UserID:   user.ID,
+			UserRole: user.Role,
+		})
+		if err == nil {
+			readingsByModule[module.ID] = readings
+		}
+	}
+
+	pd := CourseEditPageData{
+		User:             user,
+		Course:           course,
+		Instructor:       instructor,
+		Modules:          modulesList,
+		ReadingsByModule: readingsByModule,
+	}
+
+	tmpl, ok := h.templates["course_edit.html"]
+	if !ok {
+		log.Printf("template not found: course_edit.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
+}
+
+func (h *PageHandler) CourseLearn(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "course not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching course: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		log.Printf("error fetching modules: %v", err)
+		modulesList = []domain.Module{}
+	}
+
+	readingsByModule := make(map[int64][]domain.Reading)
+	var allReadings []struct {
+		Module  domain.Module
+		Reading domain.Reading
+	}
+
+	for i := range modulesList {
+		module := &modulesList[i]
+		readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+			ModuleID: module.ID,
+			UserID:   user.ID,
+			UserRole: user.Role,
+		})
+		if err == nil {
+			readingsByModule[module.ID] = readings
+			for j := range readings {
+				allReadings = append(allReadings, struct {
+					Module  domain.Module
+					Reading domain.Reading
+				}{Module: *module, Reading: readings[j]})
+			}
+		}
+	}
+
+	var currentModule *domain.Module
+	var currentReading *domain.Reading
+	var previousReading *domain.Reading
+	var nextReading *domain.Reading
+
+	readingIDStr := r.URL.Query().Get("readingId")
+	if readingIDStr != "" {
+		readingID, err := strconv.ParseInt(readingIDStr, 10, 64)
+		if err == nil {
+			for i, item := range allReadings {
+				if item.Reading.ID == readingID {
+					currentModule = &item.Module
+					currentReading = &item.Reading
+					if i > 0 {
+						prev := allReadings[i-1]
+						previousReading = &prev.Reading
+					}
+					if i < len(allReadings)-1 {
+						next := allReadings[i+1]
+						nextReading = &next.Reading
+					}
+					break
+				}
+			}
+		}
+	}
+
+	if currentReading == nil && len(allReadings) > 0 {
+		first := allReadings[0]
+		currentModule = &first.Module
+		currentReading = &first.Reading
+		if len(allReadings) > 1 {
+			second := allReadings[1]
+			nextReading = &second.Reading
+		}
+	}
+
+	if currentReading == nil {
+		http.Error(w, "no content available", http.StatusNotFound)
+		return
+	}
+
+	pd := CourseLearnPageData{
+		User:             user,
+		Course:           course,
+		Module:           currentModule,
+		Reading:          currentReading,
+		AllModules:       modulesList,
+		ReadingsByModule: readingsByModule,
+		PreviousReading:  previousReading,
+		NextReading:      nextReading,
+	}
+
+	tmpl, ok := h.templates["course_learn.html"]
+	if !ok {
+		log.Printf("template not found: course_learn.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
+}
+
+func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
+	user, _ := middleware.UserFromContext(r.Context())
+
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var userID int64
+	var userRole domain.UserRole
+	if user != nil {
+		userID = user.ID
+		userRole = user.Role
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   userID,
+		UserRole: userRole,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "course not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching course: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var instructor *domain.User
+	if inst, ok := h.userRepo.GetByID(r.Context(), course.InstructorID); ok {
+		instructor = inst
+	}
+
+	isInstructor := user != nil && course.IsTaughtBy(user)
+
+	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
+		CourseID: courseID,
+		UserID:   userID,
+		UserRole: userRole,
+	})
+	if err != nil {
+		log.Printf("error fetching modules: %v", err)
+		modulesList = []domain.Module{}
+	}
+
+	readingsByModule := make(map[int64][]domain.Reading)
+	var allReadings []struct {
+		Module  domain.Module
+		Reading domain.Reading
+	}
+
+	for i := range modulesList {
+		module := &modulesList[i]
+		readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+			ModuleID: module.ID,
+			UserID:   userID,
+			UserRole: userRole,
+		})
+		if err == nil {
+			readingsByModule[module.ID] = readings
+			for j := range readings {
+				allReadings = append(allReadings, struct {
+					Module  domain.Module
+					Reading domain.Reading
+				}{Module: *module, Reading: readings[j]})
+			}
+		}
+	}
+
+	var currentModule *domain.Module
+	var currentReading *domain.Reading
+	var previousReading *domain.Reading
+	var nextReading *domain.Reading
+
+	readingIDStr := r.URL.Query().Get("readingId")
+	if readingIDStr != "" {
+		readingID, err := strconv.ParseInt(readingIDStr, 10, 64)
+		if err == nil {
+			for i, item := range allReadings {
+				if item.Reading.ID == readingID {
+					currentModule = &item.Module
+					currentReading = &item.Reading
+					if i > 0 {
+						prev := allReadings[i-1]
+						previousReading = &prev.Reading
+					}
+					if i < len(allReadings)-1 {
+						next := allReadings[i+1]
+						nextReading = &next.Reading
+					}
+					break
+				}
+			}
+		}
+	}
+
+	if currentReading == nil && len(allReadings) > 0 {
+		first := allReadings[0]
+		currentModule = &first.Module
+		currentReading = &first.Reading
+		if len(allReadings) > 1 {
+			second := allReadings[1]
+			nextReading = &second.Reading
+		}
+	}
+
+	pd := CourseContentPageData{
+		User:             user,
+		Course:           course,
+		Instructor:       instructor,
+		IsInstructor:     isInstructor,
+		Modules:          modulesList,
+		ReadingsByModule: readingsByModule,
+		CurrentReading:   currentReading,
+		CurrentModule:    currentModule,
+		PreviousReading:  previousReading,
+		NextReading:      nextReading,
+	}
+
+	tmpl, ok := h.templates["course_content.html"]
+	if !ok {
+		log.Printf("template not found: course_content.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
 }
 
 func (h *PageHandler) Proposals(w http.ResponseWriter, r *http.Request) {

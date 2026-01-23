@@ -1,0 +1,67 @@
+{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+<div class="page-header">
+    <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+    {{if .User}}
+    <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
+    {{end}}
+</div>
+
+<div class="course-learn-container">
+    <div class="course-learn-sidebar">
+        <div class="course-learn-sidebar-header">
+            <h3>{{.Course.Title}}</h3>
+        </div>
+        <div class="course-learn-modules">
+            {{range .AllModules}}
+            <div class="course-learn-module">
+                <div class="course-learn-module-header">
+                    <h4>{{.Title}}</h4>
+                </div>
+                <div class="course-learn-readings">
+                    {{$readings := index $.ReadingsByModule .ID}}
+                    {{range $readings}}
+                    <a href="/courses/{{$.Course.ID}}/learn?readingId={{.ID}}" class="course-learn-reading {{if $.Reading}}{{if eq .ID $.Reading.ID}}active{{end}}{{end}}">
+                        {{.Title}}
+                    </a>
+                    {{end}}
+                </div>
+            </div>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="course-learn-main">
+        <div class="course-learn-breadcrumb">
+            <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
+            <span> / </span>
+            <span>{{.Module.Title}}</span>
+            <span> / </span>
+            <span>{{.Reading.Title}}</span>
+        </div>
+
+        <div class="course-learn-content">
+            <h1>{{.Reading.Title}}</h1>
+            {{if .Reading.Content}}
+            <div class="proposal-content-value">{{markdown .Reading.Content}}</div>
+            {{else}}
+            <p class="text-muted">No content available yet.</p>
+            {{end}}
+        </div>
+
+        <div class="course-learn-navigation">
+            {{if .PreviousReading}}
+            <a href="/courses/{{.Course.ID}}/learn?readingId={{.PreviousReading.ID}}" class="btn btn-outline">← Previous</a>
+            {{else}}
+            <span></span>
+            {{end}}
+            {{if .NextReading}}
+            <a href="/courses/{{.Course.ID}}/learn?readingId={{.NextReading.ID}}" class="btn btn-primary">Next →</a>
+            {{else}}
+            <span></span>
+            {{end}}
+        </div>
+    </div>
+</div>
+{{end}} {{define "scripts"}}
+<script type="module" src="/static/js/pages/course_learn.js"></script>
+{{end}}

@@ -3,18 +3,17 @@ ByteCourses{{end}} {{define "content"}}
 <div class="page-header">
     <a href="/courses" class="btn btn-outline">← Back to Courses</a>
     {{if .IsInstructor}}
-    <button type="button" id="edit-toggle-btn" class="btn btn-primary">Edit</button>
+    <a href="/courses/{{.Course.ID}}/edit" class="btn btn-primary">Manage Course</a>
+    {{else}}
+    <a href="/courses/{{.Course.ID}}/content" class="btn btn-primary">View Content</a>
     {{end}}
 </div>
 
-<form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="2000">
 <div class="course-view-hero">
     <div class="course-view-hero-content">
         <div class="course-view-hero-main">
-            <h1 id="view-title" class="view-mode">{{.Course.Title}}</h1>
-            <input type="text" id="title" name="title" class="edit-mode course-hero-title-input" style="display: none;" required value="{{.Course.Title}}" />
-            <p id="view-summary" class="course-view-summary view-mode">{{.Course.Summary}}</p>
-            <textarea id="summary" name="summary" class="edit-mode course-hero-summary-textarea" style="display: none;" rows="3" required>{{.Course.Summary}}</textarea>
+            <h1>{{.Course.Title}}</h1>
+            <p class="course-view-summary">{{.Course.Summary}}</p>
             <div class="course-view-instructor-inline">
                 {{if .Instructor}}
                 <div class="course-view-instructor-avatar">
@@ -36,55 +35,6 @@ ByteCourses{{end}} {{define "content"}}
         </div>
     </div>
 </div>
-
-    <div class="form-container edit-mode" style="display: none;">
-        <div class="form-group">
-            <label for="target_audience">Target Audience
-                <span class="help-icon" data-help="target_audience" aria-label="Show help for Target Audience" tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>Who this course is for.</small></label>
-            <textarea id="target_audience" name="target_audience" rows="3">{{.Course.TargetAudience}}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="learning_objectives">Learning Objectives
-                <span class="help-icon" data-help="learning_objectives" aria-label="Show help for Learning Objectives" tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>What learners will be able to do after completing this course.</small></label>
-            <textarea id="learning_objectives" name="learning_objectives" rows="5">{{.Course.LearningObjectives}}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="assumed_prerequisites">Assumed Prerequisites
-                <span class="help-icon" data-help="assumed_prerequisites" aria-label="Show help for Assumed Prerequisites" tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>What learners should know before starting this course.</small></label>
-            <textarea id="assumed_prerequisites" name="assumed_prerequisites" rows="3">{{.Course.AssumedPrerequisites}}</textarea>
-        </div>
-
-        <div id="error-message" class="error-message" style="display: none"></div>
-        <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
-
-        <div class="form-actions">
-            <button type="button" id="saveBtn" class="btn btn-secondary">Save</button>
-        </div>
-    </div>
-</form>
 
 <div class="course-view-content">
     <div class="course-view-main view-mode">
@@ -157,62 +107,6 @@ ByteCourses{{end}} {{define "content"}}
                 {{markdown .Course.Summary}}
             </div>
         </section>
-
-        <section class="course-view-section course-view-modules">
-            <div class="course-view-section-header">
-                <div class="course-view-section-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                        <polyline points="2 17 12 22 22 17"></polyline>
-                        <polyline points="2 12 12 17 22 12"></polyline>
-                    </svg>
-                </div>
-                <h2>Course Content</h2>
-                {{if .IsInstructor}}
-                <button type="button" id="add-module-btn" class="btn btn-small btn-primary">Add Module</button>
-                {{end}}
-            </div>
-            <div class="course-view-section-body">
-                {{if .Modules}}
-                    {{range .Modules}}
-                    {{$moduleID := .ID}}
-                    <div class="module-item" data-module-id="{{.ID}}" data-order="{{.Order}}">
-                        <div class="module-header">
-                            <h3>{{.Title}}</h3>
-                            {{if $.IsInstructor}}
-                            <div class="module-actions">
-                                <button type="button" class="btn-edit-module" data-module-id="{{.ID}}">Edit</button>
-                                <button type="button" class="btn-delete-module" data-module-id="{{.ID}}">Delete</button>
-                            </div>
-                            {{end}}
-                        </div>
-                        {{if .Description}}
-                        <p class="module-description">{{markdown .Description}}</p>
-                        {{end}}
-                        <div class="readings-list">
-                            {{$readings := index $.ReadingsByModule .ID}}
-                            {{if $readings}}
-                                {{range $readings}}
-                                <div class="reading-item">
-                                    <a href="/modules/{{$moduleID}}/readings/{{.ID}}">{{.Title}}</a>
-                                </div>
-                                {{end}}
-                            {{end}}
-                            {{if $.IsInstructor}}
-                            <button type="button" class="btn-add-reading" data-module-id="{{.ID}}">+ Add Reading</button>
-                            {{end}}
-                        </div>
-                    </div>
-                    {{end}}
-                {{else}}
-                    {{if .IsInstructor}}
-                    <p class="text-muted">No modules yet. Click "Add Module" to get started.</p>
-                    {{else}}
-                    <p class="text-muted">No content available yet.</p>
-                    {{end}}
-                {{end}}
-            </div>
-        </section>
     </div>
 
     <div class="course-view-sidebar">
@@ -254,98 +148,7 @@ ByteCourses{{end}} {{define "content"}}
                 <span class="course-view-detail-label">Created</span>
                 <span class="course-view-detail-value">{{.Course.CreatedAt.Format "Jan 2, 2006"}}</span>
             </div>
-            {{if and .IsInstructor (eq .Course.Status "draft")}}
-            <div style="margin-top: 1.5rem;">
-                <button type="button" id="publishBtn" class="btn btn-primary" style="width: 100%;">
-                    Publish Course
-                </button>
-            </div>
-            {{end}}
         </div>
     </div>
 </div>
-
-{{if .IsInstructor}}
-<div id="module-form-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create Module</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="module-create-form">
-                <div class="form-group">
-                    <label for="module-title">Title</label>
-                    <input type="text" id="module-title" name="title" required />
-                </div>
-                <div class="form-group">
-                    <label for="module-description">Description</label>
-                    <textarea id="module-description" name="description" rows="4"></textarea>
-                </div>
-                <div id="module-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div id="module-edit-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Edit Module</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="module-edit-form">
-                <input type="hidden" id="module-edit-id" name="module_id" />
-                <div class="form-group">
-                    <label for="module-edit-title">Title</label>
-                    <input type="text" id="module-edit-title" name="title" required />
-                </div>
-                <div class="form-group">
-                    <label for="module-edit-description">Description</label>
-                    <textarea id="module-edit-description" name="description" rows="4"></textarea>
-                </div>
-                <div id="module-edit-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div id="reading-form-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create Reading</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="reading-create-form">
-                <input type="hidden" id="reading-module-id" name="module_id" />
-                <div class="form-group">
-                    <label for="reading-title">Title</label>
-                    <input type="text" id="reading-title" name="title" required />
-                </div>
-                <div id="reading-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{{end}}
-
-{{end}} {{define "scripts"}}
-<script type="module" src="/static/js/pages/course_view.js"></script>
 {{end}}

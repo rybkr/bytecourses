@@ -1,6 +1,5 @@
 import api from "../core/api.js";
 import FormHandler from "../components/FormHandler.js";
-import { escapeHtml, confirmAction } from "../core/utils.js";
 import { $, on } from "../core/dom.js";
 import { showError, hideError } from "../core/utils.js";
 

@@ -4,7 +4,9 @@
         <div class="lecture-view-breadcrumb">
             <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
             <span> / </span>
-            <span>{{.Module.Title}}</span>
+            <a href="/courses/{{.Course.ID}}/content?readingId={{.Reading.ID}}">{{.Module.Title}}</a>
+            <span> / </span>
+            <span>{{.Reading.Title}}</span>
         </div>
         <h1 class="lecture-view-title">{{.Reading.Title}}</h1>
         <div class="lecture-view-meta">
@@ -24,7 +26,10 @@
     </div>
 
     <div class="lecture-navigation">
-        <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
+        <a href="/courses/{{.Course.ID}}/content?readingId={{.Reading.ID}}" class="btn btn-outline">← Back to Content</a>
+        {{if .IsInstructor}}
+        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
+        {{end}}
     </div>
 </div>
 {{end}}

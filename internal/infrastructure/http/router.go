@@ -1,6 +1,8 @@
 package http
 
 import (
+	"embed"
+	"io/fs"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -11,12 +13,12 @@ import (
 	"bytecourses/internal/infrastructure/http/middleware"
 )
 
-func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
+func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
 
-	pageHandler := handlers.NewPageHandler(templatesDir, c.ProposalService, c.CourseService, c.UserRepo)
+	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.UserRepo)
 	authHandler := handlers.NewAuthHandler(c.AuthService)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
@@ -64,7 +66,8 @@ func NewRouter(c *bootstrap.Container, templatesDir string) http.Handler {
 		})
 	})
 
-	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.Dir("web/static"))))
+	staticFS, _ := fs.Sub(webFS, "static")
+	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
 	r.Group(func(r chi.Router) {
 		r.Use(optionalUser)

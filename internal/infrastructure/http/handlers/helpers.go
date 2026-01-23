@@ -6,8 +6,6 @@ import (
 	"log/slog"
 	"net/http"
 
-	"bytecourses/internal/domain"
-	"bytecourses/internal/infrastructure/http/middleware"
 	"bytecourses/internal/pkg/errors"
 )
 
@@ -34,19 +32,6 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	}
 
 	return true
-}
-
-func userFromRequest(r *http.Request) (*domain.User, bool) {
-	return middleware.UserFromContext(r.Context())
-}
-
-func requireAuthenticatedUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
-	user, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		handleError(w, errors.ErrUnauthorized)
-		return nil, false
-	}
-	return user, true
 }
 
 func handleError(w http.ResponseWriter, err error) {

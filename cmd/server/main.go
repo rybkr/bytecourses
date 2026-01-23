@@ -14,6 +14,7 @@ import (
 	"bytecourses/internal/bootstrap"
 	infraauth "bytecourses/internal/infrastructure/auth"
 	infrahttp "bytecourses/internal/infrastructure/http"
+	"bytecourses/web"
 )
 
 func main() {
@@ -69,7 +70,7 @@ func main() {
 	}
 	defer container.Close()
 
-	router := infrahttp.NewRouter(container, "web/templates")
+	router := infrahttp.NewRouter(container, web.FS)
 
 	port := os.Getenv("PORT")
 	if port == "" {

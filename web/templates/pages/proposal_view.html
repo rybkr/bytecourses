@@ -54,8 +54,7 @@ ByteCourses{{end}} {{define "content"}}
     <div id="review-error" class="error-message" style="display: none"></div>
     <div class="form-group">
         <label for="review-notes">Review Notes</label>
-        <textarea id="review-notes" rows="4" placeholder="Add your review notes here...">
-{{.Proposal.ReviewNotes}}</textarea>
+        <textarea id="review-notes" rows="4" placeholder="Add your review notes here...">{{.Proposal.ReviewNotes}}</textarea>
     </div>
     <div class="review-actions">
         <button id="approveBtn" class="btn btn-success">Approve</button>

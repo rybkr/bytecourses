@@ -1676,12 +1676,14 @@ a {
 .review-notes-content {
     color: var(--text-color);
     line-height: 1.8;
-    margin-bottom: 1rem;
-    white-space: pre-wrap;
     font-size: 0.9375rem;
     padding: 1rem 1.25rem;
     background: var(--bg-secondary);
     border-radius: 0.5rem;
+}
+
+.review-notes-content p:last-child {
+    margin-bottom: 0;
 }
 
 .review-notes-meta {
@@ -1689,8 +1691,7 @@ a {
     gap: 1.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    padding-top: 1rem;
-    border-top: 1px solid var(--border-color);
+    margin-top: 1rem;
 }
 
 .review-card h2 {

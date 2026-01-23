@@ -78,3 +78,17 @@ func (r *CourseRepository) Update(ctx context.Context, c *domain.Course) error {
 
 	return nil
 }
+
+func (r *CourseRepository) GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	for _, c := range r.courses {
+		if c.ProposalID != nil && *c.ProposalID == proposalID {
+			course := c
+			return &course, true
+		}
+	}
+
+	return nil, false
+}

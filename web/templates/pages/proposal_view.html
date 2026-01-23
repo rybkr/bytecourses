@@ -15,7 +15,11 @@ ByteCourses{{end}} {{define "content"}}
         <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
         {{end}}
         {{if eq .Proposal.Status "approved"}}
+        {{if .CourseExists}}
+        <a href="/courses/{{.ExistingCourseID}}/edit" class="btn btn-primary">Course Already Created</a>
+        {{else}}
         <button id="createCourseBtn" class="btn btn-primary">Create Course</button>
+        {{end}}
         {{end}}
         {{end}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
@@ -108,8 +112,22 @@ ByteCourses{{end}} {{define "content"}}
     <h2>Prerequisites</h2>
     <div class="proposal-content-value">{{markdown .Proposal.AssumedPrerequisites}}</div>
 </div>
+<div id="create-course-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Create Course from Proposal</h2>
+        <p>Your proposal data will be copied to a draft course where you can review and refine the details.</p>
+        <p>You can edit all fields before publishing. Once published, your course will be visible to students.</p>
+        <p>The proposal will remain linked to the course for reference.</p>
+        <div class="modal-actions">
+            <button id="confirm-create-course" class="btn btn-primary">Create Course</button>
+            <button data-modal-close class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
 {{end}} {{define "scripts"}}
-<script>
+<script type="module">
+    import Modal from "/static/js/components/Modal.js";
+    
     document.addEventListener("DOMContentLoaded", () => {
         const proposalId = {{.Proposal.ID}};
         if (!proposalId || proposalId <= 0) {
@@ -121,6 +139,7 @@ ByteCourses{{end}} {{define "content"}}
     const deleteBtn = document.getElementById("deleteBtn");
     const createCourseBtn = document.getElementById("createCourseBtn");
     const errorDiv = document.getElementById("error-message");
+    const createCourseModal = new Modal("#create-course-modal");
 
     if (submitBtn) {
         async function submit() {
@@ -221,10 +240,17 @@ ByteCourses{{end}} {{define "content"}}
     }
 
     if (createCourseBtn) {
+        createCourseBtn.addEventListener("click", () => {
+            createCourseModal.open();
+        });
+    }
+
+    const confirmCreateCourseBtn = document.getElementById("confirm-create-course");
+    if (confirmCreateCourseBtn) {
         async function createCourse() {
             errorDiv.style.display = "none";
             errorDiv.textContent = "";
-            createCourseBtn.disabled = true;
+            confirmCreateCourseBtn.disabled = true;
 
             try {
                 const res = await fetch(`/api/proposals/${proposalId}/actions/create-course`, {
@@ -233,22 +259,34 @@ ByteCourses{{end}} {{define "content"}}
 
                 if (!res.ok) {
                     const txt = await res.text();
-                    errorDiv.textContent = txt || "Create course failed";
+                    let errorMsg = txt || "Create course failed";
+                    if (res.status === 409) {
+                        try {
+                            const data = await res.json();
+                            if (data.course_id) {
+                                window.location.href = `/courses/${data.course_id}/edit`;
+                                return;
+                            }
+                        } catch (e) {
+                        }
+                    }
+                    errorDiv.textContent = errorMsg;
                     errorDiv.style.display = "block";
-                    createCourseBtn.disabled = false;
+                    confirmCreateCourseBtn.disabled = false;
                     return;
                 }
 
                 const course = await res.json();
+                createCourseModal.close();
                 window.location.href = `/courses/${course.id}/edit`;
             } catch (error) {
                 errorDiv.textContent = "Network error. Please try again.";
                 errorDiv.style.display = "block";
-                createCourseBtn.disabled = false;
+                confirmCreateCourseBtn.disabled = false;
             }
         }
 
-        createCourseBtn.addEventListener("click", createCourse);
+        confirmCreateCourseBtn.addEventListener("click", createCourse);
     }
 
     const approveBtn = document.getElementById("approveBtn");

@@ -3549,6 +3549,56 @@ a {
     max-width: 700px;
 }
 
+.course-hero-title-input {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0 0 1rem 0;
+    color: white;
+    line-height: 1.2;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    width: 100%;
+    max-width: 700px;
+    transition: all 0.2s ease;
+}
+
+.course-hero-title-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.course-hero-title-input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.course-hero-summary-textarea {
+    font-size: 1.125rem;
+    margin: 0 0 1.5rem 0;
+    color: white;
+    line-height: 1.7;
+    max-width: 700px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.15);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    resize: vertical;
+    transition: all 0.2s ease;
+}
+
+.course-hero-summary-textarea:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.course-hero-summary-textarea::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
 .course-view-instructor-inline {
     display: flex;
     align-items: center;

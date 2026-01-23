@@ -26,8 +26,10 @@ type PageData struct {
 }
 
 type ProposalPageData struct {
-	User     *domain.User
-	Proposal *domain.Proposal
+	User             *domain.User
+	Proposal         *domain.Proposal
+	CourseExists     bool
+	ExistingCourseID *int64
 }
 
 type CoursesPageData struct {
@@ -35,6 +37,13 @@ type CoursesPageData struct {
 	Courses      []domain.Course
 	Instructors  map[int64]*domain.User
 	ModuleCounts map[int64]int
+}
+
+type CoursePageData struct {
+	User         *domain.User
+	Course       *domain.Course
+	Instructor   *domain.User
+	IsInstructor bool
 }
 
 type PageHandler struct {
@@ -202,11 +211,70 @@ func (h *PageHandler) Courses(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, "course_view.html", nil)
+	user, _ := middleware.UserFromContext(r.Context())
+
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var userID int64
+	var userRole domain.UserRole
+	if user != nil {
+		userID = user.ID
+		userRole = user.Role
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   userID,
+		UserRole: userRole,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "course not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching course: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var instructor *domain.User
+	if inst, ok := h.userRepo.GetByID(r.Context(), course.InstructorID); ok {
+		instructor = inst
+	}
+
+	isInstructor := user != nil && course.IsTaughtBy(user)
+
+	pd := CoursePageData{
+		User:         user,
+		Course:       course,
+		Instructor:   instructor,
+		IsInstructor: isInstructor,
+	}
+
+	tmpl, ok := h.templates["course_view.html"]
+	if !ok {
+		log.Printf("template not found: course_view.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
 }
 
 func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
-	h.render(w, r, "course_edit.html", nil)
+	courseID := chi.URLParam(r, "id")
+	http.Redirect(w, r, "/courses/"+courseID, http.StatusFound)
 }
 
 func (h *PageHandler) Proposals(w http.ResponseWriter, r *http.Request) {
@@ -251,6 +319,14 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 	pd := ProposalPageData{
 		User:     user,
 		Proposal: proposal,
+	}
+
+	if proposal.Status == domain.ProposalStatusApproved && proposal.AuthorID == user.ID {
+		existing, ok := h.courseService.Courses.GetByProposalID(r.Context(), proposalID)
+		if ok {
+			pd.CourseExists = true
+			pd.ExistingCourseID = &existing.ID
+		}
 	}
 
 	var buf bytes.Buffer

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -13,12 +14,14 @@ import (
 )
 
 type ProposalHandler struct {
-	Service *services.ProposalService
+	Service      *services.ProposalService
+	CourseService *services.CourseService
 }
 
-func NewProposalHandler(proposalService *services.ProposalService) *ProposalHandler {
+func NewProposalHandler(proposalService *services.ProposalService, courseService *services.CourseService) *ProposalHandler {
 	return &ProposalHandler{
-		Service: proposalService,
+		Service:      proposalService,
+		CourseService: courseService,
 	}
 }
 
@@ -325,4 +328,41 @@ func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, proposals)
+}
+
+func (h *ProposalHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	course, err := h.CourseService.CreateFromProposal(r.Context(), &services.CreateCourseFromProposalCommand{
+		ProposalID: proposalID,
+		UserID:     user.ID,
+	})
+	if err != nil {
+		if err == errors.ErrConflict {
+			existing, _ := h.CourseService.Courses.GetByProposalID(r.Context(), proposalID)
+			if existing != nil {
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusConflict)
+				_ = json.NewEncoder(w).Encode(map[string]interface{}{
+					"error":     "course already exists for this proposal",
+					"course_id": existing.ID,
+				})
+				return
+			}
+		}
+		handleError(w, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, course)
 }

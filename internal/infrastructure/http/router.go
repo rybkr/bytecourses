@@ -20,7 +20,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.UserRepo)
 	authHandler := handlers.NewAuthHandler(c.AuthService)
-	proposalHandler := handlers.NewProposalHandler(c.ProposalService)
+	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
@@ -54,6 +54,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 			r.With(requireAdmin).Post("/{id}/actions/approve", proposalHandler.Approve)
 			r.With(requireAdmin).Post("/{id}/actions/reject", proposalHandler.Reject)
 			r.With(requireAdmin).Post("/{id}/actions/request-changes", proposalHandler.RequestChanges)
+			r.Post("/{id}/actions/create-course", proposalHandler.CreateCourse)
 		})
 
 		r.Route("/courses", func(r chi.Router) {

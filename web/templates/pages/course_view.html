@@ -2,13 +2,18 @@
 ByteCourses{{end}} {{define "content"}}
 <div class="page-header">
     <a href="/courses" class="btn btn-outline">← Back to Courses</a>
+    {{if .IsInstructor}}
+    <button type="button" id="edit-toggle-btn" class="btn btn-primary">Edit</button>
+    {{end}}
 </div>
 
 <div class="course-view-hero">
     <div class="course-view-hero-content">
         <div class="course-view-hero-main">
-            <h1>{{.Course.Title}}</h1>
-            <p class="course-view-summary">{{.Course.Summary}}</p>
+            <h1 id="view-title" class="view-mode">{{.Course.Title}}</h1>
+            <input type="text" id="hero-title" name="title" class="edit-mode course-hero-title-input" style="display: none;" required value="{{.Course.Title}}" />
+            <p id="view-summary" class="course-view-summary view-mode">{{.Course.Summary}}</p>
+            <textarea id="hero-summary" name="summary" class="edit-mode course-hero-summary-textarea" style="display: none;" rows="3" required>{{.Course.Summary}}</textarea>
             <div class="course-view-instructor-inline">
                 {{if .Instructor}}
                 <div class="course-view-instructor-avatar">
@@ -26,22 +31,89 @@ ByteCourses{{end}} {{define "content"}}
                     {{if eq (printf "%s" .Course.Status) "published"}}Published{{else}}Draft{{end}}
                 </span>
                 {{end}}
-                {{if .Modules}}
-                <span class="course-view-stat">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                    {{len .Modules}} module{{if ne (len .Modules) 1}}s{{end}}
-                </span>
-                {{end}}
             </div>
         </div>
     </div>
 </div>
 
+<form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="2000" class="edit-mode" style="display: none;">
+    <div class="form-container">
+        <div class="form-group">
+            <label for="title">Title
+                <span class="help-icon" data-help="title" aria-label="Show help for Title" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>Clear, specific, and focused on one topic.</small></label>
+            <input type="text" id="title" name="title" required value="{{.Course.Title}}" />
+        </div>
+
+        <div class="form-group">
+            <label for="summary">Summary
+                <span class="help-icon" data-help="summary" aria-label="Show help for Summary" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>What learners will gain and why it matters.</small></label>
+            <textarea id="summary" name="summary" rows="5" required>{{.Course.Summary}}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="target_audience">Target Audience
+                <span class="help-icon" data-help="target_audience" aria-label="Show help for Target Audience" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>Who this course is for.</small></label>
+            <textarea id="target_audience" name="target_audience" rows="3">{{.Course.TargetAudience}}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="learning_objectives">Learning Objectives
+                <span class="help-icon" data-help="learning_objectives" aria-label="Show help for Learning Objectives" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>What learners will be able to do after completing this course.</small></label>
+            <textarea id="learning_objectives" name="learning_objectives" rows="5">{{.Course.LearningObjectives}}</textarea>
+        </div>
+
+        <div class="form-group">
+            <label for="assumed_prerequisites">Assumed Prerequisites
+                <span class="help-icon" data-help="assumed_prerequisites" aria-label="Show help for Assumed Prerequisites" tabindex="0" role="button">
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
+                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
+                    </svg>
+                </span>
+                <br /><small>What learners should know before starting this course.</small></label>
+            <textarea id="assumed_prerequisites" name="assumed_prerequisites" rows="3">{{.Course.AssumedPrerequisites}}</textarea>
+        </div>
+
+        <div id="error-message" class="error-message" style="display: none"></div>
+        <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
+
+        <div class="form-actions">
+            <button type="button" id="saveBtn" class="btn btn-secondary">Save</button>
+        </div>
+    </div>
+</form>
+
 <div class="course-view-content">
-    <div class="course-view-main">
+    <div class="course-view-main view-mode">
         {{if .Course.LearningObjectives}}
         <section class="course-view-section course-view-objectives">
             <div class="course-view-section-header">
@@ -53,7 +125,7 @@ ByteCourses{{end}} {{define "content"}}
                 </div>
                 <h2>What You'll Learn</h2>
             </div>
-            <div class="course-view-objectives-content">
+            <div class="course-view-section-body">
                 {{markdown .Course.LearningObjectives}}
             </div>
         </section>
@@ -140,18 +212,6 @@ ByteCourses{{end}} {{define "content"}}
                 <span class="course-view-detail-label">Status</span>
                 <span class="course-view-detail-value">{{if eq (printf "%s" .Course.Status) "published"}}Published{{else}}Draft{{end}}</span>
             </div>
-            {{if .Modules}}
-            <div class="course-view-detail-row">
-                <span class="course-view-detail-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                    </svg>
-                </span>
-                <span class="course-view-detail-label">Modules</span>
-                <span class="course-view-detail-value">{{len .Modules}}</span>
-            </div>
-            {{end}}
             <div class="course-view-detail-row">
                 <span class="course-view-detail-icon">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -164,66 +224,16 @@ ByteCourses{{end}} {{define "content"}}
                 <span class="course-view-detail-label">Created</span>
                 <span class="course-view-detail-value">{{.Course.CreatedAt.Format "Jan 2, 2006"}}</span>
             </div>
+            {{if and .IsInstructor (eq .Course.Status "draft")}}
+            <div style="margin-top: 1.5rem;">
+                <button type="button" id="publishBtn" class="btn btn-primary" style="width: 100%;">
+                    Publish Course
+                </button>
+            </div>
+            {{end}}
         </div>
     </div>
 </div>
-
-<div class="curriculum-section" data-is-instructor="{{.IsInstructor}}">
-    <div class="curriculum-header">
-        <h2>Curriculum</h2>
-        {{if .IsInstructor}}
-        <button type="button" id="add-module-btn" class="btn btn-primary">Add Module</button>
-        {{end}}
-    </div>
-    {{if .Modules}}
-    {{range $index, $module := .Modules}}
-    <div class="module-accordion{{if eq $index 0}} expanded{{end}}" data-module-id="{{$module.ID}}">
-        <div class="module-accordion-header">
-            <h3 class="module-accordion-title">{{$module.Title}}</h3>
-            <div class="module-accordion-meta">
-                {{if $.IsInstructor}}
-                <div class="module-actions">
-                    <button type="button" class="btn btn-small btn-secondary edit-module-btn" data-module-id="{{$module.ID}}" data-module-title="{{$module.Title}}">Edit</button>
-                    <button type="button" class="btn btn-small btn-danger delete-module-btn" data-module-id="{{$module.ID}}" data-module-title="{{$module.Title}}">Delete</button>
-                </div>
-                {{else}}
-                <span>Coming soon</span>
-                {{end}}
-            </div>
-            <div class="module-accordion-toggle">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-            </div>
-        </div>
-        <div class="module-accordion-content">
-            <div class="module-accordion-body">
-                <div class="content-list" data-module-id="{{$module.ID}}">
-                    <div class="content-list-loading">Loading content...</div>
-                </div>
-                {{if $.IsInstructor}}
-                <div class="module-content-actions" style="margin-top: 1rem;">
-                    <button type="button" class="btn btn-secondary add-lecture-btn" data-module-id="{{$module.ID}}">+ Add Lecture</button>
-                </div>
-                {{end}}
-            </div>
-        </div>
-    </div>
-    {{end}}
-    {{else}}
-    {{if .IsInstructor}}
-    <div class="empty-modules-message">
-        <p>No modules yet. Click "Add Module" to get started.</p>
-    </div>
-    {{else}}
-    <div class="empty-modules-message">
-        <p>Curriculum will be available soon.</p>
-    </div>
-    {{end}}
-    {{end}}
-</div>
-{{end}}
-
-{{define "scripts"}}
+{{end}} {{define "scripts"}}
 <script type="module" src="/static/js/pages/course_view.js"></script>
 {{end}}

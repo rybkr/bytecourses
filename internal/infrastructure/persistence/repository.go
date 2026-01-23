@@ -28,6 +28,7 @@ type ProposalRepository interface {
 type CourseRepository interface {
 	Repository[domain.Course]
 	ListAllLive(ctx context.Context) ([]domain.Course, error)
+	GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool)
 }
 
 type PasswordResetRepository interface {

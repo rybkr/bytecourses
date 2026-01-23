@@ -12,6 +12,7 @@ import (
 
 var (
 	_ Command = (*CreateCourseCommand)(nil)
+	_ Command = (*CreateCourseFromProposalCommand)(nil)
 	_ Command = (*UpdateCourseCommand)(nil)
 	_ Command = (*PublishCourseCommand)(nil)
 )
@@ -74,6 +75,50 @@ func (s *CourseService) Create(ctx context.Context, cmd *CreateCourseCommand) (*
 	_ = s.Events.Publish(ctx, event)
 
 	return &course, nil
+}
+
+type CreateCourseFromProposalCommand struct {
+	ProposalID int64 `json:"proposal_id"`
+	UserID     int64 `json:"user_id"`
+}
+
+func (c *CreateCourseFromProposalCommand) Validate(v *validation.Validator) {
+	v.Field(c.ProposalID, "proposal_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
+func (s *CourseService) CreateFromProposal(ctx context.Context, cmd *CreateCourseFromProposalCommand) (*domain.Course, error) {
+	if err := validation.Validate(cmd); err != nil {
+		return nil, err
+	}
+
+	proposal, ok := s.Proposals.GetByID(ctx, cmd.ProposalID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	if proposal.AuthorID != cmd.UserID {
+		return nil, errors.ErrNotFound
+	}
+
+	if proposal.Status != domain.ProposalStatusApproved {
+		return nil, errors.ErrInvalidStatusTransition
+	}
+
+	existing, ok := s.Courses.GetByProposalID(ctx, cmd.ProposalID)
+	if ok {
+		return existing, errors.ErrConflict
+	}
+
+	course := domain.CourseFromProposal(proposal)
+	if err := s.Courses.Create(ctx, course); err != nil {
+		return nil, err
+	}
+
+	event := domain.NewCourseCreatedEvent(course.ID, cmd.UserID)
+	_ = s.Events.Publish(ctx, event)
+
+	return course, nil
 }
 
 type UpdateCourseCommand struct {

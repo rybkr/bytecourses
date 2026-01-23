@@ -24,7 +24,7 @@ func (r *CourseRepository) Create(ctx context.Context, c *domain.Course) error {
 	if err := r.db.QueryRowContext(ctx, `
 		INSERT INTO courses (
 			title, summary, target_audience, learning_objectives,
-			assumed_prerequisites, instructor_id, status,
+			assumed_prerequisites, instructor_id, proposal_id, status,
 			created_at, updated_at
 		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
@@ -36,6 +36,7 @@ func (r *CourseRepository) Create(ctx context.Context, c *domain.Course) error {
 		c.LearningObjectives,
 		c.AssumedPrerequisites,
 		c.InstructorID,
+		c.ProposalID,
 		string(c.Status),
 		now,
 		now,
@@ -54,7 +55,7 @@ func (r *CourseRepository) GetByID(ctx context.Context, id int64) (*domain.Cours
 
 	if err := r.db.QueryRowContext(ctx, `
 		SELECT id, title, summary, target_audience, learning_objectives,
-		       assumed_prerequisites, instructor_id, status,
+		       assumed_prerequisites, instructor_id, proposal_id, status,
 		       created_at, updated_at
 		FROM courses
 		WHERE id = $1
@@ -66,6 +67,7 @@ func (r *CourseRepository) GetByID(ctx context.Context, id int64) (*domain.Cours
 		&c.LearningObjectives,
 		&c.AssumedPrerequisites,
 		&c.InstructorID,
+		&c.ProposalID,
 		&status,
 		&c.CreatedAt,
 		&c.UpdatedAt,
@@ -80,10 +82,10 @@ func (r *CourseRepository) GetByID(ctx context.Context, id int64) (*domain.Cours
 func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, error) {
 	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, title, summary, target_audience, learning_objectives,
-		       assumed_prerequisites, instructor_id, status,
+		       assumed_prerequisites, instructor_id, proposal_id, status,
 		       created_at, updated_at
 		FROM courses
-		WHERE status = 'live'
+		WHERE status = 'published'
 		ORDER BY created_at DESC
 	`)
 	if err != nil {
@@ -104,6 +106,7 @@ func (r *CourseRepository) ListAllLive(ctx context.Context) ([]domain.Course, er
 			&c.LearningObjectives,
 			&c.AssumedPrerequisites,
 			&c.InstructorID,
+			&c.ProposalID,
 			&status,
 			&c.CreatedAt,
 			&c.UpdatedAt,
@@ -142,4 +145,34 @@ func (r *CourseRepository) Update(ctx context.Context, c *domain.Course) error {
 		c.UpdatedAt,
 	)
 	return err
+}
+
+func (r *CourseRepository) GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
+	var c domain.Course
+	var status string
+
+	if err := r.db.QueryRowContext(ctx, `
+		SELECT id, title, summary, target_audience, learning_objectives,
+		       assumed_prerequisites, instructor_id, proposal_id, status,
+		       created_at, updated_at
+		FROM courses
+		WHERE proposal_id = $1
+	`, proposalID).Scan(
+		&c.ID,
+		&c.Title,
+		&c.Summary,
+		&c.TargetAudience,
+		&c.LearningObjectives,
+		&c.AssumedPrerequisites,
+		&c.InstructorID,
+		&c.ProposalID,
+		&status,
+		&c.CreatedAt,
+		&c.UpdatedAt,
+	); err != nil {
+		return nil, false
+	}
+
+	c.Status = domain.CourseStatus(status)
+	return &c, true
 }

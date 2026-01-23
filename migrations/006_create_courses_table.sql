@@ -5,7 +5,7 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'course_status') THEN
         CREATE TYPE course_status AS ENUM (
             'draft',
-            'live'
+            'published'
         );
     END IF;
 END $$;
@@ -24,5 +24,7 @@ CREATE INDEX IF NOT EXISTS courses_instructor_id_idx ON courses(instructor_id);
 CREATE INDEX IF NOT EXISTS courses_status_idx ON courses(status);
 
 -- +goose Down
+DROP INDEX IF EXISTS courses_instructor_id_idx;
+DROP INDEX IF EXISTS courses_status_idx;
 DROP TABLE IF EXISTS courses;
 DROP TYPE IF EXISTS course_status;

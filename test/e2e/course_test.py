@@ -297,4 +297,4 @@ class TestCoursePublicAccess:
         if course_id in course_ids:
             for course in r.json():
                 if course["id"] == course_id:
-                    assert course["status"] == "live"
+                    assert course["status"] == "published"

@@ -317,13 +317,14 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pd := ProposalPageData{
-		User:     user,
-		Proposal: proposal,
+		User:         user,
+		Proposal:     proposal,
+		CourseExists: false,
 	}
 
 	if proposal.Status == domain.ProposalStatusApproved && proposal.AuthorID == user.ID {
 		existing, ok := h.courseService.Courses.GetByProposalID(r.Context(), proposalID)
-		if ok {
+		if ok && existing != nil {
 			pd.CourseExists = true
 			pd.ExistingCourseID = &existing.ID
 		}

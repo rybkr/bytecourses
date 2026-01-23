@@ -95,7 +95,7 @@ func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64)
 		       author_id, reviewer_id, review_notes, status, created_at, updated_at
 		FROM proposals
 		WHERE author_id = $1
-		ORDER BY created_at DESC
+		ORDER BY updated_at DESC
 	`, authorID)
 	if err != nil {
 		return nil, err
@@ -112,7 +112,7 @@ func (r *ProposalRepository) ListAllSubmitted(ctx context.Context) ([]domain.Pro
 		       author_id, reviewer_id, review_notes, status, created_at, updated_at
 		FROM proposals
 		WHERE status IN ('submitted', 'approved', 'rejected', 'changes_requested')
-		ORDER BY created_at DESC
+		ORDER BY updated_at DESC
 	`)
 	if err != nil {
 		return nil, err

@@ -2,6 +2,7 @@ package memory
 
 import (
 	"context"
+	"sort"
 	"sync"
 	"time"
 
@@ -62,6 +63,9 @@ func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64)
 			result = append(result, p)
 		}
 	}
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].UpdatedAt.After(result[j].UpdatedAt)
+	})
 	return result, nil
 }
 
@@ -78,6 +82,9 @@ func (r *ProposalRepository) ListAllSubmitted(ctx context.Context) ([]domain.Pro
 			result = append(result, p)
 		}
 	}
+	sort.SliceStable(result, func(i, j int) bool {
+		return result[i].UpdatedAt.After(result[j].UpdatedAt)
+	})
 
 	return result, nil
 }

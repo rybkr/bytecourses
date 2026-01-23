@@ -44,20 +44,20 @@ document.addEventListener("DOMContentLoaded", () => {
         editToggleBtn.textContent = "Cancel";
 
         const viewTitle = $("#view-title");
-        const heroTitle = $("#hero-title");
+        const titleInput = $("#title");
         const viewSummary = $("#view-summary");
-        const heroSummary = $("#hero-summary");
+        const summaryInput = $("#summary");
 
-        if (viewTitle && heroTitle) {
+        if (viewTitle && titleInput) {
             viewTitle.style.display = "none";
-            heroTitle.style.display = "block";
-            heroTitle.value = viewTitle.textContent.trim();
+            titleInput.style.display = "block";
+            titleInput.value = viewTitle.textContent.trim();
         }
 
-        if (viewSummary && heroSummary) {
+        if (viewSummary && summaryInput) {
             viewSummary.style.display = "none";
-            heroSummary.style.display = "block";
-            heroSummary.value = viewSummary.textContent.trim();
+            summaryInput.style.display = "block";
+            summaryInput.value = viewSummary.textContent.trim();
         }
 
         viewModeElements.forEach((el) => {
@@ -66,13 +66,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         editModeElements.forEach((el) => {
-            if (el && el.id !== "hero-title" && el.id !== "hero-summary") {
+            if (el && el.id !== "title" && el.id !== "summary") {
                 el.style.display = "";
             }
         });
 
-        if (courseForm) {
-            courseForm.style.display = "block";
+        const formContainer = $(".form-container");
+        if (formContainer) {
+            formContainer.style.display = "block";
         }
         if (courseViewMain) {
             courseViewMain.style.display = "none";
@@ -81,64 +82,25 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!formHandler) {
             formHandler = initializeFormHandler();
         }
-
-        const formTitle = $("#title");
-        const formSummary = $("#summary");
-        if (formTitle && heroTitle) {
-            formTitle.value = heroTitle.value;
-        }
-        if (formSummary && heroSummary) {
-            formSummary.value = heroSummary.value;
-        }
-
-        if (formHandler && heroTitle && formTitle) {
-            heroTitle.addEventListener("input", syncHeroToForm);
-        }
-        if (formHandler && heroSummary && formSummary) {
-            heroSummary.addEventListener("input", syncHeroToForm);
-        }
-    }
-
-    function syncHeroToForm() {
-        const heroTitle = $("#hero-title");
-        const heroSummary = $("#hero-summary");
-        const formTitle = $("#title");
-        const formSummary = $("#summary");
-
-        if (heroTitle && formTitle) {
-            formTitle.value = heroTitle.value;
-            formTitle.dispatchEvent(new Event("input", { bubbles: true }));
-        }
-        if (heroSummary && formSummary) {
-            formSummary.value = heroSummary.value;
-            formSummary.dispatchEvent(new Event("input", { bubbles: true }));
-        }
     }
 
     function exitEditMode() {
         isEditMode = false;
         editToggleBtn.textContent = "Edit";
 
-        const heroTitle = $("#hero-title");
-        const heroSummary = $("#hero-summary");
-        if (heroTitle) {
-            heroTitle.removeEventListener("input", syncHeroToForm);
-        }
-        if (heroSummary) {
-            heroSummary.removeEventListener("input", syncHeroToForm);
-        }
-
         const viewTitle = $("#view-title");
+        const titleInput = $("#title");
         const viewSummary = $("#view-summary");
+        const summaryInput = $("#summary");
 
-        if (viewTitle && heroTitle) {
+        if (viewTitle && titleInput) {
             viewTitle.style.display = "";
-            heroTitle.style.display = "none";
+            titleInput.style.display = "none";
         }
 
-        if (viewSummary && heroSummary) {
+        if (viewSummary && summaryInput) {
             viewSummary.style.display = "";
-            heroSummary.style.display = "none";
+            summaryInput.style.display = "none";
         }
 
         viewModeElements.forEach((el) => {
@@ -147,13 +109,14 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
         editModeElements.forEach((el) => {
-            if (el && el.id !== "hero-title" && el.id !== "hero-summary") {
+            if (el && el.id !== "title" && el.id !== "summary") {
                 el.style.display = "none";
             }
         });
 
-        if (courseForm) {
-            courseForm.style.display = "none";
+        const formContainer = $(".form-container");
+        if (formContainer) {
+            formContainer.style.display = "none";
         }
         if (courseViewMain) {
             courseViewMain.style.display = "";

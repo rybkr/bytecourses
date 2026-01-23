@@ -29,7 +29,7 @@ func (r *ReadingRepository) Create(ctx context.Context, reading *domain.Reading)
 
 	var contentItemID int64
 	if err := tx.QueryRowContext(ctx, `
-		INSERT INTO content_items (
+		INSERT INTO content (
 			module_id, content_type, title, order_index, status,
 			created_at, updated_at
 		)
@@ -88,7 +88,7 @@ func (r *ReadingRepository) GetByID(ctx context.Context, id int64) (*domain.Read
 		SELECT ci.id, ci.module_id, ci.content_type, ci.title, ci.order_index,
 		       ci.status, ci.created_at, ci.updated_at,
 		       r.format, r.content
-		FROM content_items ci
+		FROM content ci
 		INNER JOIN readings r ON ci.id = r.content_item_id
 		WHERE ci.id = $1
 	`, id).Scan(
@@ -129,7 +129,7 @@ func (r *ReadingRepository) Update(ctx context.Context, reading *domain.Reading)
 	defer tx.Rollback()
 
 	_, err = tx.ExecContext(ctx, `
-		UPDATE content_items
+		UPDATE content
 		SET title = $2,
 		    order_index = $3,
 		    status = $4,
@@ -174,7 +174,7 @@ func (r *ReadingRepository) ListByModuleID(ctx context.Context, moduleID int64) 
 		SELECT ci.id, ci.module_id, ci.content_type, ci.title, ci.order_index,
 		       ci.status, ci.created_at, ci.updated_at,
 		       r.format, r.content
-		FROM content_items ci
+		FROM content ci
 		INNER JOIN readings r ON ci.id = r.content_item_id
 		WHERE ci.module_id = $1
 		ORDER BY ci.order_index ASC

@@ -60,7 +60,6 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.Route("/courses", func(r chi.Router) {
 			r.With(optionalUser).Get("/", courseHandler.List)
 
-			r.With(requireUser).Post("/", courseHandler.Create)
 			r.With(requireUser).Get("/{id}", courseHandler.Get)
 			r.With(requireUser).Patch("/{id}", courseHandler.Update)
 			r.With(requireUser).Post("/{id}/publish", courseHandler.Publish)

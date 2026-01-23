@@ -23,46 +23,6 @@ func NewCourseHandler(courseService *services.CourseService) *CourseHandler {
 	}
 }
 
-type CreateCourseRequest struct {
-	Title                string `json:"title"`
-	Summary              string `json:"summary"`
-	TargetAudience       string `json:"target_audience"`
-	LearningObjectives   string `json:"learning_objectives"`
-	AssumedPrerequisites string `json:"assumed_prerequisites"`
-}
-
-func (r *CreateCourseRequest) ToCommand(instructorID int64) *services.CreateCourseCommand {
-	return &services.CreateCourseCommand{
-		InstructorID:         instructorID,
-		Title:                strings.TrimSpace(r.Title),
-		Summary:              strings.TrimSpace(r.Summary),
-		TargetAudience:       strings.TrimSpace(r.TargetAudience),
-		LearningObjectives:   strings.TrimSpace(r.LearningObjectives),
-		AssumedPrerequisites: strings.TrimSpace(r.AssumedPrerequisites),
-	}
-}
-
-func (h *CourseHandler) Create(w http.ResponseWriter, r *http.Request) {
-	user, ok := middleware.UserFromContext(r.Context())
-	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
-		return
-	}
-
-	var req CreateCourseRequest
-	if !decodeJSON(w, r, &req) {
-		return
-	}
-
-	course, err := h.Service.Create(r.Context(), req.ToCommand(user.ID))
-	if err != nil {
-		handleError(w, err)
-		return
-	}
-
-	writeJSON(w, http.StatusCreated, course)
-}
-
 type UpdateCourseRequest struct {
 	Title                string `json:"title"`
 	Summary              string `json:"summary"`

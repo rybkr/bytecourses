@@ -25,6 +25,14 @@ var (
 	_ Event = (*CourseCreatedEvent)(nil)
 	_ Event = (*CourseUpdatedEvent)(nil)
 	_ Event = (*CoursePublishedEvent)(nil)
+	_ Event = (*ModuleCreatedEvent)(nil)
+	_ Event = (*ModuleUpdatedEvent)(nil)
+	_ Event = (*ModuleDeletedEvent)(nil)
+	_ Event = (*ModulePublishedEvent)(nil)
+	_ Event = (*ReadingCreatedEvent)(nil)
+	_ Event = (*ReadingUpdatedEvent)(nil)
+	_ Event = (*ReadingDeletedEvent)(nil)
+	_ Event = (*ReadingPublishedEvent)(nil)
 )
 
 type BaseEvent struct {
@@ -325,4 +333,172 @@ func NewCoursePublishedEvent(courseID int64, instructorID int64) *CoursePublishe
 
 func (e *CoursePublishedEvent) EventName() string {
 	return "course.published"
+}
+
+type ModuleCreatedEvent struct {
+	BaseEvent
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewModuleCreatedEvent(moduleID, courseID, instructorID int64) *ModuleCreatedEvent {
+	return &ModuleCreatedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ModuleCreatedEvent) EventName() string {
+	return "module.created"
+}
+
+type ModuleUpdatedEvent struct {
+	BaseEvent
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewModuleUpdatedEvent(moduleID, courseID, instructorID int64) *ModuleUpdatedEvent {
+	return &ModuleUpdatedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ModuleUpdatedEvent) EventName() string {
+	return "module.updated"
+}
+
+type ModuleDeletedEvent struct {
+	BaseEvent
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewModuleDeletedEvent(moduleID, courseID, instructorID int64) *ModuleDeletedEvent {
+	return &ModuleDeletedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ModuleDeletedEvent) EventName() string {
+	return "module.deleted"
+}
+
+type ModulePublishedEvent struct {
+	BaseEvent
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewModulePublishedEvent(moduleID, courseID, instructorID int64) *ModulePublishedEvent {
+	return &ModulePublishedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ModulePublishedEvent) EventName() string {
+	return "module.published"
+}
+
+type ReadingCreatedEvent struct {
+	BaseEvent
+	ReadingID   int64
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewReadingCreatedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingCreatedEvent {
+	return &ReadingCreatedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ReadingID:    readingID,
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ReadingCreatedEvent) EventName() string {
+	return "reading.created"
+}
+
+type ReadingUpdatedEvent struct {
+	BaseEvent
+	ReadingID   int64
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewReadingUpdatedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingUpdatedEvent {
+	return &ReadingUpdatedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ReadingID:    readingID,
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ReadingUpdatedEvent) EventName() string {
+	return "reading.updated"
+}
+
+type ReadingDeletedEvent struct {
+	BaseEvent
+	ReadingID   int64
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewReadingDeletedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingDeletedEvent {
+	return &ReadingDeletedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ReadingID:    readingID,
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ReadingDeletedEvent) EventName() string {
+	return "reading.deleted"
+}
+
+type ReadingPublishedEvent struct {
+	BaseEvent
+	ReadingID   int64
+	ModuleID    int64
+	CourseID    int64
+	InstructorID int64
+}
+
+func NewReadingPublishedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingPublishedEvent {
+	return &ReadingPublishedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ReadingID:    readingID,
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ReadingPublishedEvent) EventName() string {
+	return "reading.published"
 }

@@ -11,7 +11,6 @@ import (
 )
 
 var (
-	_ Command = (*CreateCourseCommand)(nil)
 	_ Command = (*CreateCourseFromProposalCommand)(nil)
 	_ Command = (*UpdateCourseCommand)(nil)
 	_ Command = (*PublishCourseCommand)(nil)
@@ -33,48 +32,6 @@ func NewCourseService(
 		Proposals: proposals,
 		Events:    eventBus,
 	}
-}
-
-type CreateCourseCommand struct {
-	InstructorID         int64  `json:"instructor_id"`
-	Title                string `json:"title"`
-	Summary              string `json:"summary"`
-	TargetAudience       string `json:"target_audience"`
-	LearningObjectives   string `json:"learning_objectives"`
-	AssumedPrerequisites string `json:"assumed_prerequisites"`
-}
-
-func (c *CreateCourseCommand) Validate(v *validation.Validator) {
-	v.Field(c.InstructorID, "instructor_id").EntityID()
-	v.Field(c.Title, "title").Required().MinLength(4).MaxLength(128).IsTrimmed()
-	v.Field(c.Summary, "summary").Required().MaxLength(2048).IsTrimmed()
-	v.Field(c.TargetAudience, "target_audience").Required().MaxLength(2048).IsTrimmed()
-	v.Field(c.LearningObjectives, "learning_objectives").Required().MaxLength(2048).IsTrimmed()
-	v.Field(c.AssumedPrerequisites, "assumed_prerequisites").Required().MaxLength(2048).IsTrimmed()
-}
-
-func (s *CourseService) Create(ctx context.Context, cmd *CreateCourseCommand) (*domain.Course, error) {
-	if err := validation.Validate(cmd); err != nil {
-		return nil, err
-	}
-
-	course := domain.Course{
-		InstructorID:         cmd.InstructorID,
-		Title:                cmd.Title,
-		Summary:              cmd.Summary,
-		TargetAudience:       cmd.TargetAudience,
-		LearningObjectives:   cmd.LearningObjectives,
-		AssumedPrerequisites: cmd.AssumedPrerequisites,
-		Status:               domain.CourseStatusDraft,
-	}
-	if err := s.Courses.Create(ctx, &course); err != nil {
-		return nil, err
-	}
-
-	event := domain.NewCourseCreatedEvent(course.ID, cmd.InstructorID)
-	_ = s.Events.Publish(ctx, event)
-
-	return &course, nil
 }
 
 type CreateCourseFromProposalCommand struct {

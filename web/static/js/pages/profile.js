@@ -1,13 +1,14 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const form = document.getElementById("profile-form");
-    const saveBtn = document.getElementById("save-btn");
-    const nameInput = document.getElementById("name");
-    const nameError = document.getElementById("name-error");
-    const statusDiv = document.getElementById("profile-status");
+import api from "../core/api.js";
+import { $ } from "../core/dom.js";
 
-    if (!form || !saveBtn || !nameInput) {
-        return;
-    }
+document.addEventListener("DOMContentLoaded", () => {
+    const form = $("#profile-form");
+    const saveBtn = $("#save-btn");
+    const nameInput = $("#name");
+    const nameError = $("#name-error");
+    const statusDiv = $("#profile-status");
+
+    if (!form || !saveBtn || !nameInput) return;
 
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -29,22 +30,7 @@ document.addEventListener("DOMContentLoaded", () => {
         saveBtn.textContent = "Saving...";
 
         try {
-            const response = await fetch("/api/me", {
-                method: "PATCH",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ name }),
-            });
-
-            if (!response.ok) {
-                if (response.status === 401) {
-                    window.location.href = "/login";
-                    return;
-                }
-                const errorText = await response.text();
-                throw new Error(errorText || "Failed to update profile");
-            }
+            await api.patch("/api/me", { name });
 
             statusDiv.textContent = "Profile updated successfully";
             statusDiv.className = "success-message";
@@ -67,4 +53,3 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
-

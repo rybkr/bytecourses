@@ -5,8 +5,7 @@
     <a href="/courses/{{.Course.ID}}" class="btn btn-secondary">Back to Course</a>
 </div>
 <div class="form-container">
-    <form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="1000"
-        onsubmit="event.preventDefault()">
+    <form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="1000">
         <div class="form-group">
             <label for="title">Title
                 <span class="help-icon" data-help="title" aria-label="Show help for Title" tabindex="0" role="button">
@@ -127,5 +126,5 @@
     </form>
 </div>
 {{end}} {{define "scripts"}}
-<script src="/static/js/course_edit.js" defer></script>
+<script type="module" src="/static/js/pages/course_edit.js"></script>
 {{end}}

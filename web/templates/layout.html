@@ -20,7 +20,7 @@
             <div class="nav-brand">
                 <a href="/">ByteCourses</a>
             </div>
-            <button class="hamburger-btn" onclick="toggleMobileMenu(event)" aria-label="Toggle menu" aria-expanded="false">
+            <button class="hamburger-btn" aria-label="Toggle menu" aria-expanded="false">
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
                 <span class="hamburger-line"></span>
@@ -30,7 +30,7 @@
                 <a href="/courses" class="nav-link">Browse Courses</a>
                 {{if .User}}
                 <div class="teach-dropdown">
-                    <a href="#" class="nav-link teach-menu-trigger" onclick="toggleTeachMenu(event); return false;">Teach</a>
+                    <a href="#" class="nav-link teach-menu-trigger">Teach</a>
                     <div class="teach-dropdown-menu" id="teachDropdownMenu">
                         <a href="/proposals/new" class="teach-dropdown-item">New Proposal</a>
                         <a href="/proposals/mine" class="teach-dropdown-item">My Proposals</a>
@@ -40,7 +40,7 @@
                     </div>
                 </div>
                 <div class="user-dropdown">
-                    <button class="user-menu-btn" onclick="toggleUserMenu(event)" aria-label="User menu"
+                    <button class="user-menu-btn" aria-label="User menu"
                         aria-expanded="false">
                         <svg class="user-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -66,7 +66,7 @@
                             Profile
                         </a>
                         <div class="user-dropdown-divider"></div>
-                        <button onclick="handleLogout()" class="user-dropdown-item user-dropdown-logout">
+                        <button class="user-dropdown-item user-dropdown-logout" data-logout>
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -81,23 +81,23 @@
                 <a href="/login" class="nav-link">Login</a>
                 {{end}}
             </div>
-            <div class="mobile-menu-overlay" id="mobileMenuOverlay" onclick="closeMobileMenu()"></div>
+            <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
             <div class="mobile-menu" id="mobileMenu">
-                <a href="/about" class="mobile-menu-item" onclick="closeMobileMenu()">About</a>
-                <a href="/courses" class="mobile-menu-item" onclick="closeMobileMenu()">Browse Courses</a>
+                <a href="/about" class="mobile-menu-item">About</a>
+                <a href="/courses" class="mobile-menu-item">Browse Courses</a>
                 {{if .User}}
                 <div class="mobile-menu-divider"></div>
-                <a href="/proposals/new" class="mobile-menu-item" onclick="closeMobileMenu()">New Proposal</a>
-                <a href="/proposals/mine" class="mobile-menu-item" onclick="closeMobileMenu()">My Proposals</a>
+                <a href="/proposals/new" class="mobile-menu-item">New Proposal</a>
+                <a href="/proposals/mine" class="mobile-menu-item">My Proposals</a>
                 {{if eq .User.Role "admin"}}
-                <a href="/proposals" class="mobile-menu-item" onclick="closeMobileMenu()">All Proposals</a>
+                <a href="/proposals" class="mobile-menu-item">All Proposals</a>
                 {{end}}
                 <div class="mobile-menu-divider"></div>
-                <a href="/profile" class="mobile-menu-item" onclick="closeMobileMenu()">Profile</a>
-                <button onclick="handleLogout(); closeMobileMenu();" class="mobile-menu-item mobile-menu-logout">Logout</button>
+                <a href="/profile" class="mobile-menu-item">Profile</a>
+                <button class="mobile-menu-item mobile-menu-logout" data-logout>Logout</button>
                 {{else}}
                 <div class="mobile-menu-divider"></div>
-                <a href="/login" class="mobile-menu-item" onclick="closeMobileMenu()">Login</a>
+                <a href="/login" class="mobile-menu-item">Login</a>
                 {{end}}
             </div>
         </div>
@@ -113,7 +113,7 @@
         </div>
     </footer>
 
-    <script src="/static/js/app.js"></script>
+    <script type="module" src="/static/js/app.js"></script>
     {{block "scripts" .}}{{end}}
 </body>
 

@@ -4,83 +4,165 @@ ByteCourses{{end}} {{define "content"}}
     <a href="/courses" class="btn btn-outline">← Back to Courses</a>
 </div>
 
-<div class="course-hero">
-    <div class="course-hero-content">
-        <h1>{{.Course.Title}}</h1>
-        <p>{{.Course.Summary}}</p>
-        <div class="course-meta-pills">
-            {{if .Course.Status}}
-            <span class="pill">{{.Course.Status}}</span>
-            {{end}}
-            {{if .Modules}}
-            <span class="pill">📦 {{len .Modules}} module{{if ne (len .Modules) 1}}s{{end}}</span>
-            {{end}}
-            {{if .Instructor}}
-            <span class="pill">by {{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</span>
-            {{end}}
+<div class="course-view-hero">
+    <div class="course-view-hero-content">
+        <div class="course-view-hero-main">
+            <h1>{{.Course.Title}}</h1>
+            <p class="course-view-summary">{{.Course.Summary}}</p>
+            <div class="course-view-instructor-inline">
+                {{if .Instructor}}
+                <div class="course-view-instructor-avatar">
+                    {{if .Instructor.Name}}{{printf "%.1s" .Instructor.Name}}{{else}}{{printf "%.1s" .Instructor.Email}}{{end}}
+                </div>
+                <div class="course-view-instructor-details">
+                    <span class="course-view-instructor-label">Instructor</span>
+                    <span class="course-view-instructor-name">{{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</span>
+                </div>
+                {{end}}
+            </div>
+            <div class="course-view-meta">
+                {{if .Course.Status}}
+                <span class="course-view-badge {{if eq (printf "%s" .Course.Status) "published"}}course-view-badge-success{{else}}course-view-badge-default{{end}}">
+                    {{if eq (printf "%s" .Course.Status) "published"}}Published{{else}}Draft{{end}}
+                </span>
+                {{end}}
+                {{if .Modules}}
+                <span class="course-view-stat">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    {{len .Modules}} module{{if ne (len .Modules) 1}}s{{end}}
+                </span>
+                {{end}}
+            </div>
         </div>
     </div>
 </div>
 
-<div class="course-layout">
-    <div class="course-main">
-        <section>
-            <h2>About This Course</h2>
-            <div class="proposal-content-value">{{markdown .Course.Summary}}</div>
-        </section>
-
+<div class="course-view-content">
+    <div class="course-view-main">
         {{if .Course.LearningObjectives}}
-        <section style="margin-top: 2.5rem;">
-            <h2>What You'll Learn</h2>
-            <div class="proposal-content-value">{{markdown .Course.LearningObjectives}}</div>
-        </section>
-        {{end}}
-
-        {{if .Course.AssumedPrerequisites}}
-        <section style="margin-top: 2.5rem;">
-            <h2>Prerequisites</h2>
-            <div class="proposal-content-value">{{markdown .Course.AssumedPrerequisites}}</div>
+        <section class="course-view-section course-view-objectives">
+            <div class="course-view-section-header">
+                <div class="course-view-section-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <h2>What You'll Learn</h2>
+            </div>
+            <div class="course-view-objectives-content">
+                {{markdown .Course.LearningObjectives}}
+            </div>
         </section>
         {{end}}
 
         {{if .Course.TargetAudience}}
-        <section style="margin-top: 2.5rem;">
-            <h2>Target Audience</h2>
-            <div class="proposal-content-value">{{markdown .Course.TargetAudience}}</div>
+        <section class="course-view-section course-view-audience">
+            <div class="course-view-section-header">
+                <div class="course-view-section-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                </div>
+                <h2>Who This Course Is For</h2>
+            </div>
+            <div class="course-view-section-body">
+                {{markdown .Course.TargetAudience}}
+            </div>
         </section>
         {{end}}
+
+        {{if .Course.AssumedPrerequisites}}
+        <section class="course-view-section course-view-prerequisites">
+            <div class="course-view-section-header">
+                <div class="course-view-section-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <h2>Prerequisites</h2>
+            </div>
+            <div class="course-view-section-body">
+                {{markdown .Course.AssumedPrerequisites}}
+            </div>
+        </section>
+        {{end}}
+
+        <section class="course-view-section course-view-about">
+            <div class="course-view-section-header">
+                <div class="course-view-section-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="16" x2="12" y2="12"></line>
+                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                    </svg>
+                </div>
+                <h2>About This Course</h2>
+            </div>
+            <div class="course-view-section-body">
+                {{markdown .Course.Summary}}
+            </div>
+        </section>
     </div>
 
-    <div class="course-sidebar">
+    <div class="course-view-sidebar">
         {{if .Instructor}}
-        <div class="instructor-card">
-            <h3>Instructor</h3>
-            <div class="instructor-info">
-                <div class="instructor-avatar">
+        <div class="course-view-instructor-card">
+            <h3>Your Instructor</h3>
+            <div class="course-view-instructor-profile">
+                <div class="course-view-instructor-avatar-large">
                     {{if .Instructor.Name}}{{printf "%.1s" .Instructor.Name}}{{else}}{{printf "%.1s" .Instructor.Email}}{{end}}
                 </div>
-                <div>
-                    <p class="instructor-name">{{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</p>
+                <div class="course-view-instructor-info">
+                    <p class="course-view-instructor-name-large">{{if .Instructor.Name}}{{.Instructor.Name}}{{else}}{{.Instructor.Email}}{{end}}</p>
                 </div>
             </div>
         </div>
         {{end}}
 
-        <div class="course-details-card">
+        <div class="course-view-details-card">
             <h3>Course Details</h3>
-            <div class="course-detail-item">
-                <span class="course-detail-label">Status</span>
-                <span class="course-detail-value">{{.Course.Status}}</span>
+            <div class="course-view-detail-row">
+                <span class="course-view-detail-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </span>
+                <span class="course-view-detail-label">Status</span>
+                <span class="course-view-detail-value">{{if eq (printf "%s" .Course.Status) "published"}}Published{{else}}Draft{{end}}</span>
             </div>
             {{if .Modules}}
-            <div class="course-detail-item">
-                <span class="course-detail-label">Modules</span>
-                <span class="course-detail-value">{{len .Modules}}</span>
+            <div class="course-view-detail-row">
+                <span class="course-view-detail-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </span>
+                <span class="course-view-detail-label">Modules</span>
+                <span class="course-view-detail-value">{{len .Modules}}</span>
             </div>
             {{end}}
-            <div class="course-detail-item">
-                <span class="course-detail-label">Created</span>
-                <span class="course-detail-value">{{.Course.CreatedAt.Format "January 2, 2006"}}</span>
+            <div class="course-view-detail-row">
+                <span class="course-view-detail-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="2" x2="16" y2="6"></line>
+                        <line x1="8" y1="2" x2="8" y2="6"></line>
+                        <line x1="3" y1="10" x2="21" y2="10"></line>
+                    </svg>
+                </span>
+                <span class="course-view-detail-label">Created</span>
+                <span class="course-view-detail-value">{{.Course.CreatedAt.Format "Jan 2, 2006"}}</span>
             </div>
         </div>
     </div>

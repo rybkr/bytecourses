@@ -194,4 +194,111 @@ document.addEventListener("DOMContentLoaded", () => {
             formHandler.saveNow().catch(() => {});
         }
     });
+
+    // Module Management
+    const addModuleBtn = $("#add-module-btn");
+    if (addModuleBtn) {
+        on(addModuleBtn, "click", async () => {
+            const title = prompt("Module title:");
+            if (!title || !title.trim()) return;
+
+            const description = prompt("Module description (optional):") || "";
+            const orderStr = prompt("Order (number, optional):") || "0";
+            const order = parseInt(orderStr, 10) || 0;
+
+            try {
+                await api.post(`/api/courses/${courseId}/modules`, {
+                    title: title.trim(),
+                    description: description.trim(),
+                    order: order,
+                });
+                window.location.reload();
+            } catch (error) {
+                alert(error.message || "Failed to create module");
+            }
+        });
+    }
+
+    // Edit Module
+    document.querySelectorAll(".btn-edit-module").forEach((btn) => {
+        on(btn, "click", async (e) => {
+            const moduleId = Number(btn.dataset.moduleId);
+            if (!moduleId) return;
+
+            const moduleItem = document.querySelector(`[data-module-id="${moduleId}"]`);
+            if (!moduleItem) return;
+
+            const titleEl = moduleItem.querySelector("h3");
+            const descEl = moduleItem.querySelector(".module-description");
+
+            const currentTitle = titleEl ? titleEl.textContent.trim() : "";
+            const currentDesc = descEl ? descEl.textContent.trim() : "";
+
+            const newTitle = prompt("Module title:", currentTitle);
+            if (newTitle === null) return;
+
+            const newDesc = prompt("Module description:", currentDesc) || "";
+            const orderStr = prompt("Order (number):", "0") || "0";
+            const order = parseInt(orderStr, 10) || 0;
+
+            try {
+                await api.patch(`/api/courses/${courseId}/modules/${moduleId}`, {
+                    title: newTitle.trim(),
+                    description: newDesc.trim(),
+                    order: order,
+                });
+                window.location.reload();
+            } catch (error) {
+                alert(error.message || "Failed to update module");
+            }
+        });
+    });
+
+    // Delete Module
+    document.querySelectorAll(".btn-delete-module").forEach((btn) => {
+        on(btn, "click", async (e) => {
+            const moduleId = Number(btn.dataset.moduleId);
+            if (!moduleId) return;
+
+            if (!confirm("Are you sure you want to delete this module? This will also delete all readings in this module.")) {
+                return;
+            }
+
+            try {
+                await api.delete(`/api/courses/${courseId}/modules/${moduleId}`);
+                window.location.reload();
+            } catch (error) {
+                alert(error.message || "Failed to delete module");
+            }
+        });
+    });
+
+    // Add Reading
+    document.querySelectorAll(".btn-add-reading").forEach((btn) => {
+        on(btn, "click", async (e) => {
+            const moduleId = Number(btn.dataset.moduleId);
+            if (!moduleId) return;
+
+            const title = prompt("Reading title:");
+            if (!title || !title.trim()) return;
+
+            const orderStr = prompt("Order (number, optional):") || "0";
+            const order = parseInt(orderStr, 10) || 0;
+
+            const content = prompt("Reading content (Markdown):") || "";
+
+            try {
+                const response = await api.post(`/api/modules/${moduleId}/readings`, {
+                    title: title.trim(),
+                    order: order,
+                    format: "markdown",
+                    content: content,
+                });
+                const reading = await response.json();
+                window.location.href = `/modules/${moduleId}/readings/${reading.id}/edit`;
+            } catch (error) {
+                alert(error.message || "Failed to create reading");
+            }
+        });
+    });
 });

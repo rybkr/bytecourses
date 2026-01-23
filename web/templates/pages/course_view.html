@@ -157,6 +157,62 @@ ByteCourses{{end}} {{define "content"}}
                 {{markdown .Course.Summary}}
             </div>
         </section>
+
+        <section class="course-view-section course-view-modules">
+            <div class="course-view-section-header">
+                <div class="course-view-section-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                    </svg>
+                </div>
+                <h2>Course Content</h2>
+                {{if .IsInstructor}}
+                <button type="button" id="add-module-btn" class="btn btn-small btn-primary">Add Module</button>
+                {{end}}
+            </div>
+            <div class="course-view-section-body">
+                {{if .Modules}}
+                    {{range .Modules}}
+                    {{$moduleID := .ID}}
+                    <div class="module-item" data-module-id="{{.ID}}">
+                        <div class="module-header">
+                            <h3>{{.Title}}</h3>
+                            {{if $.IsInstructor}}
+                            <div class="module-actions">
+                                <button type="button" class="btn-edit-module" data-module-id="{{.ID}}">Edit</button>
+                                <button type="button" class="btn-delete-module" data-module-id="{{.ID}}">Delete</button>
+                            </div>
+                            {{end}}
+                        </div>
+                        {{if .Description}}
+                        <p class="module-description">{{markdown .Description}}</p>
+                        {{end}}
+                        <div class="readings-list">
+                            {{$readings := index $.ReadingsByModule .ID}}
+                            {{if $readings}}
+                                {{range $readings}}
+                                <div class="reading-item">
+                                    <a href="/modules/{{$moduleID}}/readings/{{.ID}}">{{.Title}}</a>
+                                </div>
+                                {{end}}
+                            {{end}}
+                            {{if $.IsInstructor}}
+                            <button type="button" class="btn-add-reading" data-module-id="{{.ID}}">+ Add Reading</button>
+                            {{end}}
+                        </div>
+                    </div>
+                    {{end}}
+                {{else}}
+                    {{if .IsInstructor}}
+                    <p class="text-muted">No modules yet. Click "Add Module" to get started.</p>
+                    {{else}}
+                    <p class="text-muted">No content available yet.</p>
+                    {{end}}
+                {{end}}
+            </div>
+        </section>
     </div>
 
     <div class="course-view-sidebar">

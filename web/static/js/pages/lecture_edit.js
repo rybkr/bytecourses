@@ -3,9 +3,9 @@ import { debounce } from "../core/utils.js";
 import { $ } from "../core/dom.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const { courseId, moduleId, contentId } = window.LECTURE_DATA || {};
+    const { courseId, moduleId, readingId } = window.LECTURE_DATA || {};
 
-    if (!courseId || !moduleId || !contentId) return;
+    if (!courseId || !moduleId || !readingId) return;
 
     const titleInput = $("#lecture-title");
     const contentTextarea = $("#lecture-content");
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastSavedContent = contentTextarea.value;
     let isSaving = false;
 
-    const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${contentId}`;
+    const apiUrl = `/api/modules/${moduleId}/readings/${readingId}`;
 
     function updatePreview() {
         if (typeof marked !== "undefined") {
@@ -110,15 +110,9 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Unpublish functionality not yet implemented in service layer
     if (unpublishBtn) {
-        unpublishBtn.addEventListener("click", async () => {
-            try {
-                await api.post(`${apiUrl}/unpublish`);
-                window.location.reload();
-            } catch (error) {
-                alert(error.message || "Failed to unpublish");
-            }
-        });
+        unpublishBtn.style.display = "none";
     }
 
     window.addEventListener("beforeunload", (e) => {

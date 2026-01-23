@@ -1,4 +1,4 @@
-{{template "layout" .}} {{define "title"}}{{.ContentItem.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
 <div class="lecture-view-container">
     <div class="lecture-view-header">
         <div class="lecture-view-breadcrumb">
@@ -6,18 +6,18 @@
             <span> / </span>
             <span>{{.Module.Title}}</span>
         </div>
-        <h1 class="lecture-view-title">{{.ContentItem.Title}}</h1>
+        <h1 class="lecture-view-title">{{.Reading.Title}}</h1>
         <div class="lecture-view-meta">
             {{if .IsInstructor}}
-            <span class="content-status-badge content-status-{{.ContentItem.Status}}">{{.ContentItem.Status}}</span>
-            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.ContentItem.ID}}/edit" class="btn btn-small btn-secondary">Edit</a>
+            <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
+            <a href="/modules/{{.Module.ID}}/readings/{{.Reading.ID}}/edit" class="btn btn-small btn-secondary">Edit</a>
             {{end}}
         </div>
     </div>
 
     <div class="lecture-view-content">
-        {{if .Lecture.Content}}
-        <div class="proposal-content-value">{{markdown .Lecture.Content}}</div>
+        {{if .Reading.Content}}
+        <div class="proposal-content-value">{{markdown .Reading.Content}}</div>
         {{else}}
         <p class="text-muted">No content available yet.</p>
         {{end}}

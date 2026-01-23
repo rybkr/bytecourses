@@ -49,7 +49,7 @@ func (r *ProposalRepository) GetByID(ctx context.Context, id int64) (*domain.Pro
 		return nil, false
 	}
 
-    return &p, true
+	return &p, true
 }
 
 func (r *ProposalRepository) ListByAuthorID(ctx context.Context, authorID int64) ([]domain.Proposal, error) {

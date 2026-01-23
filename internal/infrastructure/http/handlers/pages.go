@@ -35,8 +35,8 @@ type ProposalPageData struct {
 
 // PageHandler handles rendering of HTML page templates.
 type PageHandler struct {
-	templates      map[string]*template.Template
-	funcMap        template.FuncMap
+	templates       map[string]*template.Template
+	funcMap         template.FuncMap
 	proposalService *services.ProposalService
 }
 

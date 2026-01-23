@@ -300,12 +300,12 @@ func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
 		UserID:     user.ID,
 		UserRole:   user.Role,
 	})
-    if err != nil {
-        handleError(w, err)
-        return
-    }
+	if err != nil {
+		handleError(w, err)
+		return
+	}
 
-    writeJSON(w, http.StatusOK, proposal)
+	writeJSON(w, http.StatusOK, proposal)
 }
 
 func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {

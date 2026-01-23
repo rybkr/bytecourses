@@ -38,8 +38,8 @@ var (
 )
 
 var (
-    _ Query = (*GetProposalQuery)(nil)
-    _ Query = (*ListProposalsQuery)(nil)
+	_ Query = (*GetProposalQuery)(nil)
+	_ Query = (*ListProposalsQuery)(nil)
 )
 
 type CreateProposalCommand struct {
@@ -169,10 +169,10 @@ func (s *ProposalService) Submit(ctx context.Context, cmd *SubmitProposalCommand
 	if proposal.AuthorID != cmd.UserID {
 		return errors.ErrNotFound
 	}
-    if proposal.Status != domain.ProposalStatusDraft &&
-        proposal.Status != domain.ProposalStatusChangesRequested {
-        return errors.ErrInvalidStatusTransition
-    }
+	if proposal.Status != domain.ProposalStatusDraft &&
+		proposal.Status != domain.ProposalStatusChangesRequested {
+		return errors.ErrInvalidStatusTransition
+	}
 
 	proposal.Status = domain.ProposalStatusSubmitted
 	if err := s.Proposals.Update(ctx, proposal); err != nil {
@@ -207,9 +207,9 @@ func (s *ProposalService) Withdraw(ctx context.Context, cmd *WithdrawProposalCom
 	if proposal.AuthorID != cmd.UserID {
 		return errors.ErrNotFound
 	}
-    if proposal.Status != domain.ProposalStatusSubmitted {
-        return errors.ErrInvalidStatusTransition
-    }
+	if proposal.Status != domain.ProposalStatusSubmitted {
+		return errors.ErrInvalidStatusTransition
+	}
 
 	proposal.Status = domain.ProposalStatusWithdrawn
 	if err := s.Proposals.Update(ctx, proposal); err != nil {
@@ -243,9 +243,9 @@ func (s *ProposalService) Approve(ctx context.Context, cmd *ReviewProposalComman
 	if !ok {
 		return errors.ErrNotFound
 	}
-    if proposal.Status != domain.ProposalStatusSubmitted {
-        return errors.ErrInvalidStatusTransition
-    }
+	if proposal.Status != domain.ProposalStatusSubmitted {
+		return errors.ErrInvalidStatusTransition
+	}
 
 	proposal.Status = domain.ProposalStatusApproved
 	proposal.ReviewerID = &cmd.ReviewerID
@@ -269,9 +269,9 @@ func (s *ProposalService) Reject(ctx context.Context, cmd *ReviewProposalCommand
 	if !ok {
 		return errors.ErrNotFound
 	}
-    if proposal.Status != domain.ProposalStatusSubmitted {
-        return errors.ErrInvalidStatusTransition
-    }
+	if proposal.Status != domain.ProposalStatusSubmitted {
+		return errors.ErrInvalidStatusTransition
+	}
 
 	proposal.Status = domain.ProposalStatusRejected
 	proposal.ReviewerID = &cmd.ReviewerID
@@ -295,9 +295,9 @@ func (s *ProposalService) RequestChanges(ctx context.Context, cmd *ReviewProposa
 	if !ok {
 		return errors.ErrNotFound
 	}
-    if proposal.Status != domain.ProposalStatusSubmitted {
-        return errors.ErrInvalidStatusTransition
-    }
+	if proposal.Status != domain.ProposalStatusSubmitted {
+		return errors.ErrInvalidStatusTransition
+	}
 
 	proposal.Status = domain.ProposalStatusChangesRequested
 	proposal.ReviewerID = &cmd.ReviewerID

@@ -43,7 +43,7 @@ func userFromRequest(r *http.Request) (*domain.User, bool) {
 func requireAuthenticatedUser(w http.ResponseWriter, r *http.Request) (*domain.User, bool) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-        handleError(w, errors.ErrUnauthorized)
+		handleError(w, errors.ErrUnauthorized)
 		return nil, false
 	}
 	return user, true

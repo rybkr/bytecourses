@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-    "net/url"
+	"net/url"
 )
 
 type ResendSender struct {
@@ -83,22 +83,22 @@ func (s *ResendSender) SendWelcomeEmail(ctx context.Context, email, name string)
 func (s *ResendSender) SendPasswordResetEmail(ctx context.Context, email, resetURL, token string) error {
 	subject := "Reset Your Password"
 
-    u, err := url.Parse(resetURL)
-    if err != nil || u.Scheme == "" || u.Host == "" {
-        return fmt.Errorf("resend: invalid base url %s", resetURL)
-    }
+	u, err := url.Parse(resetURL)
+	if err != nil || u.Scheme == "" || u.Host == "" {
+		return fmt.Errorf("resend: invalid base url %s", resetURL)
+	}
 
-    query := u.Query()
-    query.Set("token", token)
-    query.Set("email", email)
-    u.RawQuery = query.Encode()
-    resetURL = u.String()
+	query := u.Query()
+	query.Set("token", token)
+	query.Set("email", email)
+	u.RawQuery = query.Encode()
+	resetURL = u.String()
 
-    var buf bytes.Buffer
-    data := struct { ResetURL string }{ResetURL: resetURL}
-    if err := passwordResetTemplate.Execute(&buf, data); err != nil {
+	var buf bytes.Buffer
+	data := struct{ ResetURL string }{ResetURL: resetURL}
+	if err := passwordResetTemplate.Execute(&buf, data); err != nil {
 		return fmt.Errorf("failed to execute password reset template: %w", err)
-    }
+	}
 
 	return s.sendEmail(ctx, email, subject, buf.String())
 }

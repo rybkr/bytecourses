@@ -7,8 +7,8 @@ import (
 type CourseStatus string
 
 const (
-	CourseStatusDraft CourseStatus = "draft"
-	CourseStatusPublished  CourseStatus = "published"
+	CourseStatusDraft     CourseStatus = "draft"
+	CourseStatusPublished CourseStatus = "published"
 )
 
 type Course struct {

@@ -9,8 +9,8 @@ import (
 var templateFS embed.FS
 
 var (
-	welcomeTemplate *template.Template
-    passwordResetTemplate *template.Template
+	welcomeTemplate       *template.Template
+	passwordResetTemplate *template.Template
 )
 
 func init() {
@@ -21,8 +21,8 @@ func init() {
 		panic("failed to parse welcome template: " + err.Error())
 	}
 
-    passwordResetTemplate, err = template.ParseFS(templateFS, "templates/password_reset.html")
-    if err != nil {
-        panic("failed to parse password reset template: " + err.Error())
-    }
+	passwordResetTemplate, err = template.ParseFS(templateFS, "templates/password_reset.html")
+	if err != nil {
+		panic("failed to parse password reset template: " + err.Error())
+	}
 }

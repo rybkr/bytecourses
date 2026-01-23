@@ -125,8 +125,8 @@ func (s *CourseService) Update(ctx context.Context, cmd *UpdateCourseCommand) er
 }
 
 type PublishCourseCommand struct {
-    CourseID int64`json:"course_id"`
-    UserID   int64`json:"user_id"`
+	CourseID int64 `json:"course_id"`
+	UserID   int64 `json:"user_id"`
 }
 
 func (c *PublishCourseCommand) Validate(v *validation.Validator) {
@@ -162,9 +162,9 @@ func (s *CourseService) Publish(ctx context.Context, cmd *PublishCourseCommand) 
 }
 
 type GetCourseQuery struct {
-    CourseID int64`json:"course_id"`
-    UserID   int64`json:"user_id"`
-    UserRole domain.UserRole`json:"user_role"`
+	CourseID int64           `json:"course_id"`
+	UserID   int64           `json:"user_id"`
+	UserRole domain.UserRole `json:"user_role"`
 }
 
 func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain.Course, error) {
@@ -173,18 +173,18 @@ func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain
 		return nil, errors.ErrNotFound
 	}
 
-    switch query.UserRole {
-    case domain.UserRoleStudent,
-        domain.UserRoleInstructor:
-        if course.InstructorID != query.UserID {
-            return nil, errors.ErrNotFound
-        }
+	switch query.UserRole {
+	case domain.UserRoleStudent,
+		domain.UserRoleInstructor:
+		if course.InstructorID != query.UserID {
+			return nil, errors.ErrNotFound
+		}
 
-    case domain.UserRoleAdmin:
+	case domain.UserRoleAdmin:
 
-    default:
-        return nil, errors.ErrForbidden
-    }
+	default:
+		return nil, errors.ErrForbidden
+	}
 
 	return course, nil
 }

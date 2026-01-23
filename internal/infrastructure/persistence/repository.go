@@ -8,25 +8,25 @@ import (
 )
 
 type Repository[T any] interface {
-    Create(context.Context, *T) error
-    GetByID(context.Context, int64) (*T, bool)
-    Update(context.Context, *T) error
+	Create(context.Context, *T) error
+	GetByID(context.Context, int64) (*T, bool)
+	Update(context.Context, *T) error
 }
 
 type UserRepository interface {
-    Repository[domain.User]
+	Repository[domain.User]
 	GetByEmail(context.Context, string) (*domain.User, bool)
 }
 
 type ProposalRepository interface {
-    Repository[domain.Proposal]
+	Repository[domain.Proposal]
 	ListByAuthorID(context.Context, int64) ([]domain.Proposal, error)
 	ListAllSubmitted(context.Context) ([]domain.Proposal, error)
 	DeleteByID(context.Context, int64) error
 }
 
 type CourseRepository interface {
-    Repository[domain.Course]
+	Repository[domain.Course]
 	ListAllLive(ctx context.Context) ([]domain.Course, error)
 }
 

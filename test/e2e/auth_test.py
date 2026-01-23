@@ -240,7 +240,7 @@ class TestUpdateProfile:
     def test_update_user_name(self, api_url, user_session):
         r = user_session.get(f"{api_url}/me")
         assert r.json()["name"] == "Guest User"
-        userID = r.json()["id"]
+        assert "id" in r.json()
 
         r = user_session.patch(f"{api_url}/me", json={"name": "New Name"})
         assert r.status_code == HTTPStatus.NO_CONTENT

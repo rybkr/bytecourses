@@ -353,7 +353,7 @@ class TestProposalPermissions:
             f"{api_url}/proposals",
             json={"title": "Draft Proposal", "summary": "Summary"},
         )
-        draft_id = r.json()["id"]
+        assert "id" in r.json()
 
         r = user.post(
             f"{api_url}/proposals",
@@ -367,7 +367,7 @@ class TestProposalPermissions:
 
         r = user.get(f"{api_url}/proposals/{submitted_id}")
         assert r.json()["status"] == "submitted"
-        assert r.json()["reviewer_id"] == None
+        assert r.json()["reviewer_id"] is None
 
     def test_user_cannot_submit_other_users_proposal(self, api_url):
         user_a = register_and_login(api_url, "usera@example.com", "password")

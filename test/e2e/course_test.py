@@ -8,16 +8,25 @@ class TestCourseCreate:
     def test_creates_course_with_title_and_summary(self, api_url):
         session = register_and_login(api_url, "instructor@example.com", "password123")
 
-        r = session.post(
-            f"{api_url}/courses",
-            json={"title": "Introduction to Python", "summary": "Learn Python basics."},
-        )
+        payload = {
+            "title": "Introduction to Python",
+            "summary": "Learn Python basics.",
+            "target_audience": "Developers",
+            "learning_objectives": "Learn about python",
+            "assumed_prerequisites": "None",
+        }
+        r = session.post(f"{api_url}/courses", json=payload)
         assert r.status_code == HTTPStatus.CREATED
         assert "id" in r.json()
-        assert r.json()["title"] == "Introduction to Python"
         assert r.json()["status"] == "draft"
 
-    def test_creates_course_with_all_fields(self, api_url):
+        course_id = r.json()["id"]
+        r = session.get(f"{api_url}/courses/{course_id}")
+        assert r.status_code == HTTPStatus.OK
+        for key, value in payload.items():
+            assert r.json()[key] == value
+
+    def test_rejects_missing_fields(self, api_url):
         session = register_and_login(api_url, "instructor@example.com", "password123")
 
         payload = {
@@ -25,13 +34,7 @@ class TestCourseCreate:
             "summary": "A comprehensive course covering Python basics to advanced.",
         }
         r = session.post(f"{api_url}/courses", json=payload)
-        assert r.status_code == HTTPStatus.CREATED
-
-        course_id = r.json()["id"]
-        r = session.get(f"{api_url}/courses/{course_id}")
-        assert r.status_code == HTTPStatus.OK
-        for key, value in payload.items():
-            assert r.json()[key] == value
+        assert r.status_code == HTTPStatus.BAD_REQUEST
 
     def test_rejects_missing_title(self, api_url):
         session = register_and_login(api_url, "instructor@example.com", "password123")
@@ -64,6 +67,20 @@ class TestCourseCreate:
         )
         assert r.status_code == HTTPStatus.UNAUTHORIZED
 
+    def test_creates_with_instructor_id(self, api_url):
+        session = register_and_login(api_url, "instructor@example.com", "password123")
+
+        payload = {
+            "title": "Introduction to Python",
+            "summary": "Learn Python basics.",
+            "target_audience": "Developers",
+            "learning_objectives": "Learn about python",
+            "assumed_prerequisites": "None",
+        }
+        r = session.post(f"{api_url}/courses", json=payload)
+        assert r.status_code == HTTPStatus.CREATED
+        assert r.json()["instructor_id"] == session.user_id
+
 
 class TestCourseRead:
     def test_gets_course_by_id(self, api_url):
@@ -71,7 +88,13 @@ class TestCourseRead:
 
         r = session.post(
             f"{api_url}/courses",
-            json={"title": "Course Title", "summary": "Course Summary"},
+            json={
+                "title": "Course Title",
+                "summary": "Course Summary",
+                "target_audience": "Developers",
+                "learning_objectives": "Learn about python",
+                "assumed_prerequisites": "None",
+            },
         )
         course_id = r.json()["id"]
 
@@ -104,13 +127,25 @@ class TestCourseUpdate:
 
         r = session.post(
             f"{api_url}/courses",
-            json={"title": "Original Title", "summary": "Original Summary"},
+            json={
+                "title": "Original Title",
+                "summary": "Original Summary",
+                "target_audience": "Developers",
+                "learning_objectives": "Learn about python",
+                "assumed_prerequisites": "None",
+            },
         )
         course_id = r.json()["id"]
 
         r = session.patch(
             f"{api_url}/courses/{course_id}",
-            json={"title": "Updated Title", "summary": "Updated Summary"},
+            json={
+                "title": "Updated Title",
+                "summary": "Updated Summary",
+                "target_audience": "Developers",
+                "learning_objectives": "Learn about python",
+                "assumed_prerequisites": "None",
+            },
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -123,7 +158,13 @@ class TestCourseUpdate:
 
         r = session.patch(
             f"{api_url}/courses/{2**63 - 1}",
-            json={"title": "Updated Title"},
+            json={
+                "title": "Updated Title",
+                "summary": "New Summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
         assert r.status_code == HTTPStatus.NOT_FOUND
 
@@ -143,7 +184,13 @@ class TestCoursePermissions:
 
         r = instructor.post(
             f"{api_url}/courses",
-            json={"title": "My Course", "summary": "My course summary"},
+            json={
+                "title": "My Course",
+                "summary": "My course summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
         course_id = r.json()["id"]
 
@@ -161,13 +208,25 @@ class TestCoursePermissions:
 
         r = instructor1.post(
             f"{api_url}/courses",
-            json={"title": "Instructor 1 Course", "summary": "Summary"},
+            json={
+                "title": "Instructor 1 Course",
+                "summary": "Summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
         course_id = r.json()["id"]
 
         r = instructor2.patch(
             f"{api_url}/courses/{course_id}",
-            json={"title": "Attempted Update"},
+            json={
+                "title": "Attempted Update",
+                "summary": "Summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
         assert r.status_code == HTTPStatus.NOT_FOUND
 
@@ -184,13 +243,25 @@ class TestCoursePermissions:
 
         r = instructor1.post(
             f"{api_url}/courses",
-            json={"title": "Instructor 1 Course", "summary": "Summary"},
+            json={
+                "title": "Instructor 1 Course",
+                "summary": "Summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
         instructor1_course_id = r.json()["id"]
 
         r = instructor2.post(
             f"{api_url}/courses",
-            json={"title": "Instructor 2 Course", "summary": "Summary"},
+            json={
+                "title": "Instructor 2 Course",
+                "summary": "Summary",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
+            },
         )
 
         r = instructor2.get(f"{api_url}/courses/{instructor1_course_id}")
@@ -212,6 +283,9 @@ class TestCoursePublicAccess:
             json={
                 "title": "Public Live Course",
                 "summary": "A publicly accessible course.",
+                "target_audience": "Learners",
+                "learning_objectives": "Learn",
+                "assumed_prerequisites": "None",
             },
         )
         course_id = r.json()["id"]

@@ -176,7 +176,7 @@ ByteCourses{{end}} {{define "content"}}
                 {{if .Modules}}
                     {{range .Modules}}
                     {{$moduleID := .ID}}
-                    <div class="module-item" data-module-id="{{.ID}}">
+                    <div class="module-item" data-module-id="{{.ID}}" data-order="{{.Order}}">
                         <div class="module-header">
                             <h3>{{.Title}}</h3>
                             {{if $.IsInstructor}}
@@ -264,6 +264,88 @@ ByteCourses{{end}} {{define "content"}}
         </div>
     </div>
 </div>
+
+{{if .IsInstructor}}
+<div id="module-form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Module</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="module-create-form">
+                <div class="form-group">
+                    <label for="module-title">Title</label>
+                    <input type="text" id="module-title" name="title" required />
+                </div>
+                <div class="form-group">
+                    <label for="module-description">Description</label>
+                    <textarea id="module-description" name="description" rows="4"></textarea>
+                </div>
+                <div id="module-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="module-edit-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit Module</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="module-edit-form">
+                <input type="hidden" id="module-edit-id" name="module_id" />
+                <div class="form-group">
+                    <label for="module-edit-title">Title</label>
+                    <input type="text" id="module-edit-title" name="title" required />
+                </div>
+                <div class="form-group">
+                    <label for="module-edit-description">Description</label>
+                    <textarea id="module-edit-description" name="description" rows="4"></textarea>
+                </div>
+                <div id="module-edit-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="reading-form-modal" class="modal" style="display: none;">
+    <div class="modal-overlay"></div>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Create Reading</h2>
+            <button class="modal-close" type="button" aria-label="Close">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="reading-create-form">
+                <input type="hidden" id="reading-module-id" name="module_id" />
+                <div class="form-group">
+                    <label for="reading-title">Title</label>
+                    <input type="text" id="reading-title" name="title" required />
+                </div>
+                <div id="reading-error-message" class="error-message" style="display: none;"></div>
+                <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{{end}}
+
 {{end}} {{define "scripts"}}
 <script type="module" src="/static/js/pages/course_view.js"></script>
 {{end}}

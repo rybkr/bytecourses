@@ -299,7 +299,6 @@ a {
     font-size: 0.9rem;
 }
 
-/* User Dropdown Styles */
 .user-dropdown {
     position: relative;
 }
@@ -479,7 +478,6 @@ a {
     color: var(--danger-color);
 }
 
-/* Teach Dropdown Styles */
 .teach-dropdown {
     position: relative;
 }
@@ -1296,7 +1294,6 @@ a {
     font-family: inherit;
 }
 
-/* Help icon and panel styles */
 .form-group label {
     position: relative;
 }
@@ -1413,8 +1410,6 @@ a {
         font-size: 0.8125rem;
     }
 }
-
-/* form-actions defined above with enhanced styling */
 
 .error-message {
     background: rgba(239, 68, 68, 0.08);
@@ -1968,7 +1963,6 @@ a {
     border: 1px solid var(--border-color);
 }
 
-/* Module Management Styles */
 .modules-section {
     margin-top: 3rem;
     padding-top: 2rem;
@@ -1996,14 +1990,12 @@ a {
 }
 
 .module-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 1.25rem;
-    background: var(--bg-secondary);
+    padding: 1.5rem;
+    background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     transition: all 0.2s ease;
+    margin-bottom: 1rem;
 }
 
 .module-item:hover {
@@ -2011,51 +2003,101 @@ a {
     box-shadow: var(--shadow-sm);
 }
 
-.module-item-content {
+.module-header {
     display: flex;
-    align-items: center;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
     gap: 1rem;
-    flex: 1;
 }
 
-.module-position {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    background: var(--primary-color);
-    color: white;
-    border-radius: 50%;
-    font-size: 0.875rem;
+.module-header h3 {
+    margin: 0;
+    flex: 1;
+    font-size: 1.25rem;
     font-weight: 600;
-    flex-shrink: 0;
-}
-
-.module-title {
-    font-weight: 500;
     color: var(--text-color);
-    flex: 1;
 }
 
-.module-edit-input {
-    flex: 1;
-    padding: 0.5rem 0.75rem;
-    border: 1.5px solid var(--primary-color);
-    border-radius: 0.5rem;
-    font-size: 1rem;
-    font-family: inherit;
-}
-
-.module-edit-input:focus {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-}
-
-.module-item-actions {
+.module-actions {
     display: flex;
     gap: 0.5rem;
     flex-shrink: 0;
+}
+
+.btn-edit-module,
+.btn-delete-module {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-edit-module:hover {
+    background: var(--bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-delete-module:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+.module-description {
+    margin: 0.75rem 0 1rem 0;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.readings-list {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.reading-item {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.reading-item:last-child {
+    border-bottom: none;
+}
+
+.reading-item a {
+    color: var(--text-color);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s ease;
+}
+
+.reading-item a:hover {
+    color: var(--primary-color);
+}
+
+.btn-add-reading {
+    margin-top: 0.75rem;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 0.5rem;
+    border: 1px dashed var(--border-color);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+}
+
+.btn-add-reading:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+    background: var(--bg-secondary);
 }
 
 .btn-small {
@@ -2085,7 +2127,6 @@ a {
     box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
 }
 
-/* Profile Page Styles */
 .profile-container {
     max-width: 800px;
     margin: 0 auto;
@@ -2256,7 +2297,6 @@ a {
     z-index: 1;
 }
 
-/* Tablet breakpoint */
 @media (max-width: 900px) {
     .hero {
         padding: 4rem 1.5rem;
@@ -2279,7 +2319,6 @@ a {
     }
 }
 
-/* Mobile breakpoint */
 @media (max-width: 640px) {
     .hero {
         padding: 3rem 1rem;
@@ -2635,7 +2674,6 @@ a {
     border: 1px solid var(--border-color);
 }
 
-/* Additional mobile adjustments for modals */
 @media (max-width: 640px) {
     .modal {
         padding: 0;
@@ -2648,7 +2686,6 @@ a {
     }
 }
 
-/* === COURSE CATALOG === */
 .catalog-controls {
     display: flex;
     justify-content: space-between;
@@ -2823,7 +2860,6 @@ a {
     gap: 0.25rem;
 }
 
-/* === COURSE LANDING PAGE === */
 .course-hero {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
     border-radius: 1.5rem;
@@ -2980,7 +3016,6 @@ a {
     font-weight: 500;
 }
 
-/* === CURRICULUM ACCORDION === */
 .curriculum-section {
     margin-top: 3rem;
 }
@@ -3118,7 +3153,6 @@ a {
     text-align: center;
 }
 
-/* === MODULE CONTENT EDITOR (INSTRUCTOR) === */
 .module-content-editor {
     padding: 1rem 0;
 }
@@ -3227,7 +3261,6 @@ a {
     }
 }
 
-/* Content Items */
 .content-list {
     display: flex;
     flex-direction: column;
@@ -3314,7 +3347,6 @@ a {
     gap: 0.5rem;
 }
 
-/* Lecture Edit Page */
 .lecture-edit-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -3445,7 +3477,6 @@ a {
     }
 }
 
-/* Lecture View Page */
 .lecture-view-container {
     max-width: 800px;
     margin: 0 auto;
@@ -3505,7 +3536,6 @@ a {
     border-top: 1px solid var(--border-color);
 }
 
-/* === COURSE VIEW PAGE (COURSERA-STYLE) === */
 .course-view-hero {
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
     border-radius: 1.5rem;
@@ -3679,7 +3709,6 @@ a {
     opacity: 0.9;
 }
 
-/* Course View Content Layout */
 .course-view-content {
     display: grid;
     grid-template-columns: 1fr 320px;
@@ -3700,7 +3729,6 @@ a {
     gap: 1.5rem;
 }
 
-/* Course View Section Cards */
 .course-view-section {
     background: var(--bg-color);
     border: 1px solid var(--border-color);
@@ -3767,7 +3795,6 @@ a {
     margin-bottom: 0;
 }
 
-/* Learning Objectives special styling */
 .course-view-objectives-content {
     color: var(--text-secondary);
     font-size: 0.9375rem;
@@ -3811,7 +3838,6 @@ a {
     margin-bottom: 0;
 }
 
-/* Sidebar Cards */
 .course-view-instructor-card,
 .course-view-details-card {
     background: var(--bg-color);
@@ -3860,7 +3886,6 @@ a {
     margin: 0;
 }
 
-/* Course Details Card */
 .course-view-detail-row {
     display: flex;
     align-items: center;
@@ -3897,7 +3922,6 @@ a {
     font-size: 0.875rem;
 }
 
-/* Course View Responsive */
 @media (max-width: 900px) {
     .course-view-content {
         grid-template-columns: 1fr;

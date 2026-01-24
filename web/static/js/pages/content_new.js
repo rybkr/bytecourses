@@ -6,13 +6,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!courseId || !moduleId) return;
 
-    const contentTypeSelect = $("#content-type");
+    const contentTypeCard = $("#content-type-reading");
     const titleInput = $("#content-title");
     const contentTextarea = $("#content-body");
     const previewDiv = $("#content-preview");
     const saveBtn = $("#save-btn");
 
     let isSaving = false;
+    let selectedContentType = "reading";
 
     function updatePreview() {
         if (typeof marked !== "undefined") {
@@ -33,7 +34,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const title = titleInput.value.trim();
         const content = contentTextarea.value;
-        const contentType = contentTypeSelect.value;
+        const contentType = selectedContentType;
 
         if (!title) {
             titleInput.focus();
@@ -61,6 +62,16 @@ document.addEventListener("DOMContentLoaded", () => {
             saveBtn.textContent = "Create";
             isSaving = false;
         }
+    }
+
+    if (contentTypeCard) {
+        contentTypeCard.addEventListener("click", () => {
+            document.querySelectorAll(".content-type-card").forEach(card => {
+                card.classList.remove("active");
+            });
+            contentTypeCard.classList.add("active");
+            selectedContentType = contentTypeCard.dataset.type;
+        });
     }
 
     updatePreview();

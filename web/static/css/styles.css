@@ -108,7 +108,7 @@ a {
     background: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     padding: 1rem 0;
     box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.05);
     position: sticky;
@@ -346,8 +346,6 @@ a {
     transition: transform 0.2s ease;
     opacity: 0.7;
 }
-
-
 .user-menu-btn[aria-expanded="true"] .dropdown-arrow {
     transform: rotate(180deg);
 }
@@ -380,7 +378,7 @@ a {
 
 .user-dropdown-header {
     padding: 1.25rem 1rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     background: var(--bg-secondary);
 }
 
@@ -1428,7 +1426,7 @@ a {
     align-items: center;
     margin-bottom: 2.5rem;
     padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     gap: 1.5rem;
     flex-wrap: wrap;
 }
@@ -2538,7 +2536,7 @@ a {
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .modal-header h2 {
@@ -3431,7 +3429,7 @@ a {
     align-items: center;
     padding: 0.75rem 1rem;
     background-color: var(--bg-tertiary);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-secondary);
@@ -4242,7 +4240,7 @@ a {
 /* Course Navbar */
 .course-navbar {
     background: var(--bg-color);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     position: sticky;
     top: 60px;
     z-index: 90;
@@ -4298,7 +4296,6 @@ a {
     font-weight: 500;
     border-bottom: 2px solid transparent;
     transition: all 0.2s ease;
-    margin-bottom: -1px;
 }
 
 .course-navbar-link:hover {
@@ -4349,7 +4346,7 @@ a {
 
 /* Module Structure */
 .course-content-module {
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-light);
     transition: opacity 0.2s ease, transform 0.2s ease;
 }
 

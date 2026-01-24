@@ -12,6 +12,7 @@ type Event interface {
 var (
 	_ Event = (*UserRegisteredEvent)(nil)
 	_ Event = (*UserProfileUpdatedEvent)(nil)
+	_ Event = (*UserDeletedEvent)(nil)
 	_ Event = (*PasswordResetRequestedEvent)(nil)
 	_ Event = (*PasswordResetCompletedEvent)(nil)
 	_ Event = (*ProposalCreatedEvent)(nil)
@@ -83,6 +84,24 @@ func NewUserProfileUpdatedEvent(userID int64) *UserProfileUpdatedEvent {
 
 func (e *UserProfileUpdatedEvent) EventName() string {
 	return "user.profile_updated"
+}
+
+type UserDeletedEvent struct {
+	BaseEvent
+	UserID int64
+	Email  string
+}
+
+func NewUserDeletedEvent(userID int64, email string) *UserDeletedEvent {
+	return &UserDeletedEvent{
+		BaseEvent: NewBaseEvent(),
+		UserID:    userID,
+		Email:     email,
+	}
+}
+
+func (e *UserDeletedEvent) EventName() string {
+	return "user.deleted"
 }
 
 type PasswordResetRequestedEvent struct {

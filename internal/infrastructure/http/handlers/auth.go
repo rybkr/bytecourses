@@ -148,6 +148,24 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *AuthHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	err := h.Service.DeleteUser(r.Context(), &services.DeleteUserCommand{
+		UserID: user.ID,
+	})
+	if err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type RequestPasswordResetRequest struct {
 	Email string `json:"email"`
 }

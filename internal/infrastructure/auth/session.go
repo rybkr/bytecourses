@@ -11,6 +11,7 @@ type SessionStore interface {
 	Create(userID int64) (sessionID string, err error)
 	Get(sessionID string) (userID int64, ok bool)
 	Delete(sessionID string) error
+	DeleteByUserID(userID int64) error
 }
 
 var (
@@ -69,6 +70,19 @@ func (s *InMemorySessionStore) Delete(sessionID string) error {
 	s.mu.Lock()
 	delete(s.sessions, sessionID)
 	s.mu.Unlock()
+	return nil
+}
+
+func (s *InMemorySessionStore) DeleteByUserID(userID int64) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	for id, sess := range s.sessions {
+		if sess.userID == userID {
+			delete(s.sessions, id)
+		}
+	}
+
 	return nil
 }
 

@@ -92,3 +92,18 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 
 	return nil
 }
+
+func (r *UserRepository) DeleteByID(ctx context.Context, id int64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	user, ok := r.users[id]
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	delete(r.users, id)
+	delete(r.byEmail, user.Email)
+
+	return nil
+}

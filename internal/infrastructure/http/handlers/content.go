@@ -48,6 +48,12 @@ func (h *ContentHandler) CreateReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid module id", http.StatusBadRequest)
@@ -93,9 +99,21 @@ func (h *ContentHandler) UpdateReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid module id", http.StatusBadRequest)
+		return
+	}
+
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
@@ -119,9 +137,21 @@ func (h *ContentHandler) DeleteReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid module id", http.StatusBadRequest)
+		return
+	}
+
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
@@ -143,9 +173,21 @@ func (h *ContentHandler) PublishReading(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid module id", http.StatusBadRequest)
+		return
+	}
+
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
@@ -164,6 +206,12 @@ func (h *ContentHandler) ListReadings(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
 		return
 	}
 
@@ -196,15 +244,21 @@ func (h *ContentHandler) GetReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid module id", http.StatusBadRequest)
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 

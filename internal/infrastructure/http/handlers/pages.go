@@ -723,15 +723,21 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid module id", http.StatusBadRequest)
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
@@ -751,14 +757,8 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	moduleTemp, ok := h.moduleService.Modules.GetByID(r.Context(), moduleID)
-	if !ok {
-		http.Error(w, "module not found", http.StatusNotFound)
-		return
-	}
-
 	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
-		CourseID: moduleTemp.CourseID,
+		CourseID: courseID,
 		UserID:   user.ID,
 		UserRole: user.Role,
 	})
@@ -769,7 +769,7 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 
 	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
 		ModuleID: moduleID,
-		CourseID: moduleTemp.CourseID,
+		CourseID: courseID,
 		UserID:   user.ID,
 		UserRole: user.Role,
 	})
@@ -812,15 +812,21 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid module id", http.StatusBadRequest)
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "readingId"), 10, 64)
+	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid reading id", http.StatusBadRequest)
+		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
@@ -840,14 +846,8 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	moduleTemp, ok := h.moduleService.Modules.GetByID(r.Context(), moduleID)
-	if !ok {
-		http.Error(w, "module not found", http.StatusNotFound)
-		return
-	}
-
 	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
-		CourseID: moduleTemp.CourseID,
+		CourseID: courseID,
 		UserID:   user.ID,
 		UserRole: user.Role,
 	})
@@ -858,7 +858,7 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 
 	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
 		ModuleID: moduleID,
-		CourseID: moduleTemp.CourseID,
+		CourseID: courseID,
 		UserID:   user.ID,
 		UserRole: user.Role,
 	})

@@ -247,3 +247,39 @@ class TestUpdateProfile:
 
         r = user_session.get(f"{api_url}/me")
         assert r.json()["name"] == "New Name"
+
+
+class TestDeleteMe:
+    def test_deletes_user_account(self, api_url):
+        session = register_and_login(api_url, "todelete@example.com", "password123")
+
+        r = session.get(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.OK
+        assert "id" in r.json()
+
+        r = session.delete(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = session.get(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_invalidates_session_after_deletion(self, api_url):
+        session = register_and_login(api_url, "todelete2@example.com", "password123")
+
+        r = session.delete(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = session.post(f"{api_url}/logout")
+        assert r.status_code == HTTPStatus.UNAUTHORIZED
+
+    def test_rejects_get_method(self, api_url):
+        r = requests.get(f"{api_url}/me", allow_redirects=False)
+        assert r.status_code in (HTTPStatus.UNAUTHORIZED, HTTPStatus.METHOD_NOT_ALLOWED)
+
+    def test_rejects_post_method(self, api_url, user_session):
+        r = user_session.post(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.METHOD_NOT_ALLOWED
+
+    def test_requires_authentication(self, api_url):
+        r = requests.delete(f"{api_url}/me")
+        assert r.status_code == HTTPStatus.UNAUTHORIZED

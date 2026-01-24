@@ -38,6 +38,7 @@ var (
 	_ Command = (*LoginCommand)(nil)
 	_ Command = (*LogoutCommand)(nil)
 	_ Command = (*UpdateProfileCommand)(nil)
+	_ Command = (*DeleteUserCommand)(nil)
 	_ Command = (*RequestPasswordResetCommand)(nil)
 	_ Command = (*ConfirmPasswordResetCommand)(nil)
 )
@@ -100,7 +101,7 @@ func (s *AuthService) Login(ctx context.Context, cmd *LoginCommand) (string, err
 
 	user, ok := s.Users.GetByEmail(ctx, cmd.Email)
 	if !ok {
-		auth.CheckPassword(make([]byte, 20), " ") // Always perform a password check to combat timing attacks
+		auth.CheckPassword(make([]byte, 20), "") // Always perform a password check to combat timing attacks
 		return "", errors.ErrInvalidLogin
 	}
 	if err := auth.CheckPassword(user.PasswordHash, cmd.Password); err != nil {
@@ -156,6 +157,37 @@ func (s *AuthService) UpdateProfile(ctx context.Context, cmd *UpdateProfileComma
 	}
 
 	event := domain.NewUserProfileUpdatedEvent(user.ID)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+type DeleteUserCommand struct {
+	UserID int64 `json:"-"`
+}
+
+func (c *DeleteUserCommand) Validate(v *validation.Validator) {
+	v.Field(c.UserID, "user_id").Required().EntityID()
+}
+
+func (s *AuthService) DeleteUser(ctx context.Context, cmd *DeleteUserCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	user, ok := s.Users.GetByID(ctx, cmd.UserID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	if err := s.Sessions.DeleteByUserID(cmd.UserID); err != nil {
+		return err
+	}
+	if err := s.Users.DeleteByID(ctx, cmd.UserID); err != nil {
+		return err
+	}
+
+	event := domain.NewUserDeletedEvent(user.ID, user.Email)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil

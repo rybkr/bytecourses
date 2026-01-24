@@ -130,3 +130,24 @@ func (r *UserRepository) Update(ctx context.Context, u *domain.User) error {
 
 	return nil
 }
+
+func (r *UserRepository) DeleteByID(ctx context.Context, id int64) error {
+	result, err := r.db.ExecContext(ctx, `
+		DELETE FROM users
+		WHERE id = $1
+	`, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return errors.ErrNotFound
+	}
+
+	return nil
+}

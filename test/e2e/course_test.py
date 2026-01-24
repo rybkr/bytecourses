@@ -714,7 +714,7 @@ class TestCoursePublicAccess:
         r = instructor.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        r = instructor.post(f"{api_url}/courses/{course_id}/publish")
+        r = instructor.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = requests.get(f"{api_url}/courses")
@@ -756,7 +756,7 @@ class TestCoursePublish:
         course_id = r.json()["id"]
         assert r.json()["status"] == "draft"
 
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = author.get(f"{api_url}/courses/{course_id}")
@@ -790,7 +790,7 @@ class TestCoursePublish:
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        r = requests.post(f"{api_url}/courses/{course_id}/publish")
+        r = requests.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.UNAUTHORIZED
 
     def test_cannot_publish_other_instructors_course(self, api_url, admin_session):
@@ -825,7 +825,7 @@ class TestCoursePublish:
         r = instructor1.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        r = instructor2.post(f"{api_url}/courses/{course_id}/publish")
+        r = instructor2.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NOT_FOUND
 
         r = instructor1.get(f"{api_url}/courses/{course_id}")
@@ -858,16 +858,16 @@ class TestCoursePublish:
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.CONFLICT
 
     def test_cannot_publish_nonexistent_course(self, api_url):
         session = register_and_login(api_url, "instructor@example.com", "password123")
 
-        r = session.post(f"{api_url}/courses/{2**63 - 1}/publish")
+        r = session.post(f"{api_url}/courses/{2**63 - 1}/actions/publish")
         assert r.status_code == HTTPStatus.NOT_FOUND
 
     def test_published_course_appears_in_list(self, api_url, admin_session):
@@ -901,7 +901,7 @@ class TestCoursePublish:
         course_ids = [course["id"] for course in r.json()]
         assert course_id not in course_ids
 
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = requests.get(f"{api_url}/courses")
@@ -1176,7 +1176,7 @@ class TestCourseAdminAccess:
         r = instructor.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        r = instructor.post(f"{api_url}/courses/{course_id}/publish")
+        r = instructor.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = admin_session.get(f"{api_url}/courses/{course_id}")
@@ -1551,7 +1551,7 @@ class TestCourseList:
 
         r = author.post(f"{api_url}/proposals/{proposal2_id}/actions/create-course")
         published_course_id = r.json()["id"]
-        r = author.post(f"{api_url}/courses/{published_course_id}/publish")
+        r = author.post(f"{api_url}/courses/{published_course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = requests.get(f"{api_url}/courses")
@@ -1586,7 +1586,7 @@ class TestCourseList:
 
         r = author.post(f"{api_url}/proposals/{proposal1_id}/actions/create-course")
         course1_id = r.json()["id"]
-        r = author.post(f"{api_url}/courses/{course1_id}/publish")
+        r = author.post(f"{api_url}/courses/{course1_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = author.post(
@@ -1612,7 +1612,7 @@ class TestCourseList:
 
         r = author.post(f"{api_url}/proposals/{proposal2_id}/actions/create-course")
         course2_id = r.json()["id"]
-        r = author.post(f"{api_url}/courses/{course2_id}/publish")
+        r = author.post(f"{api_url}/courses/{course2_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = requests.get(f"{api_url}/courses")
@@ -1647,7 +1647,7 @@ class TestCourseList:
 
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = requests.get(f"{api_url}/courses")
@@ -1681,7 +1681,7 @@ class TestCourseList:
 
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
-        r = author.post(f"{api_url}/courses/{course_id}/publish")
+        r = author.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = author.get(f"{api_url}/courses")
@@ -1755,7 +1755,7 @@ class TestCourseGetPermissions:
 
         r = instructor.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
-        r = instructor.post(f"{api_url}/courses/{course_id}/publish")
+        r = instructor.post(f"{api_url}/courses/{course_id}/actions/publish")
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = student.get(f"{api_url}/courses/{course_id}")

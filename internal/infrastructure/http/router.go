@@ -43,6 +43,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.With(requireUser).Post("/logout", authHandler.Logout)
 		r.With(requireUser).Get("/me", authHandler.Me)
 		r.With(requireUser).Patch("/me", authHandler.UpdateProfile)
+		r.With(requireUser).Delete("/me", authHandler.Delete)
 
 		r.Route("/proposals", func(r chi.Router) {
 			r.Use(requireUser)
@@ -64,7 +65,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 			r.With(requireUser).Get("/{id}", courseHandler.Get)
 			r.With(requireUser).Patch("/{id}", courseHandler.Update)
-			r.With(requireUser).Post("/{id}/publish", courseHandler.Publish)
+			r.With(requireUser).Post("/{id}/actions/publish", courseHandler.Publish)
 
 			r.Route("/{courseId}/modules", func(r chi.Router) {
 				r.Use(requireUser)
@@ -73,18 +74,18 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 				r.Get("/{moduleId}", moduleHandler.Get)
 				r.Patch("/{moduleId}", moduleHandler.Update)
 				r.Delete("/{moduleId}", moduleHandler.Delete)
-				r.Post("/{moduleId}/publish", moduleHandler.Publish)
-			})
-		})
+				r.Post("/{moduleId}/actions/publish", moduleHandler.Publish)
 
-		r.Route("/modules/{moduleId}/readings", func(r chi.Router) {
-			r.Use(requireUser)
-			r.Post("/", contentHandler.CreateReading)
-			r.Get("/", contentHandler.ListReadings)
-			r.Get("/{readingId}", contentHandler.GetReading)
-			r.Patch("/{readingId}", contentHandler.UpdateReading)
-			r.Delete("/{readingId}", contentHandler.DeleteReading)
-			r.Post("/{readingId}/publish", contentHandler.PublishReading)
+				r.Route("/{moduleId}/content", func(r chi.Router) {
+					r.Use(requireUser)
+					r.Post("/", contentHandler.CreateReading)
+					r.Get("/", contentHandler.ListReadings)
+					r.Get("/{contentId}", contentHandler.GetReading)
+					r.Patch("/{contentId}", contentHandler.UpdateReading)
+					r.Delete("/{contentId}", contentHandler.DeleteReading)
+					r.Post("/{contentId}/actions/publish", contentHandler.PublishReading)
+				})
+			})
 		})
 	})
 
@@ -115,8 +116,8 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 		r.Get("/courses/{id}/edit", pageHandler.CourseEdit)
 
-		r.Get("/modules/{moduleId}/readings/{readingId}", pageHandler.LectureView)
-		r.Get("/modules/{moduleId}/readings/{readingId}/edit", pageHandler.LectureEdit)
+		r.Get("/courses/{courseId}/modules/{moduleId}/content/{contentId}", pageHandler.LectureView)
+		r.Get("/courses/{courseId}/modules/{moduleId}/content/{contentId}/edit", pageHandler.LectureEdit)
 	})
 
 	r.NotFound(pageHandler.NotFound)

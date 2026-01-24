@@ -16,6 +16,7 @@ type Repository[T any] interface {
 type UserRepository interface {
 	Repository[domain.User]
 	GetByEmail(context.Context, string) (*domain.User, bool)
+	DeleteByID(context.Context, int64) error
 }
 
 type ProposalRepository interface {

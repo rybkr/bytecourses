@@ -113,7 +113,6 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.Get("/proposals/{id}", pageHandler.ProposalView)
 		r.Get("/proposals/{id}/edit", pageHandler.ProposalEdit)
 
-		r.Get("/courses/{id}/learn", pageHandler.CourseLearn)
 		r.Get("/courses/{id}/edit", pageHandler.CourseEdit)
 
 		r.Get("/modules/{moduleId}/readings/{readingId}", pageHandler.LectureView)

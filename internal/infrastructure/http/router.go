@@ -78,12 +78,12 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 				r.Route("/{moduleId}/content", func(r chi.Router) {
 					r.Use(requireUser)
-					r.Post("/", contentHandler.CreateReading)
-					r.Get("/", contentHandler.ListReadings)
-					r.Get("/{contentId}", contentHandler.GetReading)
-					r.Patch("/{contentId}", contentHandler.UpdateReading)
-					r.Delete("/{contentId}", contentHandler.DeleteReading)
-					r.Post("/{contentId}/actions/publish", contentHandler.PublishReading)
+					r.Post("/", contentHandler.Create)
+					r.Get("/", contentHandler.List)
+					r.Get("/{contentId}", contentHandler.Get)
+					r.Patch("/{contentId}", contentHandler.Update)
+					r.Delete("/{contentId}", contentHandler.Delete)
+					r.Post("/{contentId}/actions/publish", contentHandler.Publish)
 				})
 			})
 		})

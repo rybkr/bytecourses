@@ -30,10 +30,10 @@ var (
 	_ Event = (*ModuleUpdatedEvent)(nil)
 	_ Event = (*ModuleDeletedEvent)(nil)
 	_ Event = (*ModulePublishedEvent)(nil)
-	_ Event = (*ReadingCreatedEvent)(nil)
-	_ Event = (*ReadingUpdatedEvent)(nil)
-	_ Event = (*ReadingDeletedEvent)(nil)
-	_ Event = (*ReadingPublishedEvent)(nil)
+	_ Event = (*ContentCreatedEvent)(nil)
+	_ Event = (*ContentUpdatedEvent)(nil)
+	_ Event = (*ContentDeletedEvent)(nil)
+	_ Event = (*ContentPublishedEvent)(nil)
 )
 
 type BaseEvent struct {
@@ -440,90 +440,98 @@ func (e *ModulePublishedEvent) EventName() string {
 	return "module.published"
 }
 
-type ReadingCreatedEvent struct {
+type ContentCreatedEvent struct {
 	BaseEvent
-	ReadingID    int64
+	ContentType  ContentType
+	ContentID    int64
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
 }
 
-func NewReadingCreatedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingCreatedEvent {
-	return &ReadingCreatedEvent{
+func NewContentCreatedEvent(contentType ContentType, contentID, moduleID, courseID, instructorID int64) *ContentCreatedEvent {
+	return &ContentCreatedEvent{
 		BaseEvent:    NewBaseEvent(),
-		ReadingID:    readingID,
+		ContentType:  contentType,
+		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
 	}
 }
 
-func (e *ReadingCreatedEvent) EventName() string {
-	return "reading.created"
+func (e *ContentCreatedEvent) EventName() string {
+	return "content.created"
 }
 
-type ReadingUpdatedEvent struct {
+type ContentUpdatedEvent struct {
 	BaseEvent
-	ReadingID    int64
+	ContentType  ContentType
+	ContentID    int64
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
 }
 
-func NewReadingUpdatedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingUpdatedEvent {
-	return &ReadingUpdatedEvent{
+func NewContentUpdatedEvent(contentType ContentType, contentID, moduleID, courseID, instructorID int64) *ContentUpdatedEvent {
+	return &ContentUpdatedEvent{
 		BaseEvent:    NewBaseEvent(),
-		ReadingID:    readingID,
+		ContentType:  contentType,
+		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
 	}
 }
 
-func (e *ReadingUpdatedEvent) EventName() string {
-	return "reading.updated"
+func (e *ContentUpdatedEvent) EventName() string {
+	return "content.updated"
 }
 
-type ReadingDeletedEvent struct {
+type ContentDeletedEvent struct {
 	BaseEvent
-	ReadingID    int64
+	ContentType  ContentType
+	ContentID    int64
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
 }
 
-func NewReadingDeletedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingDeletedEvent {
-	return &ReadingDeletedEvent{
+func NewContentDeletedEvent(contentType ContentType, contentID, moduleID, courseID, instructorID int64) *ContentDeletedEvent {
+	return &ContentDeletedEvent{
 		BaseEvent:    NewBaseEvent(),
-		ReadingID:    readingID,
+		ContentType:  contentType,
+		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
 	}
 }
 
-func (e *ReadingDeletedEvent) EventName() string {
-	return "reading.deleted"
+func (e *ContentDeletedEvent) EventName() string {
+	return "content.deleted"
 }
 
-type ReadingPublishedEvent struct {
+type ContentPublishedEvent struct {
 	BaseEvent
-	ReadingID    int64
+	ContentType  ContentType
+	ContentID    int64
 	ModuleID     int64
 	CourseID     int64
 	InstructorID int64
 }
 
-func NewReadingPublishedEvent(readingID, moduleID, courseID, instructorID int64) *ReadingPublishedEvent {
-	return &ReadingPublishedEvent{
+func NewContentPublishedEvent(contentType ContentType, contentID, moduleID, courseID, instructorID int64) *ContentPublishedEvent {
+	return &ContentPublishedEvent{
 		BaseEvent:    NewBaseEvent(),
-		ReadingID:    readingID,
+		ContentType:  contentType,
+		ContentID:    contentID,
 		ModuleID:     moduleID,
 		CourseID:     courseID,
 		InstructorID: instructorID,
 	}
 }
 
-func (e *ReadingPublishedEvent) EventName() string {
-	return "reading.published"
+func (e *ContentPublishedEvent) EventName() string {
+	return "content.published"
 }

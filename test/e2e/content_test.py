@@ -43,6 +43,7 @@ class TestContentEndpoints:
         r = author.post(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content",
             json={
+                "type": "reading",
                 "title": "Test Reading",
                 "order": 1,
                 "format": "markdown",
@@ -68,6 +69,7 @@ class TestContentEndpoints:
         r = author.patch(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}",
             json={
+                "type": "reading",
                 "title": "Updated Reading",
                 "order": 1,
                 "format": "markdown",

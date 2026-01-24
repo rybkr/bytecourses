@@ -23,7 +23,7 @@ func NewContentHandler(contentService *services.ContentService) *ContentHandler 
 	}
 }
 
-type CreateReadingRequest struct {
+type CreateContentRequest struct {
 	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Order   int    `json:"order"`
@@ -31,8 +31,9 @@ type CreateReadingRequest struct {
 	Content string `json:"content"`
 }
 
-func (r *CreateReadingRequest) ToCommand(moduleID, userID int64) *services.CreateReadingCommand {
-	return &services.CreateReadingCommand{
+func (r *CreateContentRequest) ToCommand(moduleID, userID int64) *services.CreateContentCommand {
+	return &services.CreateContentCommand{
+		Type:     domain.ContentType(strings.TrimSpace(r.Type)),
 		ModuleID: moduleID,
 		Title:    strings.TrimSpace(r.Title),
 		Order:    r.Order,
@@ -42,7 +43,7 @@ func (r *CreateReadingRequest) ToCommand(moduleID, userID int64) *services.Creat
 	}
 }
 
-func (h *ContentHandler) CreateReading(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -61,35 +62,32 @@ func (h *ContentHandler) CreateReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req CreateReadingRequest
+	var req CreateContentRequest
 	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	if req.Type != string(domain.ContentTypeReading) {
-		http.Error(w, "invalid content type", http.StatusBadRequest)
-		return
-	}
-
-	reading, err := h.Service.CreateReading(r.Context(), req.ToCommand(moduleID, user.ID))
+	content, err := h.Service.Create(r.Context(), req.ToCommand(moduleID, user.ID))
 	if err != nil {
 		handleError(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusCreated, reading)
+	writeJSON(w, http.StatusCreated, content)
 }
 
-type UpdateReadingRequest struct {
+type UpdateContentRequest struct {
+	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Order   int    `json:"order"`
 	Format  string `json:"format"`
 	Content string `json:"content"`
 }
 
-func (r *UpdateReadingRequest) ToCommand(readingID, userID int64) *services.UpdateReadingCommand {
-	return &services.UpdateReadingCommand{
-		ReadingID: readingID,
+func (r *UpdateContentRequest) ToCommand(contentID, userID int64) *services.UpdateContentCommand {
+	return &services.UpdateContentCommand{
+		Type:      domain.ContentType(strings.TrimSpace(r.Type)),
+		ContentID: contentID,
 		Title:     strings.TrimSpace(r.Title),
 		Order:     r.Order,
 		Format:    strings.TrimSpace(r.Format),
@@ -98,7 +96,7 @@ func (r *UpdateReadingRequest) ToCommand(readingID, userID int64) *services.Upda
 	}
 }
 
-func (h *ContentHandler) UpdateReading(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -117,18 +115,18 @@ func (h *ContentHandler) UpdateReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
-	var req UpdateReadingRequest
+	var req UpdateContentRequest
 	if !decodeJSON(w, r, &req) {
 		return
 	}
 
-	if err := h.Service.UpdateReading(r.Context(), req.ToCommand(readingID, user.ID)); err != nil {
+	if err := h.Service.Update(r.Context(), req.ToCommand(contentID, user.ID)); err != nil {
 		handleError(w, err)
 		return
 	}
@@ -136,7 +134,7 @@ func (h *ContentHandler) UpdateReading(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ContentHandler) DeleteReading(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -155,14 +153,20 @@ func (h *ContentHandler) DeleteReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Service.DeleteReading(r.Context(), &services.DeleteReadingCommand{
-		ReadingID: readingID,
+	contentTypeStr := r.URL.Query().Get("type")
+	if contentTypeStr == "" {
+		contentTypeStr = string(domain.ContentTypeReading)
+	}
+
+	if err := h.Service.Delete(r.Context(), &services.DeleteContentCommand{
+		Type:      domain.ContentType(contentTypeStr),
+		ContentID: contentID,
 		UserID:    user.ID,
 	}); err != nil {
 		handleError(w, err)
@@ -172,7 +176,7 @@ func (h *ContentHandler) DeleteReading(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ContentHandler) PublishReading(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -191,14 +195,20 @@ func (h *ContentHandler) PublishReading(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
-	if err := h.Service.PublishReading(r.Context(), &services.PublishReadingCommand{
-		ReadingID: readingID,
+	contentTypeStr := r.URL.Query().Get("type")
+	if contentTypeStr == "" {
+		contentTypeStr = string(domain.ContentTypeReading)
+	}
+
+	if err := h.Service.Publish(r.Context(), &services.PublishContentCommand{
+		Type:      domain.ContentType(contentTypeStr),
+		ContentID: contentID,
 		UserID:    user.ID,
 	}); err != nil {
 		handleError(w, err)
@@ -208,7 +218,7 @@ func (h *ContentHandler) PublishReading(w http.ResponseWriter, r *http.Request) 
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *ContentHandler) ListReadings(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) List(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -227,7 +237,7 @@ func (h *ContentHandler) ListReadings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readings, err := h.Service.ListReadings(r.Context(), &services.ListReadingsQuery{
+	items, err := h.Service.List(r.Context(), &services.ListContentQuery{
 		ModuleID: moduleID,
 		UserID:   user.ID,
 		UserRole: user.Role,
@@ -236,14 +246,14 @@ func (h *ContentHandler) ListReadings(w http.ResponseWriter, r *http.Request) {
 		handleError(w, err)
 		return
 	}
-	if readings == nil {
-		readings = make([]domain.Reading, 0)
+	if items == nil {
+		items = make([]domain.ContentItem, 0)
 	}
 
-	writeJSON(w, http.StatusOK, readings)
+	writeJSON(w, http.StatusOK, items)
 }
 
-func (h *ContentHandler) GetReading(w http.ResponseWriter, r *http.Request) {
+func (h *ContentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		handleError(w, errors.ErrInvalidCredentials)
@@ -262,14 +272,14 @@ func (h *ContentHandler) GetReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
 		http.Error(w, "invalid content id", http.StatusBadRequest)
 		return
 	}
 
-	reading, err := h.Service.GetReading(r.Context(), &services.GetReadingQuery{
-		ReadingID: readingID,
+	content, err := h.Service.Get(r.Context(), &services.GetContentQuery{
+		ContentID: contentID,
 		ModuleID:  moduleID,
 		UserID:    user.ID,
 		UserRole:  user.Role,
@@ -279,5 +289,5 @@ func (h *ContentHandler) GetReading(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	writeJSON(w, http.StatusOK, reading)
+	writeJSON(w, http.StatusOK, content)
 }

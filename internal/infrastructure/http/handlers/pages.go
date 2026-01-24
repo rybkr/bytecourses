@@ -327,12 +327,18 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 		if err == nil {
 			modules = modulesList
 			for _, module := range modules {
-				readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+				items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
 					ModuleID: module.ID,
 					UserID:   userID,
 					UserRole: userRole,
 				})
 				if err == nil {
+					readings := make([]domain.Reading, 0, len(items))
+					for _, item := range items {
+						if reading, ok := item.(*domain.Reading); ok {
+							readings = append(readings, *reading)
+						}
+					}
 					readingsByModule[module.ID] = readings
 				}
 			}
@@ -416,12 +422,18 @@ func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
 
 	readingsByModule := make(map[int64][]domain.Reading)
 	for _, module := range modulesList {
-		readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+		items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
 			ModuleID: module.ID,
 			UserID:   user.ID,
 			UserRole: user.Role,
 		})
 		if err == nil {
+			readings := make([]domain.Reading, 0, len(items))
+			for _, item := range items {
+				if reading, ok := item.(*domain.Reading); ok {
+					readings = append(readings, *reading)
+				}
+			}
 			readingsByModule[module.ID] = readings
 		}
 	}
@@ -509,12 +521,18 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 
 	for i := range modulesList {
 		module := &modulesList[i]
-		readings, err := h.contentService.ListReadings(r.Context(), &services.ListReadingsQuery{
+		items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
 			ModuleID: module.ID,
 			UserID:   userID,
 			UserRole: userRole,
 		})
 		if err == nil {
+			readings := make([]domain.Reading, 0, len(items))
+			for _, item := range items {
+				if reading, ok := item.(*domain.Reading); ok {
+					readings = append(readings, *reading)
+				}
+			}
 			readingsByModule[module.ID] = readings
 			for j := range readings {
 				allReadings = append(allReadings, struct {
@@ -775,8 +793,8 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reading, err := h.contentService.GetReading(r.Context(), &services.GetReadingQuery{
-		ReadingID: readingID,
+	content, err := h.contentService.Get(r.Context(), &services.GetContentQuery{
+		ContentID: readingID,
 		ModuleID:  moduleID,
 		UserID:    user.ID,
 		UserRole:  user.Role,
@@ -788,6 +806,12 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("error fetching reading: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	reading, ok := content.(*domain.Reading)
+	if !ok {
+		http.Error(w, "invalid content type", http.StatusInternalServerError)
 		return
 	}
 
@@ -864,8 +888,8 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reading, err := h.contentService.GetReading(r.Context(), &services.GetReadingQuery{
-		ReadingID: readingID,
+	content, err := h.contentService.Get(r.Context(), &services.GetContentQuery{
+		ContentID: readingID,
 		ModuleID:  moduleID,
 		UserID:    user.ID,
 		UserRole:  user.Role,
@@ -877,6 +901,12 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		}
 		log.Printf("error fetching reading: %v", err)
 		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	reading, ok := content.(*domain.Reading)
+	if !ok {
+		http.Error(w, "invalid content type", http.StatusInternalServerError)
 		return
 	}
 

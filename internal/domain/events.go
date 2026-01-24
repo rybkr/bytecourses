@@ -218,19 +218,21 @@ func (e *ProposalWithdrawnEvent) EventName() string {
 
 type ProposalApprovedEvent struct {
 	BaseEvent
-	ProposalID int64
-	AuthorID   int64
-	ReviewerID int64
-	Title      string
+	ProposalID  int64
+	AuthorID    int64
+	ReviewerID  int64
+	AuthorEmail string
+	Title       string
 }
 
-func NewProposalApprovedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalApprovedEvent {
+func NewProposalApprovedEvent(proposalID int64, authorID int64, reviewerID int64, authorEmail, title string) *ProposalApprovedEvent {
 	return &ProposalApprovedEvent{
-		BaseEvent:  NewBaseEvent(),
-		ProposalID: proposalID,
-		AuthorID:   authorID,
-		ReviewerID: reviewerID,
-		Title:      title,
+		BaseEvent:   NewBaseEvent(),
+		ProposalID:  proposalID,
+		AuthorID:    authorID,
+		ReviewerID:  reviewerID,
+		AuthorEmail: authorEmail,
+		Title:       title,
 	}
 }
 
@@ -240,19 +242,21 @@ func (e *ProposalApprovedEvent) EventName() string {
 
 type ProposalRejectedEvent struct {
 	BaseEvent
-	ProposalID int64
-	AuthorID   int64
-	ReviewerID int64
-	Title      string
+	ProposalID  int64
+	AuthorID    int64
+	ReviewerID  int64
+	Title       string
+	ReviewNotes string
 }
 
-func NewProposalRejectedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalRejectedEvent {
+func NewProposalRejectedEvent(proposalID int64, authorID int64, reviewerID int64, title, reviewNotes string) *ProposalRejectedEvent {
 	return &ProposalRejectedEvent{
-		BaseEvent:  NewBaseEvent(),
-		ProposalID: proposalID,
-		AuthorID:   authorID,
-		ReviewerID: reviewerID,
-		Title:      title,
+		BaseEvent:   NewBaseEvent(),
+		ProposalID:  proposalID,
+		AuthorID:    authorID,
+		ReviewerID:  reviewerID,
+		Title:       title,
+		ReviewNotes: reviewNotes,
 	}
 }
 
@@ -262,19 +266,21 @@ func (e *ProposalRejectedEvent) EventName() string {
 
 type ProposalChangesRequestedEvent struct {
 	BaseEvent
-	ProposalID int64
-	AuthorID   int64
-	ReviewerID int64
-	Title      string
+	ProposalID  int64
+	AuthorID    int64
+	ReviewerID  int64
+	Title       string
+	ReviewNotes string
 }
 
-func NewProposalChangesRequestedEvent(proposalID int64, authorID int64, reviewerID int64, title string) *ProposalChangesRequestedEvent {
+func NewProposalChangesRequestedEvent(proposalID int64, authorID int64, reviewerID int64, title, reviewNotes string) *ProposalChangesRequestedEvent {
 	return &ProposalChangesRequestedEvent{
-		BaseEvent:  NewBaseEvent(),
-		ProposalID: proposalID,
-		AuthorID:   authorID,
-		ReviewerID: reviewerID,
-		Title:      title,
+		BaseEvent:   NewBaseEvent(),
+		ProposalID:  proposalID,
+		AuthorID:    authorID,
+		ReviewerID:  reviewerID,
+		Title:       title,
+		ReviewNotes: reviewNotes,
 	}
 }
 

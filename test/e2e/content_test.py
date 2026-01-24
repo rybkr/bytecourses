@@ -10,7 +10,6 @@ class TestContentEndpoints:
         """Verify content endpoints are accessible via new nested route structure."""
         author = register_and_login(api_url, "author@example.com", "password123")
 
-        # Create proposal and course
         r = author.post(
             f"{api_url}/proposals",
             json={
@@ -35,14 +34,12 @@ class TestContentEndpoints:
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
 
-        # Create module
         r = author.post(
             f"{api_url}/courses/{course_id}/modules",
             json={"title": "Test Module", "description": "Description", "order": 1},
         )
         module_id = r.json()["id"]
 
-        # Test content creation with new nested route
         r = author.post(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content",
             json={
@@ -56,13 +53,11 @@ class TestContentEndpoints:
         assert "id" in r.json()
         content_id = r.json()["id"]
 
-        # Test content listing
         r = author.get(f"{api_url}/courses/{course_id}/modules/{module_id}/content")
         assert r.status_code == HTTPStatus.OK
         assert len(r.json()) == 1
         assert r.json()[0]["id"] == content_id
 
-        # Test content retrieval
         r = author.get(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}"
         )
@@ -70,7 +65,6 @@ class TestContentEndpoints:
         assert r.json()["id"] == content_id
         assert r.json()["title"] == "Test Reading"
 
-        # Test content update
         r = author.patch(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}",
             json={
@@ -82,25 +76,21 @@ class TestContentEndpoints:
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        # Verify update
         r = author.get(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}"
         )
         assert r.json()["title"] == "Updated Reading"
 
-        # Test content publish
         r = author.post(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}/actions/publish"
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        # Test content deletion
         r = author.delete(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}"
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
-        # Verify deletion
         r = author.get(
             f"{api_url}/courses/{course_id}/modules/{module_id}/content/{content_id}"
         )

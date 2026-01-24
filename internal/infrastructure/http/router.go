@@ -19,7 +19,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	r.Use(chimw.Logger)
 
 	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.ModuleService, c.ContentService, c.UserRepo)
-	authHandler := handlers.NewAuthHandler(c.AuthService)
+	authHandler := handlers.NewAuthHandler(c.AuthService, c.BaseURL)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 	moduleHandler := handlers.NewModuleHandler(c.ModuleService)
@@ -116,6 +116,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 		r.Get("/courses/{id}/edit", pageHandler.CourseEdit)
 
+		r.Get("/courses/{courseId}/modules/{moduleId}/content/new", pageHandler.ContentNew)
 		r.Get("/courses/{courseId}/modules/{moduleId}/content/{contentId}", pageHandler.LectureView)
 		r.Get("/courses/{courseId}/modules/{moduleId}/content/{contentId}/edit", pageHandler.LectureEdit)
 	})

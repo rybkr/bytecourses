@@ -76,11 +76,3 @@ func handleError(w http.ResponseWriter, err error) {
 func isHTTPS(r *http.Request) bool {
 	return r.Header.Get("X-Forwarded-Proto") == "https"
 }
-
-func baseURL(r *http.Request) string {
-	scheme := "http"
-	if isHTTPS(r) {
-		scheme = "https"
-	}
-	return scheme + "://" + r.Host
-}

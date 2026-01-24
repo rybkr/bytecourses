@@ -254,7 +254,12 @@ func (s *ProposalService) Approve(ctx context.Context, cmd *ReviewProposalComman
 		return err
 	}
 
-	event := domain.NewProposalApprovedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
+	author, ok := s.Users.GetByID(ctx, proposal.AuthorID)
+	authorEmail := ""
+	if ok {
+		authorEmail = author.Email
+	}
+	event := domain.NewProposalApprovedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, authorEmail, proposal.Title)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil
@@ -280,7 +285,7 @@ func (s *ProposalService) Reject(ctx context.Context, cmd *ReviewProposalCommand
 		return err
 	}
 
-	event := domain.NewProposalRejectedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
+	event := domain.NewProposalRejectedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title, proposal.ReviewNotes)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil
@@ -306,7 +311,7 @@ func (s *ProposalService) RequestChanges(ctx context.Context, cmd *ReviewProposa
 		return err
 	}
 
-	event := domain.NewProposalChangesRequestedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title)
+	event := domain.NewProposalChangesRequestedEvent(cmd.ProposalID, proposal.AuthorID, cmd.ReviewerID, proposal.Title, proposal.ReviewNotes)
 	_ = s.Events.Publish(ctx, event)
 
 	return nil

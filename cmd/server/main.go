@@ -61,6 +61,7 @@ func main() {
 		SeedUsers:     *seedUsers,
 		SeedProposals: *seedProposals,
 		SeedCourses:   *seedCourses,
+		BaseURL:       os.Getenv("BASE_URL"),
 	}
 
 	ctx := context.Background()

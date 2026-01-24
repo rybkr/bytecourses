@@ -11,11 +11,13 @@ import (
 
 type AuthHandler struct {
 	Service *services.AuthService
+	BaseURL string
 }
 
-func NewAuthHandler(authService *services.AuthService) *AuthHandler {
+func NewAuthHandler(authService *services.AuthService, baseURL string) *AuthHandler {
 	return &AuthHandler{
 		Service: authService,
+		BaseURL: baseURL,
 	}
 }
 
@@ -186,7 +188,7 @@ func (h *AuthHandler) RequestPasswordReset(w http.ResponseWriter, r *http.Reques
 	// Always return 202 Accepted to avoid email enumeration
 	w.WriteHeader(http.StatusAccepted)
 
-	_ = h.Service.RequestPasswordReset(r.Context(), req.ToCommand(baseURL(r)))
+	_ = h.Service.RequestPasswordReset(r.Context(), req.ToCommand(h.BaseURL))
 }
 
 type ConfirmPasswordResetRequest struct {

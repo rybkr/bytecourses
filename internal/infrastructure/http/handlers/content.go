@@ -24,6 +24,7 @@ func NewContentHandler(contentService *services.ContentService) *ContentHandler 
 }
 
 type CreateReadingRequest struct {
+	Type    string `json:"type"`
 	Title   string `json:"title"`
 	Order   int    `json:"order"`
 	Format  string `json:"format"`
@@ -62,6 +63,11 @@ func (h *ContentHandler) CreateReading(w http.ResponseWriter, r *http.Request) {
 
 	var req CreateReadingRequest
 	if !decodeJSON(w, r, &req) {
+		return
+	}
+
+	if req.Type != string(domain.ContentTypeReading) {
+		http.Error(w, "invalid content type", http.StatusBadRequest)
 		return
 	}
 

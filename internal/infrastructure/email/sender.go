@@ -5,8 +5,12 @@ import (
 )
 
 type Sender interface {
-	SendWelcomeEmail(ctx context.Context, email string, name string) error
+	SendWelcomeEmail(ctx context.Context, email, name, getStartedURL string) error
 	SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error
+	SendProposalSubmittedEmail(ctx context.Context, email, name, title, proposalURL string) error
+	SendProposalApprovedEmail(ctx context.Context, email, name, title, courseURL string) error
+	SendProposalRejectedEmail(ctx context.Context, email, name, title, reviewNotes, newProposalURL string) error
+	SendProposalChangesRequestedEmail(ctx context.Context, email, name, title, reviewNotes, proposalURL string) error
 }
 
 var (
@@ -20,10 +24,26 @@ func NewNullSender() *NullSender {
 	return &NullSender{}
 }
 
-func (s *NullSender) SendWelcomeEmail(ctx context.Context, email string, name string) error {
+func (s *NullSender) SendWelcomeEmail(ctx context.Context, email, name, getStartedURL string) error {
 	return nil
 }
 
 func (s *NullSender) SendPasswordResetEmail(ctx context.Context, email, baseURL, token string) error {
+	return nil
+}
+
+func (s *NullSender) SendProposalSubmittedEmail(ctx context.Context, email, name, title, proposalURL string) error {
+	return nil
+}
+
+func (s *NullSender) SendProposalApprovedEmail(ctx context.Context, email, name, title, courseURL string) error {
+	return nil
+}
+
+func (s *NullSender) SendProposalRejectedEmail(ctx context.Context, email, name, title, reviewNotes, newProposalURL string) error {
+	return nil
+}
+
+func (s *NullSender) SendProposalChangesRequestedEmail(ctx context.Context, email, name, title, reviewNotes, proposalURL string) error {
 	return nil
 }

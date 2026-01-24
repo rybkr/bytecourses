@@ -6,7 +6,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
+	"strconv"
+	"strings"
 	"time"
 
 	"bytecourses/internal/domain"
@@ -23,6 +26,7 @@ type Container struct {
 	EventBus     events.EventBus
 	SessionStore infraauth.SessionStore
 	EmailSender  email.Sender
+	BaseURL      string
 	DB           persistence.DB
 
 	UserRepo          persistence.UserRepository
@@ -58,6 +62,16 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 		return nil, err
 	}
 
+	c.BaseURL = strings.TrimSpace(cfg.BaseURL)
+	if strings.HasSuffix(c.BaseURL, "/") && !strings.HasSuffix(c.BaseURL, "//") {
+		c.BaseURL = strings.TrimSuffix(c.BaseURL, "/")
+	}
+	if c.BaseURL != "" {
+		u, err := url.Parse(c.BaseURL)
+		if err != nil || u.Scheme == "" || u.Host == "" {
+			slog.Warn("BASE_URL invalid or missing scheme/host", "base_url", c.BaseURL)
+		}
+	}
 	c.wireServices()
 	c.setupEventSubscribers()
 
@@ -177,12 +191,53 @@ func (c *Container) wireServices() {
 func (c *Container) setupEventSubscribers() {
 	c.EventBus.Subscribe("user.registered", func(ctx context.Context, e domain.Event) error {
 		event := e.(*domain.UserRegisteredEvent)
-		return c.EmailSender.SendWelcomeEmail(ctx, event.Email, event.Name)
+		getStartedURL := c.BaseURL + "/"
+		return c.EmailSender.SendWelcomeEmail(ctx, event.Email, event.Name, getStartedURL)
 	})
 
 	c.EventBus.Subscribe("user.password_reset_requested", func(ctx context.Context, e domain.Event) error {
 		event := e.(*domain.PasswordResetRequestedEvent)
 		return c.EmailSender.SendPasswordResetEmail(ctx, event.Email, event.ResetURL, event.Token)
+	})
+
+	c.EventBus.Subscribe("proposal.submitted", func(ctx context.Context, e domain.Event) error {
+		event := e.(*domain.ProposalSubmittedEvent)
+		author, ok := c.UserRepo.GetByID(ctx, event.AuthorID)
+		if !ok {
+			return nil
+		}
+		proposalURL := c.BaseURL + "/proposals/" + strconv.FormatInt(event.ProposalID, 10)
+		return c.EmailSender.SendProposalSubmittedEmail(ctx, author.Email, author.Name, event.Title, proposalURL)
+	})
+
+	c.EventBus.Subscribe("proposal.approved", func(ctx context.Context, e domain.Event) error {
+		event := e.(*domain.ProposalApprovedEvent)
+		author, ok := c.UserRepo.GetByID(ctx, event.AuthorID)
+		if !ok {
+			return nil
+		}
+		courseURL := c.BaseURL + "/proposals/" + strconv.FormatInt(event.ProposalID, 10)
+		return c.EmailSender.SendProposalApprovedEmail(ctx, author.Email, author.Name, event.Title, courseURL)
+	})
+
+	c.EventBus.Subscribe("proposal.rejected", func(ctx context.Context, e domain.Event) error {
+		event := e.(*domain.ProposalRejectedEvent)
+		author, ok := c.UserRepo.GetByID(ctx, event.AuthorID)
+		if !ok {
+			return nil
+		}
+		newProposalURL := c.BaseURL + "/proposals/new"
+		return c.EmailSender.SendProposalRejectedEmail(ctx, author.Email, author.Name, event.Title, event.ReviewNotes, newProposalURL)
+	})
+
+	c.EventBus.Subscribe("proposal.changes_requested", func(ctx context.Context, e domain.Event) error {
+		event := e.(*domain.ProposalChangesRequestedEvent)
+		author, ok := c.UserRepo.GetByID(ctx, event.AuthorID)
+		if !ok {
+			return nil
+		}
+		proposalURL := c.BaseURL + "/proposals/" + strconv.FormatInt(event.ProposalID, 10) + "/edit"
+		return c.EmailSender.SendProposalChangesRequestedEmail(ctx, author.Email, author.Name, event.Title, event.ReviewNotes, proposalURL)
 	})
 }
 

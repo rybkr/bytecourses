@@ -1,13 +1,6 @@
 {{template "layout" .}} {{define "title"}}{{.Course.Title}} -
 ByteCourses{{end}} {{define "content"}}
-<div class="page-header">
-    <a href="/courses" class="btn btn-outline">← Back to Courses</a>
-    {{if .IsInstructor}}
-    <a href="/courses/{{.Course.ID}}/edit" class="btn btn-primary">Manage Course</a>
-    {{else}}
-    <a href="/courses/{{.Course.ID}}/content" class="btn btn-primary">View Content</a>
-    {{end}}
-</div>
+{{template "course-navbar" .}}
 
 <div class="course-view-hero">
     <div class="course-view-hero-content">

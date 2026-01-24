@@ -1,56 +1,147 @@
 {{template "layout" .}} {{define "title"}}{{if .CurrentReading}}{{.CurrentReading.Title}} - {{end}}{{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
-<div class="page-header">
-    <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← Back to Course</a>
-    {{if .IsInstructor}}
-    <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
-    {{end}}
-</div>
+{{template "course-navbar" .}}
 
 <div class="course-content-container">
     <div class="course-content-sidebar">
         <div class="course-content-sidebar-header">
             <h3>{{.Course.Title}}</h3>
-            {{if .IsInstructor}}
-            <button type="button" id="add-module-btn" class="btn btn-small btn-primary">Add Module</button>
-            {{end}}
         </div>
         <div class="course-content-modules">
             {{if .Modules}}
                 {{range .Modules}}
                 <div class="course-content-module" data-module-id="{{.ID}}" data-order="{{.Order}}">
-                <div class="course-content-module-header-wrapper">
-                    <button class="course-content-module-header" type="button">
-                        <h4>{{.Title}}</h4>
-                        <svg class="course-content-module-toggle" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
+                    <div class="module-header">
+                        <button class="module-toggle" type="button">
+                            <svg class="module-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 18 15 12 9 6"></polyline>
+                            </svg>
+                            <span class="module-title">{{.Title}}</span>
+                        </button>
+                        {{if $.IsInstructor}}
+                        <div class="module-actions">
+                            <button type="button" class="btn-icon btn-edit-module" data-module-id="{{.ID}}" title="Edit module">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                                </svg>
+                            </button>
+                            <button type="button" class="btn-icon btn-delete-module" data-module-id="{{.ID}}" title="Delete module">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        {{end}}
+                    </div>
                     {{if $.IsInstructor}}
-                    <div class="course-content-module-actions">
-                        <button type="button" class="btn-edit-module btn-small btn-secondary" data-module-id="{{.ID}}">Edit</button>
-                        <button type="button" class="btn-delete-module btn-small btn-danger" data-module-id="{{.ID}}">Delete</button>
+                    <div class="inline-edit-form" data-module-id="{{.ID}}" style="display: none;">
+                        <input type="text" class="inline-input" value="{{.Title}}" placeholder="Module title" required>
+                        <textarea class="inline-textarea" placeholder="Description (optional)" rows="2">{{.Description}}</textarea>
+                        <div class="inline-actions">
+                            <button type="button" class="btn btn-small btn-primary btn-save-module">Save</button>
+                            <button type="button" class="btn btn-small btn-ghost btn-cancel-edit">Cancel</button>
+                        </div>
+                    </div>
+                    <div class="delete-confirm" data-module-id="{{.ID}}" style="display: none;">
+                        <span class="delete-confirm-text">Delete this module and all its content?</span>
+                        <div class="delete-confirm-actions">
+                            <button type="button" class="btn btn-small btn-danger btn-confirm-delete-module">Delete</button>
+                            <button type="button" class="btn btn-small btn-ghost btn-cancel-delete">Cancel</button>
+                        </div>
                     </div>
                     {{end}}
-                </div>
-                <div class="course-content-module-content">
-                    {{$readings := index $.ReadingsByModule .ID}}
-                    {{if $readings}}
-                        {{range $readings}}
-                        <a href="/courses/{{$.Course.ID}}/content?readingId={{.ID}}" class="course-content-reading {{if $.CurrentReading}}{{if eq .ID $.CurrentReading.ID}}active{{end}}{{end}}">
-                            {{.Title}}
-                        </a>
+                    <div class="module-content">
+                        {{$readings := index $.ReadingsByModule .ID}}
+                        {{if $readings}}
+                            {{range $readings}}
+                            <div class="content-item" data-reading-id="{{.ID}}">
+                                <a href="/courses/{{$.Course.ID}}/content?readingId={{.ID}}" class="content-item-link{{if $.CurrentReading}}{{if eq .ID $.CurrentReading.ID}} active{{end}}{{end}}">
+                                    <svg class="content-item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span class="content-item-title">{{.Title}}</span>
+                                </a>
+                                {{if $.IsInstructor}}
+                                <button type="button" class="btn-icon-sm btn-delete-content" data-reading-id="{{.ID}}" title="Delete">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                                    </svg>
+                                </button>
+                                <div class="delete-confirm-inline" style="display: none;">
+                                    <span>Delete?</span>
+                                    <button type="button" class="btn-text btn-text-danger btn-confirm-delete-content">Yes</button>
+                                    <button type="button" class="btn-text btn-cancel-delete-content">No</button>
+                                </div>
+                                {{end}}
+                            </div>
+                            {{end}}
                         {{end}}
-                    {{else}}
-                        <p class="text-muted" style="padding: 0.5rem 0.75rem; font-size: 0.875rem;">No readings</p>
-                    {{end}}
-                    {{if $.IsInstructor}}
-                    <button type="button" class="btn-add-reading btn-small btn-primary course-content-add-reading" data-module-id="{{.ID}}">+ Add Reading</button>
-                    {{end}}
-                </div>
+                        {{if $.IsInstructor}}
+                        <div class="add-content-row" data-module-id="{{.ID}}">
+                            <button type="button" class="add-content-trigger">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add content</span>
+                            </button>
+                            <div class="add-content-menu" style="display: none;">
+                                <button type="button" class="add-content-option" data-type="reading">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span>Reading</span>
+                                </button>
+                            </div>
+                            <div class="add-content-form" style="display: none;">
+                                <input type="text" class="inline-input inline-input-sm" placeholder="Enter title..." data-module-id="{{.ID}}">
+                                <div class="inline-actions">
+                                    <button type="button" class="btn btn-small btn-primary btn-create-content">Add</button>
+                                    <button type="button" class="btn btn-small btn-ghost btn-cancel-add-content">Cancel</button>
+                                </div>
+                            </div>
+                        </div>
+                        {{end}}
+                    </div>
                 </div>
                 {{end}}
             {{else}}
-                <p class="text-muted" style="padding: 1rem; text-align: center; font-size: 0.875rem;">No modules yet.{{if .IsInstructor}} Click "Add Module" to get started.{{end}}</p>
+                {{if .IsInstructor}}
+                <div class="empty-state">
+                    <p>No modules yet. Add your first module to get started.</p>
+                </div>
+                {{else}}
+                <div class="empty-state">
+                    <p>No content available yet.</p>
+                </div>
+                {{end}}
+            {{end}}
+            {{if .IsInstructor}}
+            <div class="add-module-row">
+                <button type="button" class="add-module-trigger" id="add-module-btn">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>Add module</span>
+                </button>
+                <div class="add-module-form" id="new-module-form" style="display: none;">
+                    <input type="text" class="inline-input" placeholder="Module title" required>
+                    <textarea class="inline-textarea" placeholder="Description (optional)" rows="2"></textarea>
+                    <div class="inline-actions">
+                        <button type="button" class="btn btn-small btn-primary btn-create-module">Create</button>
+                        <button type="button" class="btn btn-small btn-ghost btn-cancel-new-module">Cancel</button>
+                    </div>
+                </div>
+            </div>
             {{end}}
         </div>
     </div>
@@ -95,86 +186,6 @@
     </div>
 </div>
 
-{{if .IsInstructor}}
-<div id="module-form-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create Module</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="module-create-form">
-                <div class="form-group">
-                    <label for="module-title">Title</label>
-                    <input type="text" id="module-title" name="title" required />
-                </div>
-                <div class="form-group">
-                    <label for="module-description">Description</label>
-                    <textarea id="module-description" name="description" rows="4"></textarea>
-                </div>
-                <div id="module-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div id="module-edit-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Edit Module</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="module-edit-form">
-                <input type="hidden" id="module-edit-id" name="module_id" />
-                <div class="form-group">
-                    <label for="module-edit-title">Title</label>
-                    <input type="text" id="module-edit-title" name="title" required />
-                </div>
-                <div class="form-group">
-                    <label for="module-edit-description">Description</label>
-                    <textarea id="module-edit-description" name="description" rows="4"></textarea>
-                </div>
-                <div id="module-edit-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
-<div id="reading-form-modal" class="modal" style="display: none;">
-    <div class="modal-overlay"></div>
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create Reading</h2>
-            <button class="modal-close" type="button" aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="reading-create-form">
-                <input type="hidden" id="reading-module-id" name="module_id" />
-                <div class="form-group">
-                    <label for="reading-title">Title</label>
-                    <input type="text" id="reading-title" name="title" required />
-                </div>
-                <div id="reading-error-message" class="error-message" style="display: none;"></div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-outline" data-modal-close>Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-{{end}}
 {{end}} {{define "scripts"}}
 <script type="module" src="/static/js/pages/course_content.js"></script>
 {{end}}

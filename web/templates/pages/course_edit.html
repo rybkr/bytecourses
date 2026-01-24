@@ -1,8 +1,5 @@
-{{template "layout" .}} {{define "title"}}Edit: {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
-<div class="page-header">
-    <a href="/courses/{{.Course.ID}}" class="btn btn-outline">← View Course</a>
-    <a href="/courses/{{.Course.ID}}/content" class="btn btn-secondary">Preview Content</a>
-</div>
+{{template "layout" .}} {{define "title"}}Settings: {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "course-navbar" .}}
 
 <form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="2000">
 <div class="course-edit-hero">

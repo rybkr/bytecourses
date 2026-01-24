@@ -1,0 +1,55 @@
+{{template "layout" .}} {{define "title"}}New Content - {{.Module.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "course-navbar" .}}
+
+<div class="content-new-container">
+    <div class="page-header">
+        <a href="/courses/{{.Course.ID}}/content" class="btn btn-outline">← Back to Content</a>
+    </div>
+
+    <div class="content-new-form">
+        <div class="content-new-header">
+            <div class="content-new-header-left">
+                <div class="form-group">
+                    <label for="content-type">Content Type</label>
+                    <select id="content-type" class="form-select">
+                        <option value="reading">Reading - Markdown</option>
+                    </select>
+                </div>
+                <input type="text" id="content-title" class="content-title-input" placeholder="Content title..." required>
+            </div>
+            <div class="content-new-header-right">
+                <button type="button" id="save-btn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+
+        <div class="content-editor">
+            <div class="content-editor-pane">
+                <div class="content-editor-pane-header">
+                    <span>Markdown</span>
+                </div>
+                <textarea id="content-body" class="content-body-textarea" placeholder="Write your content here using Markdown..."></textarea>
+            </div>
+            <div class="content-editor-pane">
+                <div class="content-editor-pane-header">
+                    <span>Preview</span>
+                </div>
+                <div id="content-preview" class="content-preview">
+                    <div class="proposal-content-value"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.CONTENT_NEW_DATA = {
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}}
+    };
+</script>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script type="module" src="/static/js/pages/content_new.js"></script>
+{{end}}

@@ -55,6 +55,7 @@ type CourseEditPageData struct {
 	Course           *domain.Course
 	Instructor       *domain.User
 	IsInstructor     bool
+	IsEnrolled       bool
 	Modules          []domain.Module
 	ReadingsByModule map[int64][]domain.Reading
 	ActiveNavItem    string
@@ -65,6 +66,7 @@ type CourseContentPageData struct {
 	Course           *domain.Course
 	Instructor       *domain.User
 	IsInstructor     bool
+	IsEnrolled       bool
 	Modules          []domain.Module
 	ReadingsByModule map[int64][]domain.Reading
 	CurrentReading   *domain.Reading
@@ -329,6 +331,10 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 		})
 		if err == nil {
 			isEnrolled = enrolled
+		}
+		if isEnrolled {
+			http.Redirect(w, r, "/courses/"+strconv.FormatInt(courseID, 10)+"/home", http.StatusFound)
+			return
 		}
 	}
 
@@ -637,8 +643,8 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 
 	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
 		CourseID: courseID,
-		UserID:   userID,
-		UserRole: userRole,
+		UserID:   user.ID,
+		UserRole: user.Role,
 	})
 	if err != nil {
 		log.Printf("error fetching modules: %v", err)
@@ -655,8 +661,8 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		module := &modulesList[i]
 		items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
 			ModuleID: module.ID,
-			UserID:   userID,
-			UserRole: userRole,
+			UserID:   user.ID,
+			UserRole: user.Role,
 		})
 		if err == nil {
 			readings := make([]domain.Reading, 0, len(items))
@@ -717,6 +723,7 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		Course:           course,
 		Instructor:       instructor,
 		IsInstructor:     isInstructor,
+		IsEnrolled:       isEnrolled || isInstructor,
 		Modules:          modulesList,
 		ReadingsByModule: readingsByModule,
 		CurrentReading:   currentReading,
@@ -729,6 +736,120 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 	tmpl, ok := h.templates["course_content.html"]
 	if !ok {
 		log.Printf("template not found: course_content.html")
+		http.Error(w, "page not found", http.StatusNotFound)
+		return
+	}
+
+	var buf bytes.Buffer
+	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
+		log.Printf("template execution error: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	buf.WriteTo(w)
+}
+
+func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		courseID := chi.URLParam(r, "id")
+		moduleID := chi.URLParam(r, "moduleId")
+		http.Redirect(w, r, "/login?next=/courses/"+courseID+"/modules/"+moduleID, http.StatusFound)
+		return
+	}
+
+	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid module id", http.StatusBadRequest)
+		return
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "course not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching course: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	var instructor *domain.User
+	if inst, ok := h.userRepo.GetByID(r.Context(), course.InstructorID); ok {
+		instructor = inst
+	}
+
+	isInstructor := course.IsTaughtBy(user)
+
+	var isEnrolled bool
+	if !isInstructor {
+		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: courseID,
+			UserID:   user.ID,
+		})
+		if err != nil || !enrolled {
+			http.Redirect(w, r, "/courses/"+strconv.FormatInt(courseID, 10), http.StatusFound)
+			return
+		}
+		isEnrolled = true
+	}
+
+	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
+		ModuleID: moduleID,
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		if err == errors.ErrNotFound {
+			http.Error(w, "module not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching module: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
+
+	items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
+		ModuleID: moduleID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	var readings []domain.Reading
+	if err == nil {
+		for _, item := range items {
+			if reading, ok := item.(*domain.Reading); ok {
+				readings = append(readings, *reading)
+			}
+		}
+	}
+
+	pd := ModuleViewPageData{
+		User:          user,
+		Course:        course,
+		Module:        module,
+		Instructor:    instructor,
+		IsInstructor:  isInstructor,
+		IsEnrolled:    isEnrolled || isInstructor,
+		Readings:      readings,
+		ActiveNavItem: "content",
+	}
+
+	tmpl, ok := h.templates["module_view.html"]
+	if !ok {
+		log.Printf("template not found: module_view.html")
 		http.Error(w, "page not found", http.StatusNotFound)
 		return
 	}
@@ -884,6 +1005,17 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 	buf.WriteTo(w)
 }
 
+type ModuleViewPageData struct {
+	User          *domain.User
+	Course        *domain.Course
+	Module        *domain.Module
+	Instructor    *domain.User
+	IsInstructor  bool
+	IsEnrolled    bool
+	Readings      []domain.Reading
+	ActiveNavItem string
+}
+
 type ReadingPageData struct {
 	User         *domain.User
 	Course       *domain.Course
@@ -897,6 +1029,7 @@ type ContentNewPageData struct {
 	Course        *domain.Course
 	Module        *domain.Module
 	IsInstructor  bool
+	IsEnrolled    bool
 	ActiveNavItem string
 }
 

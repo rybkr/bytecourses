@@ -74,6 +74,8 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 			slog.Warn("BASE_URL invalid or missing scheme/host", "base_url", c.BaseURL)
 		}
 	}
+
+	seedAdmin(ctx, c.UserRepo)
 	c.wireServices()
 	c.setupEventSubscribers()
 

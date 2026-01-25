@@ -2120,6 +2120,33 @@
     flex-wrap: wrap;
 }
 
+.content-new-form-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.content-new-form-header-left {
+    flex: 1;
+    min-width: 200px;
+}
+
+.content-new-form-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.content-type-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+}
+
 .lecture-title-input {
     width: 100%;
     font-size: 1.5rem;
@@ -2196,6 +2223,12 @@
 .lecture-preview .proposal-content-value {
     font-size: 0.9375rem;
     line-height: 1.7;
+}
+
+.content-preview-placeholder {
+    color: var(--text-muted, var(--text-secondary));
+    font-style: italic;
+    font-size: 0.9375rem;
 }
 
 .save-status {

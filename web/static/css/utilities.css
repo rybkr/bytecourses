@@ -2,6 +2,18 @@
     display: none !important;
 }
 
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
 .error-message {
     background: rgba(239, 68, 68, 0.08);
     color: #991b1b;
@@ -11,6 +23,13 @@
     border-left: 3px solid var(--danger-color);
     font-size: 0.875rem;
     line-height: 1.6;
+}
+
+.field-error {
+    display: block;
+    font-size: 0.875rem;
+    color: var(--danger-color, #991b1b);
+    margin-top: 0.25rem;
 }
 
 .success-message {

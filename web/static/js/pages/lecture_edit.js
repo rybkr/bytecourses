@@ -3,7 +3,7 @@ import { debounce } from "../core/utils.js";
 import { $ } from "../core/dom.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const { courseId, moduleId, readingId } = window.LECTURE_DATA || {};
+    const { courseId, moduleId, readingId, order } = window.LECTURE_DATA || {};
 
     if (!courseId || !moduleId || !readingId) return;
 
@@ -19,11 +19,15 @@ document.addEventListener("DOMContentLoaded", () => {
     let lastSavedContent = contentTextarea.value;
     let isSaving = false;
 
-    const apiUrl = `/api/modules/${moduleId}/readings/${readingId}`;
+    const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`;
 
     function updatePreview() {
         if (typeof marked !== "undefined") {
-            const html = marked.parse(contentTextarea.value || "");
+            const raw = marked.parse(contentTextarea.value || "");
+            const html =
+                typeof DOMPurify !== "undefined"
+                    ? DOMPurify.sanitize(raw)
+                    : raw;
             previewDiv.innerHTML = `<div class="proposal-content-value">${html}</div>`;
         }
     }
@@ -44,30 +48,30 @@ document.addEventListener("DOMContentLoaded", () => {
     async function save(title, content) {
         if (isSaving) return;
 
+        const currentTitle = title !== undefined ? title : titleInput.value.trim();
+        const currentContent = content !== undefined ? content : contentTextarea.value;
+        const hasChanges =
+            currentTitle !== lastSavedTitle || currentContent !== lastSavedContent;
+
+        if (!hasChanges) {
+            updateSaveStatus("saved", "Saved");
+            return;
+        }
+
         isSaving = true;
         updateSaveStatus("saving", "Saving...");
 
         try {
-            const body = {};
-            if (title !== undefined && title !== lastSavedTitle) {
-                body.title = title;
-            }
-            if (content !== undefined && content !== lastSavedContent) {
-                body.content = content;
-            }
+            await api.patch(apiUrl, {
+                type: "reading",
+                title: currentTitle,
+                order: order ?? 0,
+                format: "markdown",
+                content: currentContent,
+            });
 
-            if (Object.keys(body).length === 0) {
-                updateSaveStatus("saved", "Saved");
-                isSaving = false;
-                return;
-            }
-
-            await api.patch(apiUrl, body);
-
-            lastSavedTitle = title !== undefined ? title : lastSavedTitle;
-            lastSavedContent =
-                content !== undefined ? content : lastSavedContent;
-
+            lastSavedTitle = currentTitle;
+            lastSavedContent = currentContent;
             updateSaveStatus("saved", "Saved");
         } catch (error) {
             updateSaveStatus("error", "Failed to save");
@@ -106,7 +110,7 @@ document.addEventListener("DOMContentLoaded", () => {
             await save(titleInput.value.trim(), contentTextarea.value);
 
             try {
-                await api.post(`${apiUrl}/publish`);
+                await api.post(`${apiUrl}/actions/publish`);
                 window.location.reload();
             } catch (error) {
                 alert(error.message || "Failed to publish");

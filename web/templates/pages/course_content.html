@@ -16,6 +16,7 @@
         <div class="course-content-modules">
             {{if .Modules}}
             {{range .Modules}}
+            {{$module := .}}
             {{$readings := index $.ReadingsByModule .ID}}
             <div class="course-content-module{{if $.CurrentModule}}{{if eq .ID $.CurrentModule.ID}} active{{end}}{{end}}"
                 data-module-id="{{.ID}}">
@@ -49,7 +50,7 @@
                     {{if $readings}}
                     <div class="course-content-readings">
                         {{range $index, $reading := $readings}}
-                        <a href="/courses/{{$.Course.ID}}/modules/{{$.ID}}/content/{{$reading.ID}}"
+                        <a href="/courses/{{$.Course.ID}}/modules/{{$module.ID}}/content/{{$reading.ID}}"
                             class="course-content-reading{{if $.CurrentReading}}{{if eq $reading.ID $.CurrentReading.ID}} active{{end}}{{end}}">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

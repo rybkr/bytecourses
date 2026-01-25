@@ -7,7 +7,7 @@
         <div class="content-new-breadcrumb">
             <a href="/courses/{{.Course.ID}}/modules">Content</a>
             <span> / </span>
-            <span>{{.Module.Title}}</span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
             <span> / </span>
             <span>New Content</span>
         </div>
@@ -16,33 +16,18 @@
     </div>
 
     <div class="content-new-form">
-        <div class="content-type-selector">
-            <label class="content-type-label">Content Type</label>
-            <div class="content-type-cards">
-                <button type="button" class="content-type-card active" data-type="reading" id="content-type-reading">
-                    <div class="content-type-card-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                        </svg>
-                    </div>
-                    <div class="content-type-card-content">
-                        <div class="content-type-card-title">Reading</div>
-                        <div class="content-type-card-subtitle">Markdown content</div>
-                    </div>
-                </button>
-            </div>
-        </div>
+        <div id="content-new-error" class="error-message hidden" role="alert" aria-live="assertive"></div>
+        <p class="content-type-label">Content type: Reading</p>
 
         <div class="content-new-form-header">
             <div class="content-new-form-header-left">
+                <label for="content-title" class="sr-only">Content title</label>
                 <input type="text" id="content-title" class="lecture-title-input" placeholder="Content title..."
                     required>
+                <span id="title-error" class="field-error hidden" role="alert"></span>
             </div>
             <div class="content-new-form-header-right">
+                <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">Cancel</a>
                 <button type="button" id="save-btn" class="btn btn-primary">Create</button>
             </div>
         </div>
@@ -60,6 +45,7 @@
                     <span>Preview</span>
                 </div>
                 <div id="content-preview" class="lecture-preview">
+                    <div id="content-preview-placeholder" class="content-preview-placeholder">Preview will appear here as you write.</div>
                     <div class="proposal-content-value"></div>
                 </div>
             </div>
@@ -69,13 +55,14 @@
 
 <script>
     window.CONTENT_NEW_DATA = {
-        courseId: {{.Course.ID }},
-    moduleId: { {.Module.ID } }
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}}
     };
 </script>
 {{end}}
 
 {{define "scripts"}}
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
 <script type="module" src="/static/js/pages/content_new.js"></script>
 {{end}}

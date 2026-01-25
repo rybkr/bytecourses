@@ -11,8 +11,8 @@ ByteCourses{{end}} {{define "content"}}
         {{if eq .Proposal.Status "submitted"}}
         <button id="withdrawBtn" class="btn btn-secondary btn-sm">Withdraw</button>
         {{end}}
-        {{if or (eq .Proposal.Status "draft") (eq .Proposal.Status "withdrawn") (eq .Proposal.Status "rejected")}}
-        <button id="deleteBtn" class="btn btn-danger btn-sm">Delete</button>
+        {{if ne .Proposal.Status "submitted"}}
+        <button id="deleteBtn" class="btn btn-danger btn-sm" data-proposal-status="{{.Proposal.Status}}">Delete</button>
         {{end}}
         {{if eq .Proposal.Status "approved"}}
         {{if .CourseExists}}
@@ -26,16 +26,16 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 <div id="error-message" class="error-message hidden" data-proposal-id="{{.Proposal.ID}}"></div>
-<div class="proposal-meta-bar">
-    <div class="status-container">
-        <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
-        <span class="status-context">
+
+<div class="proposal-status-card {{if and .Proposal.ReviewNotes (eq .Proposal.Status "changes_requested")}}proposal-status-card-highlight{{end}}">
+    <div class="proposal-status-header">
+        <span class="status-badge proposal-view-status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
+        <div class="proposal-status-context">
             {{if eq .User.Role "admin"}}
             {{if eq .Proposal.Status "submitted"}}Ready for review{{end}}
             {{if eq .Proposal.Status "approved"}}This proposal has been approved{{end}}
             {{if eq .Proposal.Status "rejected"}}This proposal has been rejected{{end}}
-            {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to
-            resubmit.{{end}}
+            {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to resubmit.{{end}}
             {{else}}
             {{if eq .Proposal.Status "draft"}}Ready to submit for review{{end}}
             {{if eq .Proposal.Status "submitted"}}Awaiting admin review{{end}}
@@ -44,14 +44,43 @@ ByteCourses{{end}} {{define "content"}}
             {{if eq .Proposal.Status "rejected"}}This proposal has been rejected{{end}}
             {{if eq .Proposal.Status "withdrawn"}}This proposal has been withdrawn{{end}}
             {{end}}
-        </span>
+        </div>
     </div>
     {{if eq .User.Role "admin"}}
-    <span>Author ID: {{.Proposal.AuthorID}}</span>
+    <div class="proposal-status-author">
+        <span class="proposal-status-label">Author ID:</span>
+        <span class="proposal-status-value">{{.Proposal.AuthorID}}</span>
+    </div>
     {{end}}
-    <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
-    <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
+    {{if and .Proposal.ReviewNotes (ne .Proposal.Status "submitted")}}
+    <div class="proposal-status-review-notes">
+        <h3>Review Notes</h3>
+        <div class="proposal-status-review-content">{{markdown .Proposal.ReviewNotes}}</div>
+        {{if .Proposal.ReviewerID}}
+        <div class="proposal-status-review-meta">
+            <span>Reviewed by Admin</span>
+            <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
+        </div>
+        {{end}}
+    </div>
+    {{end}}
+    <div class="proposal-status-help">
+        {{if eq .User.Role "admin"}}
+        {{if eq .Proposal.Status "submitted"}}Review this proposal and provide feedback using the actions below.{{end}}
+        {{if eq .Proposal.Status "approved"}}This proposal has been approved.{{end}}
+        {{if eq .Proposal.Status "rejected"}}This proposal has been rejected.{{end}}
+        {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to resubmit.{{end}}
+        {{else}}
+        {{if eq .Proposal.Status "draft"}}Complete your proposal and click Submit to send it for review.{{end}}
+        {{if eq .Proposal.Status "submitted"}}Your proposal is under review. You'll be notified when an admin reviews it.{{end}}
+        {{if eq .Proposal.Status "changes_requested"}}An admin has requested changes. Please review the feedback above and make the necessary edits, then resubmit.{{end}}
+        {{if eq .Proposal.Status "approved"}}Congratulations! Your proposal has been approved.{{end}}
+        {{if eq .Proposal.Status "rejected"}}This proposal has been rejected. Please review the feedback above.{{end}}
+        {{if eq .Proposal.Status "withdrawn"}}This proposal has been withdrawn from review.{{end}}
+        {{end}}
+    </div>
 </div>
+
 {{if and (eq .User.Role "admin") (eq .Proposal.Status "submitted")}}
 <div class="review-card">
     <h2>Review Proposal</h2>
@@ -69,24 +98,6 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 {{end}}
-{{template "review-notes-card" .}}
-<div class="status-help-text">
-    {{if eq .User.Role "admin"}}
-    {{if eq .Proposal.Status "submitted"}}Review this proposal and provide feedback using the actions below.{{end}}
-    {{if eq .Proposal.Status "approved"}}This proposal has been approved.{{end}}
-    {{if eq .Proposal.Status "rejected"}}This proposal has been rejected.{{end}}
-    {{if eq .Proposal.Status "changes_requested"}}Changes have been requested. Waiting for user to resubmit.{{end}}
-    {{else}}
-    {{if eq .Proposal.Status "draft"}}Complete your proposal and click Submit to send it for review.{{end}}
-    {{if eq .Proposal.Status "submitted"}}Your proposal is under review. You'll be notified when an admin reviews
-    it.{{end}}
-    {{if eq .Proposal.Status "changes_requested"}}An admin has requested changes. Please review the feedback above and
-    make the necessary edits, then resubmit.{{end}}
-    {{if eq .Proposal.Status "approved"}}Congratulations! Your proposal has been approved.{{end}}
-    {{if eq .Proposal.Status "rejected"}}This proposal has been rejected. Please review the feedback above.{{end}}
-    {{if eq .Proposal.Status "withdrawn"}}This proposal has been withdrawn from review.{{end}}
-    {{end}}
-</div>
 <div class="proposal-content">
     <h2>Summary</h2>
     <div class="proposal-content-value">{{markdown .Proposal.Summary}}</div>
@@ -100,6 +111,10 @@ ByteCourses{{end}} {{define "content"}}
     <div class="proposal-content-value">{{markdown .Proposal.Outline}}</div>
     <h2>Prerequisites</h2>
     <div class="proposal-content-value">{{markdown .Proposal.AssumedPrerequisites}}</div>
+</div>
+<div class="proposal-dates-footer">
+    <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
+    <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
 </div>
 <div id="create-course-modal" class="modal" style="display: none;">
     <div class="modal-content">

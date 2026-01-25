@@ -146,8 +146,8 @@
 }
 
 .form-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
     margin-top: 2rem;
     padding-top: 1.5rem;
@@ -157,30 +157,24 @@
 .btn-submit {
     font-weight: 600;
     padding: 0.75rem 1.5rem;
-    grid-column: span 1;
 }
 
 .btn-draft {
     padding: 0.75rem 1.5rem;
-    grid-column: span 1;
 }
 
 .btn-cancel {
     padding: 0.75rem 1.5rem;
     text-align: center;
-    grid-column: span 1;
 }
 
 @media (max-width: 640px) {
     .form-actions {
-        grid-template-columns: 1fr;
-        gap: 0.625rem;
+        flex-direction: column;
     }
 
-    .btn-submit,
-    .btn-draft,
-    .btn-cancel {
-        grid-column: span 1;
+    .form-actions .btn {
+        width: 100%;
     }
 }
 

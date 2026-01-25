@@ -1,3 +1,6 @@
+import ConfirmationModal from "../components/ConfirmationModal.js";
+import api from "./api.js";
+
 export function escapeHtml(text) {
     if (!text) return "";
     const div = document.createElement("div");
@@ -35,8 +38,17 @@ export function hideError(container) {
     container.classList.add("hidden");
 }
 
-export function confirmAction(message) {
-    return confirm(message);
+export async function confirmAction(message, options = {}) {
+    const modal = new ConfirmationModal({
+        title: options.title || "Confirm Action",
+        message: message,
+        confirmText: options.confirmText || "Confirm",
+        cancelText: options.cancelText || "Cancel",
+        confirmButtonClass: options.confirmButtonClass || "btn-primary",
+        variant: options.variant || "info",
+    });
+
+    return await modal.show();
 }
 
 export function nowLabel() {
@@ -46,4 +58,44 @@ export function nowLabel() {
         minute: "2-digit",
         second: "2-digit",
     });
+}
+
+export async function deleteProposal(proposalId, status, options = {}) {
+    const isSubmitted = status === "submitted";
+
+    let confirmMessage;
+    if (isSubmitted) {
+        confirmMessage =
+            "This proposal will be withdrawn from review and then permanently deleted. This action cannot be undone.";
+    } else {
+        confirmMessage =
+            "This action cannot be undone. The proposal and all its data will be permanently deleted.";
+    }
+
+    const confirmed = await confirmAction(confirmMessage, {
+        title: "Delete Proposal?",
+        confirmText: "Delete",
+        confirmButtonClass: "btn-danger",
+        variant: "danger",
+    });
+
+    if (!confirmed) {
+        return false;
+    }
+
+    try {
+        if (isSubmitted) {
+            // Withdraw first, then delete
+            await api.post(`/api/proposals/${proposalId}/actions/withdraw`);
+        }
+        await api.delete(`/api/proposals/${proposalId}`);
+        return true;
+    } catch (error) {
+        if (options.onError) {
+            options.onError(error);
+        } else {
+            throw error;
+        }
+        return false;
+    }
 }

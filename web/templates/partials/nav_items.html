@@ -5,11 +5,7 @@
 <div class="teach-dropdown">
     <a href="#" class="nav-link teach-menu-trigger">Teach</a>
     <div class="teach-dropdown-menu" id="teachDropdownMenu">
-        <a href="/proposals/new" class="teach-dropdown-item">New Proposal</a>
-        <a href="/proposals/mine" class="teach-dropdown-item">My Proposals</a>
-        {{if eq .User.Role "admin"}}
-        <a href="/proposals" class="teach-dropdown-item">All Proposals</a>
-        {{end}}
+        <a href="/proposals" class="teach-dropdown-item">Proposals</a>
     </div>
 </div>
 <div class="user-dropdown">
@@ -59,11 +55,7 @@
 <a href="/courses" class="mobile-menu-item">Browse Courses</a>
 {{if .User}}
 <div class="mobile-menu-divider"></div>
-<a href="/proposals/new" class="mobile-menu-item">New Proposal</a>
-<a href="/proposals/mine" class="mobile-menu-item">My Proposals</a>
-{{if eq .User.Role "admin"}}
-<a href="/proposals" class="mobile-menu-item">All Proposals</a>
-{{end}}
+<a href="/proposals" class="mobile-menu-item">Proposals</a>
 <div class="mobile-menu-divider"></div>
 <a href="/profile" class="mobile-menu-item">Profile</a>
 <button class="mobile-menu-item mobile-menu-logout" data-logout>Logout</button>

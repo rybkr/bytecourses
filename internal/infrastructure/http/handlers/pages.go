@@ -205,6 +205,10 @@ func (h *PageHandler) Home(w http.ResponseWriter, r *http.Request) {
 	h.render(w, r, "home.html", nil)
 }
 
+func (h *PageHandler) About(w http.ResponseWriter, r *http.Request) {
+	h.render(w, r, "about.html", nil)
+}
+
 func (h *PageHandler) Login(w http.ResponseWriter, r *http.Request) {
 	h.render(w, r, "login.html", nil)
 }

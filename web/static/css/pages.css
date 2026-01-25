@@ -606,8 +606,8 @@
 }
 
 .proposal-actions {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    display: flex;
+    flex-wrap: wrap;
     gap: 0.75rem;
     margin-top: 1rem;
     padding-top: 1rem;
@@ -616,7 +616,11 @@
 
 @media (max-width: 640px) {
     .proposal-actions {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .proposal-actions .btn {
+        width: 100%;
     }
 }
 
@@ -654,15 +658,149 @@
     font-style: italic;
 }
 
-.status-help-text {
+.proposal-status-card {
+    background: var(--bg-color);
+    padding: 2rem;
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
+    margin-bottom: 2rem;
+    transition: all 0.2s ease;
+}
+
+.proposal-status-card-highlight {
+    border-left: 4px solid var(--warning-color);
+    background: rgba(200, 154, 90, 0.1);
+    box-shadow: var(--shadow-md);
+}
+
+.proposal-status-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.proposal-view-status-badge {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.proposal-status-context {
+    font-size: 0.9375rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    flex: 1;
+}
+
+.proposal-status-author {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.proposal-status-label {
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.proposal-status-value {
+    color: var(--text-color);
+    font-weight: 500;
+}
+
+.proposal-status-review-notes {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.proposal-status-review-notes h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.25rem;
+    color: var(--text-color);
+}
+
+.proposal-status-review-content {
+    color: var(--text-color);
+    line-height: 1.8;
+    font-size: 0.9375rem;
+    padding: 1rem 1.25rem;
+    background: var(--bg-secondary);
+    border-radius: 0.5rem;
+}
+
+.proposal-status-review-content p:last-child {
+    margin-bottom: 0;
+}
+
+.proposal-status-review-meta {
+    display: flex;
+    gap: 1.5rem;
     font-size: 0.875rem;
     color: var(--text-secondary);
-    margin-bottom: 2rem;
-    padding: 1rem 1.25rem;
-    background: rgba(79, 70, 229, 0.04);
-    border-left: 3px solid var(--primary-color);
-    border-radius: 0.75rem;
+    margin-top: 1rem;
+}
+
+.proposal-status-help {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
     line-height: 1.6;
+}
+
+@media (max-width: 640px) {
+    .proposal-status-card {
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .proposal-status-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        margin-bottom: 1.25rem;
+    }
+
+    .proposal-view-status-badge {
+        padding: 0.4375rem 1rem;
+        font-size: 0.8125rem;
+    }
+
+    .proposal-status-context {
+        font-size: 0.875rem;
+    }
+
+    .proposal-status-author {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.25rem;
+    }
+
+    .proposal-status-review-notes {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+    }
+
+    .proposal-status-review-content {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+    }
+
+    .proposal-status-help {
+        margin-top: 1.25rem;
+        padding-top: 1.25rem;
+        font-size: 0.8125rem;
+    }
 }
 
 .proposal-content {
@@ -811,6 +949,27 @@
     margin: 1rem 0;
     color: var(--text-secondary);
     font-style: italic;
+}
+
+.proposal-dates-footer {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+    .proposal-dates-footer {
+        gap: 1rem;
+        font-size: 0.8125rem;
+        margin-top: 1.5rem;
+        padding-top: 1.25rem;
+    }
 }
 
 .proposal-summary {

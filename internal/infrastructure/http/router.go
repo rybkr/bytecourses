@@ -100,6 +100,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(optionalUser)
 		r.Get("/", pageHandler.Home)
+		r.Get("/about", pageHandler.About)
 		r.Get("/login", pageHandler.Login)
 		r.Get("/register", pageHandler.Register)
 		r.Get("/forgot-password", pageHandler.RequestPasswordReset)

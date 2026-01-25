@@ -2,7 +2,7 @@ import api from "../core/api.js";
 import FormHandler from "../components/FormHandler.js";
 import HelpTooltip from "../components/HelpTooltip.js";
 import { $ } from "../core/dom.js";
-import { showError, hideError } from "../core/utils.js";
+import { showError, hideError, confirmAction } from "../core/utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = $("#proposal-form");
@@ -67,8 +67,22 @@ document.addEventListener("DOMContentLoaded", () => {
         window.location.href = `/proposals/${id}`;
     }
 
-    submitBtn.addEventListener("click", (e) => {
+    submitBtn.addEventListener("click", async (e) => {
         e.preventDefault();
+        const confirmed = await confirmAction(
+            "Once submitted, your proposal will be sent to administrators for review. You won't be able to edit it until they respond.",
+            {
+                title: "Submit for Review?",
+                confirmText: "Submit",
+                confirmButtonClass: "btn-primary",
+                variant: "info",
+            }
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
         submit().catch(() => {
             showError("Submit failed", errorDiv);
         });

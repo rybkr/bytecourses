@@ -1,7 +1,7 @@
 import api from "../core/api.js";
 import Modal from "../components/Modal.js";
 import { $ } from "../core/dom.js";
-import { showError, hideError, confirmAction } from "../core/utils.js";
+import { showError, hideError, confirmAction, deleteProposal } from "../core/utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const proposalIdElement = document.querySelector("[data-proposal-id]");
@@ -27,6 +27,20 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (submitBtn) {
         async function submit() {
+            const confirmed = await confirmAction(
+                "Once submitted, your proposal will be sent to administrators for review. You won't be able to edit it until they respond.",
+                {
+                    title: "Submit for Review?",
+                    confirmText: "Submit",
+                    confirmButtonClass: "btn-primary",
+                    variant: "info",
+                }
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
             hideError(errorDiv);
             submitBtn.disabled = true;
 
@@ -44,11 +58,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (withdrawBtn) {
         async function withdraw() {
-            if (
-                !confirmAction(
-                    "Are you sure you want to withdraw this proposal? It will be removed from review.",
-                )
-            ) {
+            const confirmed = await confirmAction(
+                "This proposal will be removed from review. You will still have access to the proposal but will not be able to make changes.",
+                {
+                    title: "Withdraw Proposal?",
+                    confirmText: "Withdraw",
+                    confirmButtonClass: "btn-secondary",
+                    variant: "warning",
+                }
+            );
+
+            if (!confirmed) {
                 return;
             }
 
@@ -68,28 +88,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (deleteBtn) {
-        async function deleteProposal() {
-            if (
-                !confirmAction(
-                    "Are you sure you want to delete this proposal? This action cannot be undone.",
-                )
-            ) {
-                return;
-            }
-
+        async function handleDelete() {
+            const status = deleteBtn.getAttribute("data-proposal-status");
             hideError(errorDiv);
             deleteBtn.disabled = true;
 
-            try {
-                await api.delete(`/api/proposals/${proposalId}`);
+            const success = await deleteProposal(proposalId, status, {
+                onError: (error) => {
+                    showError(error.message || "Delete failed", errorDiv);
+                    deleteBtn.disabled = false;
+                },
+            });
+
+            if (success) {
                 window.location.href = "/proposals";
-            } catch (error) {
-                showError(error.message || "Delete failed", errorDiv);
-                deleteBtn.disabled = false;
             }
         }
 
-        deleteBtn.addEventListener("click", deleteProposal);
+        deleteBtn.addEventListener("click", handleDelete);
     }
 
     if (createCourseBtn && createCourseModal) {
@@ -152,6 +168,49 @@ document.addEventListener("DOMContentLoaded", () => {
     async function handleReviewAction(action) {
         if (!proposalId || proposalId <= 0) {
             showError("Invalid proposal ID", reviewErrorDiv);
+            return;
+        }
+
+        let confirmed = false;
+        let confirmOptions = {};
+
+        switch (action) {
+            case "approve":
+                confirmed = await confirmAction(
+                    "This proposal will be approved and the instructor will be able to create a course from it.",
+                    {
+                        title: "Approve Proposal?",
+                        confirmText: "Approve",
+                        confirmButtonClass: "btn-success",
+                        variant: "info",
+                    }
+                );
+                break;
+            case "request-changes":
+                confirmed = await confirmAction(
+                    "The instructor will be notified and can make changes before resubmitting.",
+                    {
+                        title: "Request Changes?",
+                        confirmText: "Request Changes",
+                        confirmButtonClass: "btn-warning",
+                        variant: "warning",
+                    }
+                );
+                break;
+            case "reject":
+                confirmed = await confirmAction(
+                    "This proposal will be rejected. The instructor will be notified of the rejection.",
+                    {
+                        title: "Reject Proposal?",
+                        confirmText: "Reject",
+                        confirmButtonClass: "btn-danger",
+                        variant: "danger",
+                    }
+                );
+                break;
+        }
+
+        if (!confirmed) {
             return;
         }
 

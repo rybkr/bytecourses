@@ -1,5 +1,5 @@
 import api from "../core/api.js";
-import { escapeHtml, confirmAction } from "../core/utils.js";
+import { escapeHtml, confirmAction, deleteProposal } from "../core/utils.js";
 import { $, delegate } from "../core/dom.js";
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -38,21 +38,17 @@ document.addEventListener("DOMContentLoaded", () => {
                             p.status === "changes_requested"
                         ) {
                             actions.push(
-                                `<a href="/proposals/${p.id}/edit" class="btn btn-secondary btn-sm">Edit</a>`,
+                                `<a href="/proposals/${p.id}/edit" class="btn btn-secondary">Edit</a>`,
                             );
                         }
                         if (p.status === "submitted") {
                             actions.push(
-                                `<button class="btn btn-secondary btn-sm" data-withdraw-id="${p.id}">Withdraw</button>`,
+                                `<button class="btn btn-secondary" data-withdraw-id="${p.id}">Withdraw</button>`,
                             );
                         }
-                        if (
-                            p.status === "draft" ||
-                            p.status === "withdrawn" ||
-                            p.status === "rejected"
-                        ) {
+                        if (p.status !== "submitted") {
                             actions.push(
-                                `<button class="btn btn-danger btn-sm" data-delete-id="${p.id}">Delete</button>`,
+                                `<button class="btn btn-danger" data-delete-id="${p.id}" data-proposal-status="${p.status}">Delete</button>`,
                             );
                         }
                         if (actions.length > 0) {
@@ -90,30 +86,24 @@ document.addEventListener("DOMContentLoaded", () => {
     delegate(container, "[data-delete-id]", "click", async (e, target) => {
         e.preventDefault();
         const proposalId = target.getAttribute("data-delete-id");
+        const status = target.getAttribute("data-proposal-status");
         const card = target.closest(".proposal-card");
 
-        if (
-            !confirmAction(
-                "Are you sure you want to delete this proposal? This action cannot be undone.",
-            )
-        ) {
-            return;
-        }
+        const success = await deleteProposal(proposalId, status, {
+            onError: (error) => {
+                if (error.message === "Failed to fetch") {
+                    alert("Network error. Please try again.");
+                } else {
+                    alert(
+                        error.message ||
+                            "Failed to delete proposal. Please try again.",
+                    );
+                }
+            },
+        });
 
-        try {
-            await api.delete(`/api/proposals/${proposalId}`);
-            if (card) {
-                card.remove();
-            }
-        } catch (error) {
-            if (error.message === "Failed to fetch") {
-                alert("Network error. Please try again.");
-            } else {
-                alert(
-                    error.message ||
-                        "Failed to delete proposal. Please try again.",
-                );
-            }
+        if (success && card) {
+            card.remove();
         }
     });
 
@@ -121,11 +111,17 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const proposalId = target.getAttribute("data-withdraw-id");
 
-        if (
-            !confirmAction(
-                "Are you sure you want to withdraw this proposal? It will be removed from review.",
-            )
-        ) {
+        const confirmed = await confirmAction(
+            "This proposal will be removed from review. You will still have access to the proposal but will not be able to make changes.",
+            {
+                title: "Withdraw Proposal?",
+                confirmText: "Withdraw",
+                confirmButtonClass: "btn-secondary",
+                variant: "warning",
+            }
+        );
+
+        if (!confirmed) {
             return;
         }
 

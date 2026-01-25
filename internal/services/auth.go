@@ -72,7 +72,7 @@ func (s *AuthService) Register(ctx context.Context, cmd *RegisterCommand) (*doma
 		Name:         cmd.Name,
 		Email:        cmd.Email,
 		PasswordHash: passwordHash,
-		Role:         domain.UserRoleStudent,
+		Role:         domain.SystemRoleUser,
 	}
 	if err := s.Users.Create(ctx, &user); err != nil {
 		return nil, err

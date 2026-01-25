@@ -303,9 +303,9 @@ func (s *ContentService) publishReading(ctx context.Context, cmd *PublishContent
 }
 
 type ListContentQuery struct {
-	ModuleID int64           `json:"module_id"`
-	UserID   int64           `json:"user_id"`
-	UserRole domain.UserRole `json:"user_role"`
+	ModuleID int64             `json:"module_id"`
+	UserID   int64             `json:"user_id"`
+	UserRole domain.SystemRole `json:"user_role"`
 }
 
 func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]domain.ContentItem, error) {
@@ -319,16 +319,11 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 		return nil, errors.ErrNotFound
 	}
 
-	switch query.UserRole {
-	case domain.UserRoleStudent,
-		domain.UserRoleInstructor:
-		if course.InstructorID != query.UserID {
-			return nil, errors.ErrNotFound
-		}
-
-	case domain.UserRoleAdmin:
-
-	default:
+	if query.UserRole == domain.SystemRoleAdmin {
+		// allow admin
+	} else if course.InstructorID == query.UserID {
+		// allow instructor of this course
+	} else {
 		return nil, errors.ErrForbidden
 	}
 
@@ -346,10 +341,10 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 }
 
 type GetContentQuery struct {
-	ContentID int64           `json:"content_id"`
-	ModuleID  int64           `json:"module_id"`
-	UserID    int64           `json:"user_id"`
-	UserRole  domain.UserRole `json:"user_role"`
+	ContentID int64             `json:"content_id"`
+	ModuleID  int64             `json:"module_id"`
+	UserID    int64             `json:"user_id"`
+	UserRole  domain.SystemRole `json:"user_role"`
 }
 
 func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domain.ContentItem, error) {
@@ -363,16 +358,11 @@ func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domai
 		return nil, errors.ErrNotFound
 	}
 
-	switch query.UserRole {
-	case domain.UserRoleStudent,
-		domain.UserRoleInstructor:
-		if course.InstructorID != query.UserID {
-			return nil, errors.ErrNotFound
-		}
-
-	case domain.UserRoleAdmin:
-
-	default:
+	if query.UserRole == domain.SystemRoleAdmin {
+		// allow admin
+	} else if course.InstructorID == query.UserID {
+		// allow instructor of this course
+	} else {
 		return nil, errors.ErrForbidden
 	}
 

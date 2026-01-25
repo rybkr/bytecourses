@@ -278,17 +278,17 @@ func seedAdmin(ctx context.Context, users persistence.UserRepository) error {
 	return users.Create(ctx, &domain.User{
 		Email:        email,
 		PasswordHash: hash,
-		Role:         domain.UserRoleAdmin,
+		Role:         domain.SystemRoleAdmin,
 		Name:         "Admin",
 	})
 }
 
 type seedUser struct {
-	ID       int64           `json:"id"`
-	Email    string          `json:"email"`
-	Name     string          `json:"name"`
-	Password string          `json:"password"`
-	Role     domain.UserRole `json:"role"`
+	ID       int64             `json:"id"`
+	Email    string            `json:"email"`
+	Name     string            `json:"name"`
+	Password string            `json:"password"`
+	Role     domain.SystemRole `json:"role"`
 }
 
 func (c *Container) seedUsers(ctx context.Context, path string) error {

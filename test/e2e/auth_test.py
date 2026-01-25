@@ -230,10 +230,10 @@ class TestUserRoles:
         assert r.status_code == HTTPStatus.OK
         assert r.json()["role"] == "admin"
 
-    def test_regular_user_has_student_role(self, api_url, user_session):
+    def test_regular_user_has_user_role(self, api_url, user_session):
         r = user_session.get(f"{api_url}/me")
         assert r.status_code == HTTPStatus.OK
-        assert r.json()["role"] == "student"
+        assert r.json()["role"] == "user"
 
 
 class TestUpdateProfile:

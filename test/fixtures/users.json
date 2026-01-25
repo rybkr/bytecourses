@@ -4,7 +4,7 @@
     "name": "Guest User",
     "email": "user@bytecourses.org",
     "password": "user",
-    "role": "student"
+    "role": "user"
   },
   {
     "id": 2,

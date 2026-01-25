@@ -30,7 +30,7 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) error {
 	createdAt := time.Now().UTC()
 	role := u.Role
 	if role == "" {
-		role = domain.UserRoleStudent
+		role = domain.SystemRoleUser
 	}
 
 	if err := r.db.QueryRowContext(ctx, `
@@ -73,7 +73,7 @@ func (r *UserRepository) GetByID(ctx context.Context, id int64) (*domain.User, b
 		return nil, false
 	}
 
-	u.Role = domain.UserRole(role)
+	u.Role = domain.SystemRole(role)
 	return &u, true
 }
 
@@ -96,7 +96,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*domain.
 		return nil, false
 	}
 
-	u.Role = domain.UserRole(role)
+	u.Role = domain.SystemRole(role)
 	return &u, true
 }
 

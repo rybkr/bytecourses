@@ -188,7 +188,7 @@ func TestUserRepository(t *testing.T, newUserRepo NewUserRepository) {
 		u := domain.User{
 			Email:        "nonexistent@example.com",
 			PasswordHash: make([]byte, 20),
-			Role:         domain.UserRoleStudent,
+			Role:         domain.SystemRoleUser,
 		}
 
 		err := users.Update(ctx, &u)
@@ -283,7 +283,7 @@ func TestUserRepository(t *testing.T, newUserRepo NewUserRepository) {
 		u := domain.User{
 			Email:        "user@example.com",
 			PasswordHash: make([]byte, 20),
-			Role:         domain.UserRoleStudent,
+			Role:         domain.SystemRoleUser,
 		}
 		if err := users.Create(ctx, &u); err != nil {
 			t.Fatalf("users.Create failed: %v", err)
@@ -295,8 +295,8 @@ func TestUserRepository(t *testing.T, newUserRepo NewUserRepository) {
 			t.Fatalf("users.GetByID failed")
 		}
 
-		v.Role = domain.UserRoleInstructor
-		if u.Role != domain.UserRoleStudent {
+		v.Role = domain.SystemRoleAdmin
+		if u.Role != domain.SystemRoleUser {
 			t.Fatalf("UserRepository: external modification affected persisted value")
 		}
 
@@ -308,7 +308,7 @@ func TestUserRepository(t *testing.T, newUserRepo NewUserRepository) {
 		if !ok {
 			t.Fatalf("users.GetByID failed")
 		}
-		if w.Role != domain.UserRoleInstructor {
+		if w.Role != domain.SystemRoleAdmin {
 			t.Fatalf("users.Update: role not updated")
 		}
 	})

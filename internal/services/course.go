@@ -164,9 +164,9 @@ func (s *CourseService) Publish(ctx context.Context, cmd *PublishCourseCommand) 
 }
 
 type GetCourseQuery struct {
-	CourseID int64           `json:"course_id"`
-	UserID   int64           `json:"user_id"`
-	UserRole domain.UserRole `json:"user_role"`
+	CourseID int64             `json:"course_id"`
+	UserID   int64             `json:"user_id"`
+	UserRole domain.SystemRole `json:"user_role"`
 }
 
 func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain.Course, error) {
@@ -178,20 +178,15 @@ func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain
 		return course, nil
 	}
 
-	switch query.UserRole {
-	case domain.UserRoleInstructor,
-		domain.UserRoleStudent:
-		if course.InstructorID != query.UserID {
-			return nil, errors.ErrNotFound
-		}
+	if query.UserRole == domain.SystemRoleAdmin {
 		return course, nil
-
-	case domain.UserRoleAdmin:
-		return course, nil
-
-	default:
-		return nil, errors.ErrNotFound
 	}
+
+	if course.InstructorID == query.UserID {
+		return course, nil
+	}
+
+	return nil, errors.ErrNotFound
 }
 
 func (s *CourseService) List(ctx context.Context) ([]domain.Course, error) {

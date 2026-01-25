@@ -253,7 +253,7 @@ func (h *PageHandler) Courses(w http.ResponseWriter, r *http.Request) {
 	moduleCounts := make(map[int64]int)
 	if user != nil {
 		var userID int64
-		var userRole domain.UserRole
+		var userRole domain.SystemRole
 		userID = user.ID
 		userRole = user.Role
 		for _, course := range courses {
@@ -302,7 +302,7 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var userID int64
-	var userRole domain.UserRole
+	var userRole domain.SystemRole
 	if user != nil {
 		userID = user.ID
 		userRole = user.Role
@@ -909,7 +909,7 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 	proposalIDStr := chi.URLParam(r, "id")
 	if proposalIDStr == "" {
 		// Prevent admins from creating proposals through the frontend
-		if user.Role == "admin" {
+		if user.Role == domain.SystemRoleAdmin {
 			http.Error(w, "forbidden: admins cannot create proposals", http.StatusForbidden)
 			return
 		}

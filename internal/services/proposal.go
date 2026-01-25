@@ -351,9 +351,9 @@ func (s *ProposalService) Delete(ctx context.Context, cmd *DeleteProposalCommand
 }
 
 type GetProposalQuery struct {
-	ProposalID int64           `json:"proposal_id"`
-	UserID     int64           `json:"user_id"`
-	UserRole   domain.UserRole `json:"user_role"`
+	ProposalID int64             `json:"proposal_id"`
+	UserID     int64             `json:"user_id"`
+	UserRole   domain.SystemRole `json:"user_role"`
 }
 
 func (s *ProposalService) Get(ctx context.Context, query *GetProposalQuery) (*domain.Proposal, error) {
@@ -362,47 +362,35 @@ func (s *ProposalService) Get(ctx context.Context, query *GetProposalQuery) (*do
 		return nil, errors.ErrNotFound
 	}
 
-	switch query.UserRole {
-	case domain.UserRoleStudent,
-		domain.UserRoleInstructor:
-		if proposal.AuthorID != query.UserID {
-			return nil, errors.ErrNotFound
-		}
-
-	case domain.UserRoleAdmin:
+	if query.UserRole == domain.SystemRoleAdmin {
 		if proposal.Status != domain.ProposalStatusSubmitted &&
 			proposal.Status != domain.ProposalStatusApproved &&
 			proposal.Status != domain.ProposalStatusRejected &&
 			proposal.Status != domain.ProposalStatusChangesRequested {
 			return nil, errors.ErrNotFound
 		}
-
-	default:
-		return nil, errors.ErrForbidden
+	} else {
+		if proposal.AuthorID != query.UserID {
+			return nil, errors.ErrNotFound
+		}
 	}
 
 	return proposal, nil
 }
 
 type ListProposalsQuery struct {
-	UserID   int64           `json:"user_id"`
-	UserRole domain.UserRole `json:"user_role"`
+	UserID   int64             `json:"user_id"`
+	UserRole domain.SystemRole `json:"user_role"`
 }
 
 func (s *ProposalService) List(ctx context.Context, query *ListProposalsQuery) ([]domain.Proposal, error) {
 	proposals := make([]domain.Proposal, 0)
 	var err error
 
-	switch query.UserRole {
-	case domain.UserRoleStudent,
-		domain.UserRoleInstructor:
-		proposals, err = s.Proposals.ListByAuthorID(ctx, query.UserID)
-
-	case domain.UserRoleAdmin:
+	if query.UserRole == domain.SystemRoleAdmin {
 		proposals, err = s.Proposals.ListAllSubmitted(ctx)
-
-	default:
-		return make([]domain.Proposal, 0), errors.ErrForbidden
+	} else {
+		proposals, err = s.Proposals.ListByAuthorID(ctx, query.UserID)
 	}
 
 	return proposals, err

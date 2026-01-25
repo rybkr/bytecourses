@@ -49,6 +49,14 @@ type ReadingRepository interface {
 	DeleteByID(ctx context.Context, id int64) error
 }
 
+type EnrollmentRepository interface {
+	Create(ctx context.Context, enrollment *domain.Enrollment) error
+	GetByUserAndCourse(ctx context.Context, userID, courseID int64) (*domain.Enrollment, bool)
+	ListByUser(ctx context.Context, userID int64) ([]domain.Enrollment, error)
+	ListByCourse(ctx context.Context, courseID int64) ([]domain.Enrollment, error)
+	Delete(ctx context.Context, userID, courseID int64) error
+}
+
 type DB interface {
 	Ping(context.Context) error
 	Close() error

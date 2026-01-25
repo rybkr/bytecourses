@@ -35,12 +35,14 @@ type Container struct {
 	ModuleRepo        persistence.ModuleRepository
 	ReadingRepo       persistence.ReadingRepository
 	PasswordResetRepo persistence.PasswordResetRepository
+	EnrollmentRepo    persistence.EnrollmentRepository
 
-	AuthService     *services.AuthService
-	ProposalService *services.ProposalService
-	CourseService   *services.CourseService
-	ModuleService   *services.ModuleService
-	ContentService  *services.ContentService
+	AuthService       *services.AuthService
+	ProposalService   *services.ProposalService
+	CourseService     *services.CourseService
+	ModuleService     *services.ModuleService
+	ContentService    *services.ContentService
+	EnrollmentService *services.EnrollmentService
 
 	onClose func() error
 }
@@ -126,6 +128,7 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.ModuleRepo = memory.NewModuleRepository()
 		c.ReadingRepo = memory.NewReadingRepository()
 		c.PasswordResetRepo = memory.NewPasswordResetRepository()
+		c.EnrollmentRepo = memory.NewEnrollmentRepository()
 
 	case StoragePostgres:
 		dbURL := os.Getenv("DATABASE_URL")
@@ -145,6 +148,7 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.ModuleRepo = postgres.NewModuleRepository(db)
 		c.ReadingRepo = postgres.NewReadingRepository(db)
 		c.PasswordResetRepo = postgres.NewPasswordResetRepository(db)
+		c.EnrollmentRepo = postgres.NewEnrollmentRepository(db)
 		c.onClose = db.Close
 
 	default:
@@ -184,6 +188,13 @@ func (c *Container) wireServices() {
 		c.ReadingRepo,
 		c.ModuleRepo,
 		c.CourseRepo,
+		c.EventBus,
+	)
+
+	c.EnrollmentService = services.NewEnrollmentService(
+		c.EnrollmentRepo,
+		c.CourseRepo,
+		c.UserRepo,
 		c.EventBus,
 	)
 }

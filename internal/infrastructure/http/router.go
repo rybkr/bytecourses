@@ -18,12 +18,13 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
 
-	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.ModuleService, c.ContentService, c.UserRepo)
+	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.ModuleService, c.ContentService, c.EnrollmentService, c.UserRepo)
 	authHandler := handlers.NewAuthHandler(c.AuthService, c.BaseURL)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 	moduleHandler := handlers.NewModuleHandler(c.ModuleService)
 	contentHandler := handlers.NewContentHandler(c.ContentService)
+	enrollmentHandler := handlers.NewEnrollmentHandler(c.EnrollmentService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
 	requireAdmin := middleware.RequireAdmin(c.SessionStore, c.UserRepo)
@@ -44,6 +45,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.With(requireUser).Get("/me", authHandler.Me)
 		r.With(requireUser).Patch("/me", authHandler.UpdateProfile)
 		r.With(requireUser).Delete("/me", authHandler.Delete)
+		r.With(requireUser).Get("/me/enrollments", enrollmentHandler.ListByUser)
 
 		r.Route("/proposals", func(r chi.Router) {
 			r.Use(requireUser)
@@ -66,6 +68,9 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 			r.With(requireUser).Get("/{id}", courseHandler.Get)
 			r.With(requireUser).Patch("/{id}", courseHandler.Update)
 			r.With(requireUser).Post("/{id}/actions/publish", courseHandler.Publish)
+			r.With(requireUser).Post("/{id}/actions/enroll", enrollmentHandler.Enroll)
+			r.With(requireUser).Delete("/{id}/actions/enroll", enrollmentHandler.Unenroll)
+			r.With(requireUser).Get("/{id}/enrollment", enrollmentHandler.GetStatus)
 
 			r.Route("/{courseId}/modules", func(r chi.Router) {
 				r.Use(requireUser)
@@ -114,6 +119,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.Get("/proposals/{id}", pageHandler.ProposalView)
 		r.Get("/proposals/{id}/edit", pageHandler.ProposalEdit)
 
+		r.Get("/courses/{id}/home", pageHandler.CourseHome)
 		r.Get("/courses/{id}/edit", pageHandler.CourseEdit)
 
 		r.Get("/courses/{courseId}/modules/{moduleId}/content/new", pageHandler.ContentNew)

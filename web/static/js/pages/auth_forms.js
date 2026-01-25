@@ -93,6 +93,11 @@ export function initLoginForm() {
 
     const errorDiv = $("#error-message");
 
+    function getNextUrl() {
+        const params = new URLSearchParams(window.location.search);
+        return params.get("next");
+    }
+
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
         hideError(errorDiv);
@@ -115,7 +120,8 @@ export function initLoginForm() {
             });
 
             if (response.ok) {
-                window.location.href = "/";
+                const nextUrl = getNextUrl();
+                window.location.href = nextUrl || "/";
             } else {
                 const errorText = await response.text();
                 showError(errorText || "Invalid credentials", errorDiv);

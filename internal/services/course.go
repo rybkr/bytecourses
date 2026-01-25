@@ -174,21 +174,24 @@ func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain
 	if !ok {
 		return nil, errors.ErrNotFound
 	}
+	if course.IsLive() {
+		return course, nil
+	}
 
 	switch query.UserRole {
-	case domain.UserRoleStudent,
-		domain.UserRoleInstructor:
+	case domain.UserRoleInstructor,
+		domain.UserRoleStudent:
 		if course.InstructorID != query.UserID {
 			return nil, errors.ErrNotFound
 		}
+		return course, nil
 
 	case domain.UserRoleAdmin:
+		return course, nil
 
 	default:
-		return nil, errors.ErrForbidden
+		return nil, errors.ErrNotFound
 	}
-
-	return course, nil
 }
 
 func (s *CourseService) List(ctx context.Context) ([]domain.Course, error) {

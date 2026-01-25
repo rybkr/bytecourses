@@ -387,6 +387,7 @@ class TestCourseRead:
 
         r = author.post(f"{api_url}/proposals/{proposal_id}/actions/create-course")
         course_id = r.json()["id"]
+        assert r.json()["instructor_id"] == author.user_id
 
         r = author.get(f"{api_url}/courses/{course_id}")
         assert r.status_code == HTTPStatus.OK
@@ -1759,7 +1760,7 @@ class TestCourseGetPermissions:
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = student.get(f"{api_url}/courses/{course_id}")
-        assert r.status_code == HTTPStatus.NOT_FOUND
+        assert r.status_code == HTTPStatus.OK
 
     def test_invalid_course_id_format(self, api_url):
         session = register_and_login(api_url, "instructor@example.com", "password123")

@@ -19,19 +19,8 @@ ByteCourses{{end}} {{define "content"}}
                 {{end}}
             </div>
             <div class="course-view-meta">
-                {{if .Course.Status}}
-                <span class="course-view-badge {{if eq (printf "%s" .Course.Status) "published"}}course-view-badge-success{{else}}course-view-badge-default{{end}}">
-                    {{if eq (printf "%s" .Course.Status) "published"}}Published{{else}}Draft{{end}}
-                </span>
-                {{end}}
-                {{if and (not .IsInstructor) (eq (printf "%s" .Course.Status) "published")}}
-                    {{if .IsEnrolled}}
-                    <span class="course-view-badge course-view-badge-info" id="enrollment-badge">Enrolled</span>
-                    <button class="btn btn-secondary" id="unenroll-btn" data-course-id="{{.Course.ID}}">Unenroll</button>
-                    {{else}}
-                    <button class="btn btn-primary" id="enroll-btn" data-course-id="{{.Course.ID}}" data-authenticated="{{if .User}}true{{else}}false{{end}}">Enroll</button>
-                    {{end}}
-                {{end}}
+                <span class="course-view-badge course-view-badge-info">Enrolled</span>
+                <a href="/courses/{{.Course.ID}}/content" class="btn btn-primary">Continue Learning</a>
             </div>
         </div>
     </div>
@@ -56,58 +45,35 @@ ByteCourses{{end}} {{define "content"}}
         </section>
         {{end}}
 
-        {{if .Course.TargetAudience}}
-        <section class="course-view-section course-view-audience">
+        {{if .Modules}}
+        <section class="course-view-section">
             <div class="course-view-section-header">
                 <div class="course-view-section-icon">
                     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
-                        <circle cx="9" cy="7" r="4"></circle>
-                        <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
-                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
                     </svg>
                 </div>
-                <h2>Who This Course Is For</h2>
+                <h2>Course Modules</h2>
             </div>
             <div class="course-view-section-body">
-                {{markdown .Course.TargetAudience}}
+                <div class="course-home-modules">
+                    {{range .Modules}}
+                    <div class="course-home-module-card">
+                        <h3>{{.Title}}</h3>
+                        {{if .Description}}
+                        <p>{{.Description}}</p>
+                        {{end}}
+                        {{$readings := index $.ReadingsByModule .ID}}
+                        {{if $readings}}
+                        <span class="module-content-count">{{len $readings}} reading{{if gt (len $readings) 1}}s{{end}}</span>
+                        {{end}}
+                    </div>
+                    {{end}}
+                </div>
             </div>
         </section>
         {{end}}
-
-        {{if .Course.AssumedPrerequisites}}
-        <section class="course-view-section course-view-prerequisites">
-            <div class="course-view-section-header">
-                <div class="course-view-section-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
-                        <polyline points="2 17 12 22 22 17"></polyline>
-                        <polyline points="2 12 12 17 22 12"></polyline>
-                    </svg>
-                </div>
-                <h2>Prerequisites</h2>
-            </div>
-            <div class="course-view-section-body">
-                {{markdown .Course.AssumedPrerequisites}}
-            </div>
-        </section>
-        {{end}}
-
-        <section class="course-view-section course-view-about">
-            <div class="course-view-section-header">
-                <div class="course-view-section-icon">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <line x1="12" y1="16" x2="12" y2="12"></line>
-                        <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                    </svg>
-                </div>
-                <h2>About This Course</h2>
-            </div>
-            <div class="course-view-section-body">
-                {{markdown .Course.Summary}}
-            </div>
-        </section>
     </div>
 
     <div class="course-view-sidebar">
@@ -149,6 +115,18 @@ ByteCourses{{end}} {{define "content"}}
                 <span class="course-view-detail-label">Created</span>
                 <span class="course-view-detail-value">{{.Course.CreatedAt.Format "Jan 2, 2006"}}</span>
             </div>
+            {{if .Modules}}
+            <div class="course-view-detail-row">
+                <span class="course-view-detail-icon">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                </span>
+                <span class="course-view-detail-label">Modules</span>
+                <span class="course-view-detail-value">{{len .Modules}}</span>
+            </div>
+            {{end}}
         </div>
     </div>
 </div>

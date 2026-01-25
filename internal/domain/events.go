@@ -34,6 +34,8 @@ var (
 	_ Event = (*ContentUpdatedEvent)(nil)
 	_ Event = (*ContentDeletedEvent)(nil)
 	_ Event = (*ContentPublishedEvent)(nil)
+	_ Event = (*EnrollmentCreatedEvent)(nil)
+	_ Event = (*EnrollmentDeletedEvent)(nil)
 )
 
 type BaseEvent struct {
@@ -534,4 +536,40 @@ func NewContentPublishedEvent(contentType ContentType, contentID, moduleID, cour
 
 func (e *ContentPublishedEvent) EventName() string {
 	return "content.published"
+}
+
+type EnrollmentCreatedEvent struct {
+	BaseEvent
+	UserID   int64
+	CourseID int64
+}
+
+func NewEnrollmentCreatedEvent(userID, courseID int64) *EnrollmentCreatedEvent {
+	return &EnrollmentCreatedEvent{
+		BaseEvent: NewBaseEvent(),
+		UserID:    userID,
+		CourseID:  courseID,
+	}
+}
+
+func (e *EnrollmentCreatedEvent) EventName() string {
+	return "enrollment.created"
+}
+
+type EnrollmentDeletedEvent struct {
+	BaseEvent
+	UserID   int64
+	CourseID int64
+}
+
+func NewEnrollmentDeletedEvent(userID, courseID int64) *EnrollmentDeletedEvent {
+	return &EnrollmentDeletedEvent{
+		BaseEvent: NewBaseEvent(),
+		UserID:    userID,
+		CourseID:  courseID,
+	}
+}
+
+func (e *EnrollmentDeletedEvent) EventName() string {
+	return "enrollment.deleted"
 }

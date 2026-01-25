@@ -688,8 +688,6 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// The content page is now just an overview - no reading content is displayed here
-	// Readings are viewed on their dedicated pages: /courses/{id}/modules/{moduleId}/content/{contentId}
 	pd := CourseContentPageData{
 		User:             user,
 		Course:           course,
@@ -908,7 +906,6 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 
 	proposalIDStr := chi.URLParam(r, "id")
 	if proposalIDStr == "" {
-		// Prevent admins from creating proposals through the frontend
 		if user.Role == domain.SystemRoleAdmin {
 			http.Error(w, "forbidden: admins cannot create proposals", http.StatusForbidden)
 			return

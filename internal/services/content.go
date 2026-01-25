@@ -320,9 +320,9 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 	}
 
 	if query.UserRole == domain.SystemRoleAdmin {
-		// allow admin
+
 	} else if course.InstructorID == query.UserID {
-		// allow instructor of this course
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -359,9 +359,9 @@ func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domai
 	}
 
 	if query.UserRole == domain.SystemRoleAdmin {
-		// allow admin
+
 	} else if course.InstructorID == query.UserID {
-		// allow instructor of this course
+
 	} else {
 		return nil, errors.ErrForbidden
 	}

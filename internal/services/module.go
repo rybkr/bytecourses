@@ -224,9 +224,9 @@ func (s *ModuleService) List(ctx context.Context, query *ListModulesQuery) ([]do
 	}
 
 	if query.UserRole == domain.SystemRoleAdmin {
-		// allow admin
+
 	} else if course.InstructorID == query.UserID {
-		// allow instructor of this course
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -253,9 +253,9 @@ func (s *ModuleService) Get(ctx context.Context, query *GetModuleQuery) (*domain
 	}
 
 	if query.UserRole == domain.SystemRoleAdmin {
-		// allow admin
+
 	} else if course.InstructorID == query.UserID {
-		// allow instructor of this course
+
 	} else {
 		return nil, errors.ErrForbidden
 	}

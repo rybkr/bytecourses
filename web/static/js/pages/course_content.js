@@ -3,7 +3,7 @@ import { $, on } from "../core/dom.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const pathMatch = window.location.pathname.match(
-        /\/courses\/(\d+)\/content/,
+        /\/courses\/(\d+)\/modules$/,
     );
     const courseId = pathMatch ? Number(pathMatch[1]) : null;
 
@@ -82,6 +82,78 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
     });
+
+    // Expandable module functionality
+    function initExpandableModules() {
+        const modules = document.querySelectorAll(".course-content-module");
+        const storageKey = `course-${courseId}-expanded-modules`;
+
+        // Load expanded state from localStorage
+        let expandedModules = new Set();
+        try {
+            const stored = localStorage.getItem(storageKey);
+            if (stored) {
+                expandedModules = new Set(JSON.parse(stored));
+            }
+        } catch (e) {
+            // Ignore localStorage errors
+        }
+
+        // Check if current URL is a reading page and auto-expand that module
+        const pathMatch = window.location.pathname.match(
+            /\/courses\/\d+\/modules\/(\d+)\/content\/\d+/,
+        );
+        if (pathMatch) {
+            const currentModuleId = pathMatch[1];
+            expandedModules.add(currentModuleId);
+        }
+
+        modules.forEach((module) => {
+            const moduleId = module.dataset.moduleId;
+            const header = module.querySelector(".course-content-module-header");
+            const content = module.querySelector(".course-content-module-content");
+
+            if (!header || !content) return;
+
+            // Set initial state
+            const isExpanded = expandedModules.has(moduleId);
+            if (isExpanded) {
+                module.classList.add("expanded");
+                header.setAttribute("aria-expanded", "true");
+            }
+
+            // Toggle on click
+            on(header, "click", (e) => {
+                // Don't toggle if clicking the link
+                if (e.target.closest(".module-card-link")) {
+                    return;
+                }
+
+                const wasExpanded = module.classList.contains("expanded");
+                module.classList.toggle("expanded");
+                const nowExpanded = module.classList.contains("expanded");
+                header.setAttribute("aria-expanded", nowExpanded ? "true" : "false");
+
+                // Update localStorage
+                if (nowExpanded) {
+                    expandedModules.add(moduleId);
+                } else {
+                    expandedModules.delete(moduleId);
+                }
+
+                try {
+                    localStorage.setItem(
+                        storageKey,
+                        JSON.stringify(Array.from(expandedModules)),
+                    );
+                } catch (e) {
+                    // Ignore localStorage errors
+                }
+            });
+        });
+    }
+
+    initExpandableModules();
 
     function showToast(message, type = "info") {
         const existing = document.querySelector(".toast");

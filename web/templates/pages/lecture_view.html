@@ -1,10 +1,13 @@
-{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define
+"content"}}
+{{template "course-navbar" .}}
+
 <div class="lecture-view-container">
     <div class="lecture-view-header">
         <div class="lecture-view-breadcrumb">
-            <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
+            <a href="/courses/{{.Course.ID}}/modules">{{.Course.Title}}</a>
             <span> / </span>
-            <a href="/courses/{{.Course.ID}}/content?readingId={{.Reading.ID}}">{{.Module.Title}}</a>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
             <span> / </span>
             <span>{{.Reading.Title}}</span>
         </div>
@@ -12,7 +15,8 @@
         <div class="lecture-view-meta">
             {{if .IsInstructor}}
             <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
-            <a href="/modules/{{.Module.ID}}/readings/{{.Reading.ID}}/edit" class="btn btn-small btn-secondary">Edit</a>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}/edit"
+                class="btn btn-small btn-secondary">Edit</a>
             {{end}}
         </div>
     </div>
@@ -26,7 +30,8 @@
     </div>
 
     <div class="lecture-navigation">
-        <a href="/courses/{{.Course.ID}}/content?readingId={{.Reading.ID}}" class="btn btn-outline">← Back to Content</a>
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">← Back to Module</a>
+        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline">Back to Content</a>
         {{if .IsInstructor}}
         <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
         {{end}}

@@ -1,10 +1,11 @@
-{{template "layout" .}} {{define "title"}}New Content - {{.Module.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "layout" .}} {{define "title"}}New Content - {{.Module.Title}} - {{.Course.Title}} - ByteCourses{{end}}
+{{define "content"}}
 {{template "course-navbar" .}}
 
 <div class="content-new-container">
     <div class="content-new-header-section">
         <div class="content-new-breadcrumb">
-            <a href="/courses/{{.Course.ID}}/content">Content</a>
+            <a href="/courses/{{.Course.ID}}/modules">Content</a>
             <span> / </span>
             <span>{{.Module.Title}}</span>
             <span> / </span>
@@ -20,7 +21,8 @@
             <div class="content-type-cards">
                 <button type="button" class="content-type-card active" data-type="reading" id="content-type-reading">
                     <div class="content-type-card-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -37,7 +39,8 @@
 
         <div class="content-new-form-header">
             <div class="content-new-form-header-left">
-                <input type="text" id="content-title" class="lecture-title-input" placeholder="Content title..." required>
+                <input type="text" id="content-title" class="lecture-title-input" placeholder="Content title..."
+                    required>
             </div>
             <div class="content-new-form-header-right">
                 <button type="button" id="save-btn" class="btn btn-primary">Create</button>
@@ -49,7 +52,8 @@
                 <div class="lecture-editor-pane-header">
                     <span>Markdown</span>
                 </div>
-                <textarea id="content-body" class="lecture-content-textarea" placeholder="Write your content here using Markdown..."></textarea>
+                <textarea id="content-body" class="lecture-content-textarea"
+                    placeholder="Write your content here using Markdown..."></textarea>
             </div>
             <div class="lecture-editor-pane">
                 <div class="lecture-editor-pane-header">
@@ -65,8 +69,8 @@
 
 <script>
     window.CONTENT_NEW_DATA = {
-        courseId: {{.Course.ID}},
-        moduleId: {{.Module.ID}}
+        courseId: {{.Course.ID }},
+    moduleId: { {.Module.ID } }
     };
 </script>
 {{end}}

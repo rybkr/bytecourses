@@ -107,7 +107,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 		r.Get("/reset-password", pageHandler.ConfirmPasswordReset)
 		r.Get("/courses", pageHandler.Courses)
 		r.Get("/courses/{id}", pageHandler.CourseView)
-		r.Get("/courses/{id}/content", pageHandler.CourseContent)
+		r.Get("/courses/{id}/modules", pageHandler.CourseContent)
 	})
 
 	r.Group(func(r chi.Router) {

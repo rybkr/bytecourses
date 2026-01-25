@@ -603,7 +603,7 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
 		courseID := chi.URLParam(r, "id")
-		http.Redirect(w, r, "/login?next=/courses/"+courseID+"/content", http.StatusFound)
+		http.Redirect(w, r, "/login?next=/courses/"+courseID+"/modules", http.StatusFound)
 		return
 	}
 
@@ -688,43 +688,8 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	var currentModule *domain.Module
-	var currentReading *domain.Reading
-	var previousReading *domain.Reading
-	var nextReading *domain.Reading
-
-	readingIDStr := r.URL.Query().Get("readingId")
-	if readingIDStr != "" {
-		readingID, err := strconv.ParseInt(readingIDStr, 10, 64)
-		if err == nil {
-			for i, item := range allReadings {
-				if item.Reading.ID == readingID {
-					currentModule = &item.Module
-					currentReading = &item.Reading
-					if i > 0 {
-						prev := allReadings[i-1]
-						previousReading = &prev.Reading
-					}
-					if i < len(allReadings)-1 {
-						next := allReadings[i+1]
-						nextReading = &next.Reading
-					}
-					break
-				}
-			}
-		}
-	}
-
-	if currentReading == nil && len(allReadings) > 0 {
-		first := allReadings[0]
-		currentModule = &first.Module
-		currentReading = &first.Reading
-		if len(allReadings) > 1 {
-			second := allReadings[1]
-			nextReading = &second.Reading
-		}
-	}
-
+	// The content page is now just an overview - no reading content is displayed here
+	// Readings are viewed on their dedicated pages: /courses/{id}/modules/{moduleId}/content/{contentId}
 	pd := CourseContentPageData{
 		User:             user,
 		Course:           course,
@@ -733,10 +698,10 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		IsEnrolled:       isEnrolled || isInstructor,
 		Modules:          modulesList,
 		ReadingsByModule: readingsByModule,
-		CurrentReading:   currentReading,
-		CurrentModule:    currentModule,
-		PreviousReading:  previousReading,
-		NextReading:      nextReading,
+		CurrentReading:   nil,
+		CurrentModule:    nil,
+		PreviousReading:  nil,
+		NextReading:      nil,
 		ActiveNavItem:    "content",
 	}
 
@@ -1030,11 +995,13 @@ type ModuleViewPageData struct {
 }
 
 type ReadingPageData struct {
-	User         *domain.User
-	Course       *domain.Course
-	Module       *domain.Module
-	Reading      *domain.Reading
-	IsInstructor bool
+	User          *domain.User
+	Course        *domain.Course
+	Module        *domain.Module
+	Reading       *domain.Reading
+	IsInstructor  bool
+	IsEnrolled    bool
+	ActiveNavItem string
 }
 
 type ContentNewPageData struct {
@@ -1116,12 +1083,25 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 
 	isInstructor := course.IsTaughtBy(user)
 
+	var isEnrolled bool
+	if !isInstructor {
+		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: courseID,
+			UserID:   user.ID,
+		})
+		if err == nil {
+			isEnrolled = enrolled
+		}
+	}
+
 	pd := ReadingPageData{
-		User:         user,
-		Course:       course,
-		Module:       module,
-		Reading:      reading,
-		IsInstructor: isInstructor,
+		User:          user,
+		Course:        course,
+		Module:        module,
+		Reading:       reading,
+		IsInstructor:  isInstructor,
+		IsEnrolled:    isEnrolled || isInstructor,
+		ActiveNavItem: "content",
 	}
 
 	tmpl, ok := h.templates["lecture_view.html"]
@@ -1211,12 +1191,25 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 
 	isInstructor := course.IsTaughtBy(user)
 
+	var isEnrolled bool
+	if !isInstructor {
+		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: courseID,
+			UserID:   user.ID,
+		})
+		if err == nil {
+			isEnrolled = enrolled
+		}
+	}
+
 	pd := ReadingPageData{
-		User:         user,
-		Course:       course,
-		Module:       module,
-		Reading:      reading,
-		IsInstructor: isInstructor,
+		User:          user,
+		Course:        course,
+		Module:        module,
+		Reading:       reading,
+		IsInstructor:  isInstructor,
+		IsEnrolled:    isEnrolled || isInstructor,
+		ActiveNavItem: "content",
 	}
 
 	tmpl, ok := h.templates["lecture_edit.html"]

@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 },
             );
             const reading = await response.json();
-            window.location.href = `/courses/${courseId}/content?readingId=${reading.id}`;
+            window.location.href = `/courses/${courseId}/modules/${moduleId}`;
         } catch (error) {
             alert(error.message || "Failed to create content");
             saveBtn.disabled = false;

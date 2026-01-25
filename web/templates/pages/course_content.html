@@ -4,127 +4,53 @@
 <div class="course-content-container">
     <div class="course-content-sidebar">
         <div class="course-content-sidebar-header">
+            <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                </svg>
+                Modules
+            </h3>
         </div>
         <div class="course-content-modules">
             {{if .Modules}}
                 {{range .Modules}}
-                <div class="course-content-module" data-module-id="{{.ID}}" data-order="{{.Order}}">
-                    <div class="module-header">
-                        <button class="module-toggle" type="button">
-                            <svg class="module-toggle-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="9 18 15 12 9 6"></polyline>
-                            </svg>
-                            <span class="module-title">{{.Title}}</span>
-                        </button>
-                        {{if $.IsInstructor}}
-                        <div class="module-actions">
-                            <button type="button" class="btn-icon btn-edit-module" data-module-id="{{.ID}}" title="Edit module">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                                </svg>
-                            </button>
-                            <button type="button" class="btn-icon btn-delete-module" data-module-id="{{.ID}}" title="Delete module">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <polyline points="3 6 5 6 21 6"></polyline>
-                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        {{end}}
+                <a href="/courses/{{$.Course.ID}}/modules/{{.ID}}" class="module-card{{if $.CurrentModule}}{{if eq .ID $.CurrentModule.ID}} active{{end}}{{end}}">
+                    <div class="module-card-icon">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                        </svg>
                     </div>
-                    {{if $.IsInstructor}}
-                    <div class="inline-edit-form" data-module-id="{{.ID}}" style="display: none;">
-                        <input type="text" class="inline-input" value="{{.Title}}" placeholder="Module title" required>
-                        <textarea class="inline-textarea" placeholder="Description (optional)" rows="2">{{.Description}}</textarea>
-                        <div class="inline-actions">
-                            <button type="button" class="btn btn-small btn-primary btn-save-module">Save</button>
-                            <button type="button" class="btn btn-small btn-ghost btn-cancel-edit">Cancel</button>
-                        </div>
-                    </div>
-                    <div class="delete-confirm" data-module-id="{{.ID}}" style="display: none;">
-                        <span class="delete-confirm-text">Delete this module and all its content?</span>
-                        <div class="delete-confirm-actions">
-                            <button type="button" class="btn btn-small btn-danger btn-confirm-delete-module">Delete</button>
-                            <button type="button" class="btn btn-small btn-ghost btn-cancel-delete">Cancel</button>
-                        </div>
-                    </div>
-                    {{end}}
-                    <div class="module-content">
+                    <div class="module-card-content">
+                        <span class="module-card-title">{{.Title}}</span>
                         {{$readings := index $.ReadingsByModule .ID}}
-                        {{if $readings}}
-                            {{range $readings}}
-                            <div class="content-item" data-reading-id="{{.ID}}">
-                                <a href="/courses/{{$.Course.ID}}/content?readingId={{.ID}}" class="content-item-link{{if $.CurrentReading}}{{if eq .ID $.CurrentReading.ID}} active{{end}}{{end}}">
-                                    <svg class="content-item-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    </svg>
-                                    <span class="content-item-title">{{.Title}}</span>
-                                </a>
-                                {{if $.IsInstructor}}
-                                <button type="button" class="btn-icon-sm btn-delete-content" data-reading-id="{{.ID}}" title="Delete">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                                    </svg>
-                                </button>
-                                <div class="delete-confirm-inline" style="display: none;">
-                                    <span>Delete?</span>
-                                    <button type="button" class="btn-text btn-text-danger btn-confirm-delete-content">Yes</button>
-                                    <button type="button" class="btn-text btn-cancel-delete-content">No</button>
-                                </div>
-                                {{end}}
-                            </div>
-                            {{end}}
-                        {{end}}
-                        {{if $.IsInstructor}}
-                        <div class="add-content-row" data-module-id="{{.ID}}">
-                            <button type="button" class="add-content-trigger">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                <span>Add content</span>
-                            </button>
-                            <div class="add-content-menu" style="display: none;">
-                                <button type="button" class="add-content-option" data-type="reading">
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                        <polyline points="14 2 14 8 20 8"></polyline>
-                                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                                    </svg>
-                                    <span>Reading</span>
-                                </button>
-                            </div>
-                            <div class="add-content-form" style="display: none;">
-                                <input type="text" class="inline-input inline-input-sm" placeholder="Enter title..." data-module-id="{{.ID}}">
-                                <div class="inline-actions">
-                                    <button type="button" class="btn btn-small btn-primary btn-create-content">Add</button>
-                                    <button type="button" class="btn btn-small btn-ghost btn-cancel-add-content">Cancel</button>
-                                </div>
-                            </div>
-                        </div>
-                        {{end}}
+                        <span class="module-card-count">{{if $readings}}{{len $readings}} item{{if gt (len $readings) 1}}s{{end}}{{else}}Empty{{end}}</span>
                     </div>
-                </div>
+                    <div class="module-card-arrow">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </a>
                 {{end}}
             {{else}}
-                {{if .IsInstructor}}
                 <div class="empty-state">
-                    <p>No modules yet. Add your first module to get started.</p>
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                    </svg>
+                    {{if .IsInstructor}}
+                    <p>No modules yet</p>
+                    <span class="text-muted">Create your first module below</span>
+                    {{else}}
+                    <p>No content available</p>
+                    <span class="text-muted">Check back later</span>
+                    {{end}}
                 </div>
-                {{else}}
-                <div class="empty-state">
-                    <p>No content available yet.</p>
-                </div>
-                {{end}}
             {{end}}
             {{if .IsInstructor}}
-            <div class="add-module-row">
+            <div class="add-module-section">
                 <button type="button" class="add-module-trigger" id="add-module-btn">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -148,38 +74,69 @@
     <div class="course-content-main">
         {{if .CurrentReading}}
         <div class="course-content-breadcrumb">
-            <a href="/courses/{{.Course.ID}}">{{.Course.Title}}</a>
-            <span> / </span>
-            <span>{{.CurrentModule.Title}}</span>
-            <span> / </span>
+            <a href="/courses/{{.Course.ID}}/home">{{.Course.Title}}</a>
+            <span class="breadcrumb-separator">/</span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.CurrentModule.ID}}">{{.CurrentModule.Title}}</a>
+            <span class="breadcrumb-separator">/</span>
             <span>{{.CurrentReading.Title}}</span>
         </div>
 
-        <div class="course-content-reading-view">
+        <div class="course-content-reading-header">
             <h1>{{.CurrentReading.Title}}</h1>
+            {{if .IsInstructor}}
+            <a href="/courses/{{.Course.ID}}/modules/{{.CurrentModule.ID}}/content/{{.CurrentReading.ID}}/edit" class="btn btn-outline btn-small">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                </svg>
+                Edit
+            </a>
+            {{end}}
+        </div>
+
+        <div class="course-content-reading-view">
             {{if .CurrentReading.Content}}
-            <div class="proposal-content-value">{{markdown .CurrentReading.Content}}</div>
+            <div class="reading-content">{{markdown .CurrentReading.Content}}</div>
             {{else}}
-            <p class="text-muted">No content available yet.</p>
+            <div class="reading-empty">
+                <p class="text-muted">No content available yet.</p>
+                {{if .IsInstructor}}
+                <a href="/courses/{{.Course.ID}}/modules/{{.CurrentModule.ID}}/content/{{.CurrentReading.ID}}/edit" class="btn btn-primary">Add Content</a>
+                {{end}}
+            </div>
             {{end}}
         </div>
 
         <div class="course-content-navigation">
             {{if .PreviousReading}}
-            <a href="/courses/{{.Course.ID}}/content?readingId={{.PreviousReading.ID}}" class="btn btn-outline">← Previous</a>
+            <a href="/courses/{{.Course.ID}}/content?readingId={{.PreviousReading.ID}}" class="btn btn-outline">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+                Previous
+            </a>
             {{else}}
             <span></span>
             {{end}}
             {{if .NextReading}}
-            <a href="/courses/{{.Course.ID}}/content?readingId={{.NextReading.ID}}" class="btn btn-primary">Next →</a>
+            <a href="/courses/{{.Course.ID}}/content?readingId={{.NextReading.ID}}" class="btn btn-primary">
+                Next
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </a>
             {{else}}
             <span></span>
             {{end}}
         </div>
         {{else}}
         <div class="course-content-overview">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
             <h1>Course Content</h1>
-            <p class="text-muted">Select a reading from the sidebar to begin.</p>
+            <p class="text-muted">Select a module from the sidebar to view its content.</p>
         </div>
         {{end}}
     </div>

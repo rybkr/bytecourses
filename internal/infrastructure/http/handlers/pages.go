@@ -90,6 +90,9 @@ type PageHandler struct {
 func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalService, courseService *services.CourseService, moduleService *services.ModuleService, contentService *services.ContentService, enrollmentService *services.EnrollmentService, userRepo persistence.UserRepository) *PageHandler {
 	funcMap := template.FuncMap{
 		"markdown": renderMarkdown,
+		"add": func(a, b int) int {
+			return a + b
+		},
 	}
 
 	h := &PageHandler{
@@ -936,6 +939,12 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 
 	proposalIDStr := chi.URLParam(r, "id")
 	if proposalIDStr == "" {
+		// Prevent admins from creating proposals through the frontend
+		if user.Role == "admin" {
+			http.Error(w, "forbidden: admins cannot create proposals", http.StatusForbidden)
+			return
+		}
+
 		tmpl, ok := h.templates["proposal_edit.html"]
 		if !ok {
 			log.Printf("template not found: proposal_edit.html")

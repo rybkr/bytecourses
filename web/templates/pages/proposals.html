@@ -12,11 +12,21 @@
     {{end}}
 </div>
 
+{{if eq .User.Role "admin"}}
+<div class="proposals-context">
+    <p>Review submitted proposals. Provide feedback to help instructors improve their courses.</p>
+</div>
+{{else}}
+<div class="proposals-context">
+    <p>Create and manage your course proposals. Draft proposals can be edited until submitted for review.</p>
+</div>
+{{end}}
+
 <div id="proposals-list" class="proposals-list" data-is-admin="{{if eq .User.Role "admin"}}true{{else}}false{{end}}">
     <div class="loading">Loading proposals...</div>
 </div>
 {{end}}
 
 {{define "scripts"}}
-<script src="/static/js/proposals.js" defer></script>
+<script type="module" src="/static/js/pages/proposals.js"></script>
 {{end}}

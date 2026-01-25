@@ -8,9 +8,9 @@ from http import HTTPStatus
 import pytest
 import requests
 
-USER_EMAIL = "user@local.bytecourses.org"
+USER_EMAIL = "user@bytecourses.org"
 USER_PASSWORD = "user"
-ADMIN_EMAIL = "admin@local.bytecourses.org"
+ADMIN_EMAIL = "admin@bytecourses.org"
 ADMIN_PASSWORD = "admin"
 
 
@@ -32,11 +32,11 @@ def go_server():
             "go",
             "run",
             "cmd/server/main.go",
-            "--seed-users=true",
-            "--seed-proposals=true",
             "--bcrypt-cost=5",
-            "--storage=memory",
             "--email-service=none",
+            "--storage=memory",
+            "--seed-users=./test/fixtures/users.json",
+            "--seed-proposals=./test/fixtures/proposals.json",
         ],
         env=env,
         stdout=subprocess.DEVNULL,

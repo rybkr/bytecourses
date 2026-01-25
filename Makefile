@@ -12,7 +12,7 @@ include .env
 export
 endif
 
-.PHONY: help setup venv install lint go-test py-test ui-test ui-test-headless test migrate ci cloc format clean clean-all
+.PHONY: help setup venv install lint go-test py-test test migrate ci cloc format clean clean-all
 
 help: # @help Show available targets
 	@awk 'BEGIN {FS=":.*?# @help "} \
@@ -40,13 +40,7 @@ go-test: # @help Run go tests
 py-test: venv # @help Run Python e2e tests
 	pytest test/e2e -vn auto
 
-ui-test: venv # @help Run Playwright UI tests (headed)
-	pytest test/ui -vn auto --headed
-
-ui-test-headless: venv # @help Run Playwright UI tests headless
-	pytest test/ui -vn auto
-
-test: go-test py-test ui-test-headless # @help Run all tests
+test: go-test py-test # @help Run all tests
 
 migrate: # @help Run DB migrations against TEST_DATABASE_URL
 	@test -n "$${TEST_DATABASE_URL:-}" || (echo "TEST_DATABASE_URL is not set"; exit 1)

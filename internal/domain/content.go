@@ -4,12 +4,6 @@ import (
 	"time"
 )
 
-type ContentType string
-
-const (
-	ContentTypeLecture ContentType = "lecture"
-)
-
 type ContentStatus string
 
 const (
@@ -17,18 +11,42 @@ const (
 	ContentStatusPublished ContentStatus = "published"
 )
 
-type ContentItem struct {
+type ContentType string
+
+const (
+	ContentTypeReading ContentType = "reading"
+)
+
+type ContentItem interface {
+	Type() ContentType
+}
+
+var (
+	_ ContentItem = (*Reading)(nil)
+)
+
+type BaseContentItem struct {
 	ID        int64         `json:"id"`
 	ModuleID  int64         `json:"module_id"`
 	Title     string        `json:"title"`
-	Type      ContentType   `json:"type"`
+	Order     int           `json:"order"`
 	Status    ContentStatus `json:"status"`
-	Position  int           `json:"position"`
 	CreatedAt time.Time     `json:"created_at"`
 	UpdatedAt time.Time     `json:"updated_at"`
 }
 
-type Lecture struct {
-	ContentItemID int64  `json:"content_item_md"`
-	Content       string `json:"content"`
+type ReadingFormat string
+
+const (
+	ReadingFormatMarkdown ReadingFormat = "markdown"
+)
+
+type Reading struct {
+	BaseContentItem
+	Format  ReadingFormat `json:"format"`
+	Content *string       `json:"content,omitempty"`
+}
+
+func (r *Reading) Type() ContentType {
+	return ContentTypeReading
 }

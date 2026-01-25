@@ -1,0 +1,85 @@
+{{define "title"}}About - ByteCourses{{end}}
+
+{{define "content"}}
+<div class="page-container">
+    <div class="about-content">
+        <h1>About ByteCourses</h1>
+        <p class="lead">A platform where students teach students, creating a community of peer-to-peer learning and
+            knowledge sharing.</p>
+
+        <section class="about-section">
+            <h2>Our Story</h2>
+            <p>ByteCourses was born from a simple observation: some of the most valuable learning happens when students
+                teach each other. Traditional education often moves too slowly or focuses too broadly, while
+                professional courses can be expensive and disconnected from the student experience.</p>
+            <p>We believe that students who have mastered specialized skills have unique insights to share—they
+                understand the challenges, know what actually works, and can teach in ways that resonate with their
+                peers. ByteCourses creates a space where this knowledge can be shared through short, focused courses.
+            </p>
+        </section>
+
+        <section class="about-section">
+            <h2>Our Mission</h2>
+            <p>To democratize specialized education by connecting students who want to learn with peers who want to
+                teach. We're building a platform that makes it easy to share knowledge, learn practical skills, and grow
+                together as a community.</p>
+        </section>
+
+        <section class="about-section">
+            <h2>Our Values</h2>
+            <div class="values-grid">
+                <div class="value-item">
+                    <h3>Peer-to-Peer Learning</h3>
+                    <p>We believe the best teachers often come from the same community as learners. Our instructors
+                        understand student challenges because they've faced them too.</p>
+                </div>
+                <div class="value-item">
+                    <h3>Practical Focus</h3>
+                    <p>Every course is designed to teach skills you can apply immediately. We prioritize real-world
+                        application over abstract theory.</p>
+                </div>
+                <div class="value-item">
+                    <h3>Quality & Relevance</h3>
+                    <p>All course proposals go through a review process to ensure they meet our standards for quality,
+                        clarity, and relevance to today's needs.</p>
+                </div>
+                <div class="value-item">
+                    <h3>Accessibility</h3>
+                    <p>We're committed to making specialized education accessible. Our platform is designed to be
+                        straightforward for both learners and instructors.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="about-section">
+            <h2>How We Work</h2>
+            <p>ByteCourses operates on a simple model:</p>
+            <ol class="about-list">
+                <li><strong>Instructors submit proposals</strong> for courses they want to teach, outlining the content,
+                    structure, and learning outcomes.</li>
+                <li><strong>Our team reviews proposals</strong> to ensure they meet quality standards and provide value
+                    to learners.</li>
+                <li><strong>Approved courses go live</strong>, where students can discover, enroll, and learn at their
+                    own pace.</li>
+                <li><strong>Students build skills</strong> through structured modules, readings, and practical content
+                    designed by their peers.</li>
+            </ol>
+        </section>
+
+        <section class="about-section">
+            <h2>Join Us</h2>
+            <p>Whether you're looking to learn new skills or share your expertise, ByteCourses is here for you. We're
+                building a community of curious learners and passionate teachers.</p>
+            <div class="about-actions">
+                <a href="/courses" class="btn btn-primary">Browse Courses</a>
+                {{if not .User}}
+                <a href="/register" class="btn btn-outline">Create Account</a>
+                {{end}}
+                <a href="/proposals/new" class="btn btn-outline">Submit a Proposal</a>
+            </div>
+        </section>
+    </div>
+</div>
+{{end}}
+
+{{template "layout" .}}

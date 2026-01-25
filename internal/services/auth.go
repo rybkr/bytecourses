@@ -1,321 +1,273 @@
 package services
 
 import (
-	"bytecourses/internal/auth"
-	"bytecourses/internal/domain"
-	"bytecourses/internal/notify"
-	"bytecourses/internal/store"
 	"context"
-	"crypto/sha256"
-	"log/slog"
-	"strings"
 	"time"
+
+	"bytecourses/internal/domain"
+	"bytecourses/internal/infrastructure/auth"
+	"bytecourses/internal/infrastructure/persistence"
+	"bytecourses/internal/pkg/errors"
+	"bytecourses/internal/pkg/events"
+	"bytecourses/internal/pkg/validation"
 )
 
 type AuthService struct {
-	users    store.UserStore
-	sessions auth.SessionStore
-	resets   store.PasswordResetStore
-	email    notify.EmailSender
-	logger   *AuthLogger
+	Users    persistence.UserRepository
+	Resets   persistence.PasswordResetRepository
+	Sessions auth.SessionStore
+	Events   events.EventBus
 }
 
 func NewAuthService(
-	users store.UserStore,
-	sessions auth.SessionStore,
-	resets store.PasswordResetStore,
-	email notify.EmailSender,
-	logger *slog.Logger,
+	userRepo persistence.UserRepository,
+	resetRepo persistence.PasswordResetRepository,
+	sessionStore auth.SessionStore,
+	eventBus events.EventBus,
 ) *AuthService {
 	return &AuthService{
-		users:    users,
-		sessions: sessions,
-		resets:   resets,
-		email:    email,
-		logger:   NewAuthLogger(logger),
+		Users:    userRepo,
+		Resets:   resetRepo,
+		Sessions: sessionStore,
+		Events:   eventBus,
 	}
 }
 
-type RegisterRequest struct {
+var (
+	_ Command = (*RegisterCommand)(nil)
+	_ Command = (*LoginCommand)(nil)
+	_ Command = (*LogoutCommand)(nil)
+	_ Command = (*UpdateProfileCommand)(nil)
+	_ Command = (*DeleteUserCommand)(nil)
+	_ Command = (*RequestPasswordResetCommand)(nil)
+	_ Command = (*ConfirmPasswordResetCommand)(nil)
+)
+
+type RegisterCommand struct {
 	Name     string `json:"name"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r *RegisterRequest) Normalize() {
-	r.Name = strings.TrimSpace(r.Name)
-	if r.Name == "" {
-		r.Name = "Guest User"
-	}
-	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
-	r.Password = strings.TrimSpace(r.Password)
+func (c *RegisterCommand) Validate(v *validation.Validator) {
+	v.Field(c.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
+	v.Field(c.Email, "email").Required().Email()
+	v.Field(c.Password, "password").Required().Password()
 }
 
-func (r *RegisterRequest) IsValid() bool {
-	return r.Name != "" && r.Email != "" && r.Password != ""
-}
-
-func (s *AuthService) Register(ctx context.Context, request *RegisterRequest) (*domain.User, error) {
-	request.Normalize()
-	if !request.IsValid() {
-		return nil, ErrInvalidInput
+func (s *AuthService) Register(ctx context.Context, cmd *RegisterCommand) (*domain.User, error) {
+	if err := validation.Validate(cmd); err != nil {
+		return nil, err
+	}
+	if _, found := s.Users.GetByEmail(ctx, cmd.Email); found {
+		return nil, errors.ErrConflict
 	}
 
-	hash, err := auth.HashPassword(request.Password)
+	passwordHash, err := auth.HashPassword(cmd.Password)
 	if err != nil {
-		s.logger.Error("password hashing failed during registration",
-			"event", "auth.registration",
-			"email", request.Email,
-			"error", err,
-		)
 		return nil, err
 	}
 
-	user := &domain.User{
-		Email:        request.Email,
-		PasswordHash: hash,
-		Name:         request.Name,
-		Role:         domain.UserRoleStudent,
+	user := domain.User{
+		Name:         cmd.Name,
+		Email:        cmd.Email,
+		PasswordHash: passwordHash,
+		Role:         domain.SystemRoleUser,
 	}
-	if err := s.users.CreateUser(ctx, user); err != nil {
-		s.logger.ErrorOp("register", request.Email, err)
+	if err := s.Users.Create(ctx, &user); err != nil {
 		return nil, err
 	}
 
-	s.logger.InfoUser("user.registered", user)
+	event := domain.NewUserRegisteredEvent(user.ID, user.Email, user.Name)
+	_ = s.Events.Publish(ctx, event)
 
-	if err := s.email.SendWelcomeEmail(ctx, user.Email, user.Name); err != nil {
-		s.logger.Error("failed to send welcome email",
-			"event", "auth.registration",
-			"user_id", user.ID,
-			"email", user.Email,
-			"error", err,
-		)
-	}
-
-	return user, nil
+	return &user, nil
 }
 
-type LoginRequest struct {
+type LoginCommand struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
-func (r *LoginRequest) Normalize() {
-	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
-	r.Password = strings.TrimSpace(r.Password)
+func (c *LoginCommand) Validate(v *validation.Validator) {
+	v.Field(c.Email, "email").Required().Email()
+	v.Field(c.Password, "password").Required() // Do not validate password rules on login
 }
 
-func (r *LoginRequest) IsValid() bool {
-	return r.Email != "" && r.Password != ""
-}
-
-type LoginResult struct {
-	UserID int64
-	Token  string
-}
-
-func (s *AuthService) Login(ctx context.Context, request *LoginRequest) (*LoginResult, error) {
-	request.Normalize()
-	if !request.IsValid() {
-		return nil, ErrInvalidCredentials
+func (s *AuthService) Login(ctx context.Context, cmd *LoginCommand) (string, error) {
+	if err := validation.Validate(cmd); err != nil {
+		return "", err
 	}
 
-	user, ok := s.users.GetUserByEmail(ctx, request.Email)
+	user, ok := s.Users.GetByEmail(ctx, cmd.Email)
 	if !ok {
-		s.logger.Warn("failed login attempt",
-			"event", "auth.login.failed",
-			"email", request.Email,
-			"reason", "invalid_credentials",
-		)
-		return nil, ErrInvalidCredentials
+		auth.CheckPassword(make([]byte, 20), "") // Always perform a password check to combat timing attacks
+		return "", errors.ErrInvalidLogin
+	}
+	if err := auth.CheckPassword(user.PasswordHash, cmd.Password); err != nil {
+		return "", errors.ErrInvalidLogin
 	}
 
-	if !auth.VerifyPassword(user.PasswordHash, request.Password) {
-		s.logger.Warn("failed login attempt",
-			"event", "auth.login.failed",
-			"email", request.Email,
-			"user_id", user.ID,
-			"reason", "invalid_password",
-		)
-		return nil, ErrInvalidCredentials
-	}
-
-	token, err := s.sessions.CreateSession(user.ID)
+	sessionID, err := s.Sessions.Create(user.ID)
 	if err != nil {
-		s.logger.Error("session creation failed during login",
-			"event", "auth.login",
-			"user_id", user.ID,
-			"error", err,
-		)
-		return nil, err
+		return "", err
 	}
 
-	s.logger.InfoUser("user.login", user)
-	return &LoginResult{
-		UserID: user.ID,
-		Token:  token,
-	}, nil
+	return sessionID, nil
 }
 
-func (s *AuthService) Logout(ctx context.Context, token string) {
-	s.sessions.DeleteSessionByToken(token)
+type LogoutCommand struct {
+	SessionID string `json:"session_id"`
 }
 
-type UpdateProfileRequest struct {
+func (c *LogoutCommand) Validate(v *validation.Validator) {
+	v.Field(c.SessionID, "session_id").Required()
+}
+
+func (s *AuthService) Logout(ctx context.Context, cmd *LogoutCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+	return s.Sessions.Delete(cmd.SessionID)
+}
+
+type UpdateProfileCommand struct {
 	UserID int64  `json:"-"`
 	Name   string `json:"name"`
 }
 
-func (r *UpdateProfileRequest) Normalize() {
-	r.Name = strings.TrimSpace(r.Name)
+func (c *UpdateProfileCommand) Validate(v *validation.Validator) {
+	v.Field(c.UserID, "user_id").Required().EntityID()
+	v.Field(c.Name, "name").Required().MinLength(2).MaxLength(80).IsTrimmed()
 }
 
-func (r *UpdateProfileRequest) IsValid() bool {
-	return r.Name != ""
-}
-
-func (s *AuthService) UpdateProfile(ctx context.Context, request *UpdateProfileRequest) (*domain.User, error) {
-	request.Normalize()
-	if !request.IsValid() {
-		return nil, ErrInvalidInput
+func (s *AuthService) UpdateProfile(ctx context.Context, cmd *UpdateProfileCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
 	}
 
-	user, ok := s.users.GetUserByID(ctx, request.UserID)
+	user, ok := s.Users.GetByID(ctx, cmd.UserID)
 	if !ok {
-		return nil, ErrNotFound
+		return errors.ErrNotFound
 	}
 
-	oldName := user.Name
-	user.Name = request.Name
-
-	if err := s.users.UpdateUser(ctx, user); err != nil {
-		s.logger.ErrorOp("update_profile", user.Email, err)
-		return nil, err
-	}
-
-	s.logger.Info("user.profile.updated",
-		"user_id", user.ID,
-		"name_changed", request.Name != oldName,
-	)
-
-	return user, nil
-}
-
-type RequestPasswordResetRequest struct {
-	Email   string `json:"email"`
-	BaseURL string `json:"-"`
-}
-
-func (r *RequestPasswordResetRequest) Normalize() {
-	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
-	r.BaseURL = strings.TrimSpace(r.BaseURL)
-}
-
-func (r *RequestPasswordResetRequest) IsValid() bool {
-	return r.Email != ""
-}
-
-func (s *AuthService) RequestPasswordReset(ctx context.Context, request *RequestPasswordResetRequest) error {
-	request.Normalize()
-	if !request.IsValid() {
-		return ErrInvalidInput
-	}
-
-	user, ok := s.users.GetUserByEmail(ctx, request.Email)
-	if !ok {
-		return ErrNotFound
-	}
-
-	resetToken, err := auth.GenerateToken(32)
-	if err != nil {
-		s.logger.Error("token generation failed for password reset",
-			"event", "auth.password_reset",
-			"user_id", user.ID,
-			"error", err,
-		)
+	user.Name = cmd.Name
+	if err := s.Users.Update(ctx, user); err != nil {
 		return err
 	}
 
-	tokenHash := sha256.Sum256([]byte(resetToken))
-	if err := s.resets.CreateResetToken(ctx, user.ID, tokenHash[:], time.Now().Add(30*time.Minute)); err != nil {
-		s.logger.Error("failed to store reset token",
-			"event", "auth.password_reset",
-			"user_id", user.ID,
-			"error", err,
-		)
-		return err
-	}
-
-	resetURL := request.BaseURL + "/reset-password"
-	if err := s.email.SendPasswordResetPrompt(ctx, user.Email, resetURL, resetToken); err != nil {
-		s.logger.Error("failed to send password reset email",
-			"event", "auth.password_reset",
-			"user_id", user.ID,
-			"email", user.Email,
-			"error", err,
-		)
-		return err
-	}
-
-	s.logger.InfoUser("password_reset.requested", user)
+	event := domain.NewUserProfileUpdatedEvent(user.ID)
+	_ = s.Events.Publish(ctx, event)
 
 	return nil
 }
 
-type ConfirmPasswordResetRequest struct {
-	Token       string `json:"-"`
-	NewPassword string `json:"password"`
+type DeleteUserCommand struct {
+	UserID int64 `json:"-"`
 }
 
-func (r *ConfirmPasswordResetRequest) Normalize() {
-	r.Token = strings.TrimSpace(r.Token)
-	r.NewPassword = strings.TrimSpace(r.NewPassword)
+func (c *DeleteUserCommand) Validate(v *validation.Validator) {
+	v.Field(c.UserID, "user_id").Required().EntityID()
 }
 
-func (r *ConfirmPasswordResetRequest) IsValid() bool {
-	return r.Token != "" && r.NewPassword != ""
-}
-
-func (s *AuthService) ConfirmPasswordReset(ctx context.Context, request *ConfirmPasswordResetRequest) error {
-	request.Normalize()
-	if !request.IsValid() {
-		return ErrInvalidInput
+func (s *AuthService) DeleteUser(ctx context.Context, cmd *DeleteUserCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
 	}
 
-	tokenHash := sha256.Sum256([]byte(request.Token))
-	userID, ok := s.resets.ConsumeResetToken(ctx, tokenHash[:], time.Now())
+	user, ok := s.Users.GetByID(ctx, cmd.UserID)
 	if !ok {
-		return ErrInvalidToken
+		return errors.ErrNotFound
 	}
 
-	user, ok := s.users.GetUserByID(ctx, userID)
+	if err := s.Sessions.DeleteByUserID(cmd.UserID); err != nil {
+		return err
+	}
+	if err := s.Users.DeleteByID(ctx, cmd.UserID); err != nil {
+		return err
+	}
+
+	event := domain.NewUserDeletedEvent(user.ID, user.Email)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+type RequestPasswordResetCommand struct {
+	Email   string `json:"email"`
+	BaseURL string `json:"-"`
+}
+
+func (c *RequestPasswordResetCommand) Validate(v *validation.Validator) {
+	v.Field(c.Email, "email").Required().Email()
+}
+
+func (s *AuthService) RequestPasswordReset(ctx context.Context, cmd *RequestPasswordResetCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	user, ok := s.Users.GetByEmail(ctx, cmd.Email)
 	if !ok {
-		s.logger.Error("user not found during password reset confirmation",
-			"event", "auth.password_reset",
-			"user_id", userID,
-			"error", "user_not_found",
-		)
-		return ErrNotFound
+		return nil // Return nil to avoid email enumeration
 	}
 
-	hash, err := auth.HashPassword(request.NewPassword)
+	token, err := auth.GenerateToken()
 	if err != nil {
-		s.logger.Error("password hashing failed during reset confirmation",
-			"event", "auth.password_reset",
-			"user_id", user.ID,
-			"error", err,
-		)
 		return err
 	}
 
-	user.PasswordHash = hash
-	if err := s.users.UpdateUser(ctx, user); err != nil {
-		s.logger.ErrorOp("confirm_password_reset", user.Email, err)
+	tokenHash := auth.HashToken(token)
+	expiresAt := time.Now().Add(1 * time.Hour)
+	if err := s.Resets.CreateResetToken(ctx, user.ID, tokenHash[:], expiresAt); err != nil {
 		return err
 	}
 
-	s.logger.InfoUser("password_reset.confirmed", user)
+	resetURL := cmd.BaseURL + "/reset-password"
+	event := domain.NewPasswordResetRequestedEvent(user.ID, cmd.Email, resetURL, token)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
+type ConfirmPasswordResetCommand struct {
+	Token       string `json:"token"`
+	NewPassword string `json:"new_password"`
+}
+
+func (c *ConfirmPasswordResetCommand) Validate(v *validation.Validator) {
+	v.Field(c.Token, "token").Required().IsTrimmed()
+	v.Field(c.NewPassword, "new_password").Required().Password()
+}
+
+func (s *AuthService) ConfirmPasswordReset(ctx context.Context, cmd *ConfirmPasswordResetCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	hash := auth.HashToken(cmd.Token)
+
+	userID, ok := s.Resets.ConsumeResetToken(ctx, hash[:], time.Now())
+	if !ok {
+		return errors.ErrInvalidToken
+	}
+	user, ok := s.Users.GetByID(ctx, userID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	passwordHash, err := auth.HashPassword(cmd.NewPassword)
+	if err != nil {
+		return err
+	}
+
+	user.PasswordHash = passwordHash
+	if err := s.Users.Update(ctx, user); err != nil {
+		return err
+	}
+
+	event := domain.NewPasswordResetCompletedEvent(user.ID)
+	_ = s.Events.Publish(ctx, event)
 
 	return nil
 }

@@ -1,0 +1,40 @@
+{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define
+"content"}}
+{{template "course-navbar" .}}
+
+<div class="lecture-view-container">
+    <div class="lecture-view-header">
+        <div class="lecture-view-breadcrumb">
+            <a href="/courses/{{.Course.ID}}/modules">{{.Course.Title}}</a>
+            <span> / </span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
+            <span> / </span>
+            <span>{{.Reading.Title}}</span>
+        </div>
+        <h1 class="lecture-view-title">{{.Reading.Title}}</h1>
+        <div class="lecture-view-meta">
+            {{if .IsInstructor}}
+            <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}/edit"
+                class="btn btn-small btn-secondary">Edit</a>
+            {{end}}
+        </div>
+    </div>
+
+    <div class="lecture-view-content">
+        {{if .Reading.Content}}
+        <div class="proposal-content-value">{{markdown .Reading.Content}}</div>
+        {{else}}
+        <p class="text-muted">No content available yet.</p>
+        {{end}}
+    </div>
+
+    <div class="lecture-navigation">
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">← Back to Module</a>
+        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline">Back to Content</a>
+        {{if .IsInstructor}}
+        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
+        {{end}}
+    </div>
+</div>
+{{end}}

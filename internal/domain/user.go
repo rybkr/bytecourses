@@ -4,23 +4,22 @@ import (
 	"time"
 )
 
-type UserRole string
+type SystemRole string
 
 const (
-	UserRoleStudent    UserRole = "student"
-	UserRoleInstructor UserRole = "instructor"
-	UserRoleAdmin      UserRole = "admin"
+	SystemRoleUser  SystemRole = "user"
+	SystemRoleAdmin SystemRole = "admin"
 )
 
 type User struct {
-	ID           int64     `json:"id"`
-	Email        string    `json:"email"`
-	Name         string    `json:"name"`
-	PasswordHash []byte    `json:"-"`
-	Role         UserRole  `json:"role"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID           int64      `json:"id"`
+	Email        string     `json:"email"`
+	Name         string     `json:"name"`
+	PasswordHash []byte     `json:"-"`
+	Role         SystemRole `json:"role"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 func (u *User) IsAdmin() bool {
-	return u.Role == UserRoleAdmin
+	return u.Role == SystemRoleAdmin
 }

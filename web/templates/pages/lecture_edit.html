@@ -1,0 +1,57 @@
+{{template "layout" .}} {{define "title"}}Edit: {{.Reading.Title}} - ByteCourses{{end}} {{define "content"}}
+<div class="lecture-edit-container">
+    <div class="page-header">
+        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-outline">← Back to Course Edit</a>
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}" class="btn btn-secondary">View</a>
+    </div>
+
+    <div class="lecture-edit-header">
+        <div class="lecture-edit-header-left">
+            <input type="text" id="lecture-title" class="lecture-title-input" value="{{.Reading.Title}}" placeholder="Reading title...">
+        </div>
+        <div class="lecture-edit-header-right">
+            <span id="save-status" class="save-status"></span>
+            <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
+            {{if eq .Reading.Status "draft"}}
+            <button type="button" id="publish-btn" class="btn btn-success">Publish</button>
+            {{else}}
+            <button type="button" id="unpublish-btn" class="btn btn-secondary">Unpublish</button>
+            {{end}}
+            <button type="button" id="save-btn" class="btn btn-primary">Save</button>
+        </div>
+    </div>
+
+    <div class="lecture-editor">
+        <div class="lecture-editor-pane">
+            <div class="lecture-editor-pane-header">
+                <span>Markdown</span>
+            </div>
+            <textarea id="lecture-content" class="lecture-content-textarea" placeholder="Write your reading content here using Markdown...">{{if .Reading.Content}}{{.Reading.Content}}{{end}}</textarea>
+        </div>
+        <div class="lecture-editor-pane">
+            <div class="lecture-editor-pane-header">
+                <span>Preview</span>
+            </div>
+            <div id="lecture-preview" class="lecture-preview">
+                <div class="proposal-content-value">{{if .Reading.Content}}{{markdown .Reading.Content}}{{end}}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.LECTURE_DATA = {
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}},
+        readingId: {{.Reading.ID}},
+        order: {{.Reading.Order}},
+        status: "{{.Reading.Status}}"
+    };
+</script>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script type="module" src="/static/js/pages/lecture_edit.js"></script>
+{{end}}

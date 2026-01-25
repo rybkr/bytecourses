@@ -3,7 +3,7 @@
 <div class="auth-container">
     <div class="auth-card">
         <h2>Register</h2>
-        <form id="registerForm" onsubmit="handleRegister(event)">
+        <form id="registerForm">
             <div class="form-group">
                 <label for="name">Name</label>
                 <input type="text" id="name" name="name" required />
@@ -16,11 +16,7 @@
                 <label for="password">Password</label>
                 <input type="password" id="password" name="password" required />
             </div>
-            <div
-                id="error-message"
-                class="error-message"
-                style="display: none"
-            ></div>
+            <div id="error-message" class="error-message hidden"></div>
             <button type="submit" class="btn btn-primary btn-block">
                 Register
             </button>
@@ -31,37 +27,11 @@
     </div>
 </div>
 {{end}} {{define "scripts"}}
-<script>
-    async function handleRegister(event) {
-        event.preventDefault();
-        const form = event.target;
-        const name = form.name.value;
-        const email = form.email.value;
-        const password = form.password.value;
-
-        const errorDiv = document.getElementById("error-message");
-        errorDiv.style.display = "none";
-
-        try {
-            const response = await fetch("/api/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ name, email, password }),
-            });
-
-            if (response.ok) {
-                window.location.href = "/login";
-            } else {
-                const errorText = await response.text();
-                errorDiv.textContent = errorText || "Registration failed";
-                errorDiv.style.display = "block";
-            }
-        } catch (error) {
-            errorDiv.textContent = "An error occurred. Please try again.";
-            errorDiv.style.display = "block";
-        }
-    }
+<script type="module">
+    import { initRegisterForm } from "/static/js/pages/auth_forms.js";
+    
+    document.addEventListener("DOMContentLoaded", () => {
+        initRegisterForm();
+    });
 </script>
 {{end}}

@@ -1,131 +1,53 @@
-{{template "layout" .}} {{define "title"}}Edit Course - ByteCourses{{end}}
-{{define "content"}}
-<div class="page-header">
-    <h1>Edit Course</h1>
-    <a href="/courses/{{.Course.ID}}" class="btn btn-secondary">Back to Course</a>
+{{template "layout" .}} {{define "title"}}Settings: {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "course-navbar" .}}
+
+<form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="2000">
+<div class="course-edit-hero">
+    <div class="course-edit-hero-content">
+        <div class="course-edit-hero-main">
+            <input type="text" id="title" name="title" class="course-hero-title-input" required value="{{.Course.Title}}" />
+            <textarea id="summary" name="summary" class="course-hero-summary-textarea" rows="3" required>{{.Course.Summary}}</textarea>
+        </div>
+    </div>
 </div>
-<div class="form-container">
-    <form id="course-form" data-course-id="{{.Course.ID}}" data-autosave-delay="1000"
-        onsubmit="event.preventDefault()">
-        <div class="form-group">
-            <label for="title">Title
-                <span class="help-icon" data-help="title" aria-label="Show help for Title" tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>Clear, specific, and focused on one topic.</small></label>
-            <input type="text" id="title" name="title" required value="{{.Course.Title}}" />
-            <div class="help-panel" id="help-title" style="display: none; position: absolute; left: -9999px;">
-                <div class="help-panel-content">
-                    <h4>What we're looking for</h4>
-                    <p>A clear, specific title that immediately tells learners what the course is about.</p>
-                    <h4>Tips</h4>
-                    <ul>
-                        <li>Avoid vague titles like "Programming Course" or "Learn Economics"</li>
-                        <li>Keep it concise &lt;10 words is ideal</li>
-                        <li>Include the specific technology, framework, or skill</li>
-                        <li>Make it searchable: use terms learners would search for</li>
-                    </ul>
-                </div>
+
+<div class="course-edit-content">
+    <div class="course-edit-main">
+        <div class="form-container">
+            <div class="form-group">
+                <label for="target_audience">Target Audience
+                    {{template "help-icon" "target_audience"}}
+                    <br /><small>Who this course is for.</small></label>
+                <textarea id="target_audience" name="target_audience" rows="3">{{.Course.TargetAudience}}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="learning_objectives">Learning Objectives
+                    {{template "help-icon" "learning_objectives"}}
+                    <br /><small>What learners will be able to do after completing this course.</small></label>
+                <textarea id="learning_objectives" name="learning_objectives" rows="5">{{.Course.LearningObjectives}}</textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="assumed_prerequisites">Assumed Prerequisites
+                    {{template "help-icon" "assumed_prerequisites"}}
+                    <br /><small>What learners should know before starting this course.</small></label>
+                <textarea id="assumed_prerequisites" name="assumed_prerequisites" rows="3">{{.Course.AssumedPrerequisites}}</textarea>
+            </div>
+
+            <div id="error-message" class="error-message hidden"></div>
+            <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
+
+            <div class="form-actions">
+                <button type="button" id="saveBtn" class="btn btn-secondary">Save</button>
+                {{if eq .Course.Status "draft"}}
+                <button type="button" id="publishBtn" class="btn btn-primary">Publish Course</button>
+                {{end}}
             </div>
         </div>
-
-        <div class="form-group">
-            <label for="summary">Summary
-                <span class="help-icon" data-help="summary" aria-label="Show help for Summary" tabindex="0"
-                    role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>What learners will gain and why it matters.</small></label>
-            <textarea id="summary" name="summary" rows="5" required>{{.Course.Summary}}</textarea>
-            <div class="help-panel" id="help-summary" style="display: none; position: absolute; left: -9999px;">
-                <div class="help-panel-content">
-                    <h4>What we're looking for</h4>
-                    <p>A compelling summary that explains what learners will gain from this course and why it matters.
-                        Focus on outcomes and benefits, not just features.</p>
-                    <h4>Tips</h4>
-                    <ul>
-                        <li>Focus on outcomes and benefits, not just features</li>
-                        <li>Explain what learners will gain from this course</li>
-                        <li>Make it compelling and clear</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-
-        <div class="form-group">
-            <label for="target_audience">Target Audience
-                <span class="help-icon" data-help="target_audience" aria-label="Show help for Target Audience"
-                    tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>Who this course is for.</small></label>
-            <textarea id="target_audience" name="target_audience" rows="3">{{.Course.TargetAudience}}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="learning_objectives">Learning Objectives
-                <span class="help-icon" data-help="learning_objectives" aria-label="Show help for Learning Objectives"
-                    tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>What learners will be able to do after completing this course.</small></label>
-            <textarea id="learning_objectives" name="learning_objectives" rows="5">{{.Course.LearningObjectives}}</textarea>
-        </div>
-
-        <div class="form-group">
-            <label for="assumed_prerequisites">Assumed Prerequisites
-                <span class="help-icon" data-help="assumed_prerequisites" aria-label="Show help for Assumed Prerequisites"
-                    tabindex="0" role="button">
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="8" cy="8" r="7" stroke="currentColor" stroke-width="1.5" fill="none" />
-                        <path d="M8 11V8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                        <circle cx="8" cy="5.5" r="0.75" fill="currentColor" />
-                    </svg>
-                </span>
-                <br /><small>What learners should know before starting this course.</small></label>
-            <textarea id="assumed_prerequisites" name="assumed_prerequisites" rows="3">{{.Course.AssumedPrerequisites}}</textarea>
-        </div>
-
-        <div class="modules-section">
-            <div class="modules-header">
-                <h3>Modules</h3>
-                <button type="button" id="add-module-btn" class="btn btn-primary">Add Module</button>
-            </div>
-            <div id="modules-list" class="module-list"></div>
-            <div id="modules-error" class="error-message" style="display: none"></div>
-        </div>
-
-        <div id="error-message" class="error-message" style="display: none"></div>
-        <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
-
-        <div class="form-actions">
-            {{if eq .Course.Status "draft"}}
-            <button type="button" id="publishBtn" class="btn btn-primary">
-                Publish Course
-            </button>
-            {{end}}
-            <button type="button" id="saveBtn" class="btn btn-secondary">
-                Save
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
+</form>
 {{end}} {{define "scripts"}}
-<script src="/static/js/course_edit.js" defer></script>
+<script type="module" src="/static/js/pages/course_edit.js"></script>
 {{end}}

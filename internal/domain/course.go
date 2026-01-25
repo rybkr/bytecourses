@@ -7,8 +7,8 @@ import (
 type CourseStatus string
 
 const (
-	CourseStatusDraft CourseStatus = "draft"
-	CourseStatusLive  CourseStatus = "live"
+	CourseStatusDraft     CourseStatus = "draft"
+	CourseStatusPublished CourseStatus = "published"
 )
 
 type Course struct {
@@ -39,7 +39,7 @@ func CourseFromProposal(p *Proposal) *Course {
 }
 
 func (c *Course) IsLive() bool {
-	return c.Status == CourseStatusLive
+	return c.Status == CourseStatusPublished
 }
 
 func (c *Course) IsTaughtBy(u *User) bool {
@@ -48,8 +48,4 @@ func (c *Course) IsTaughtBy(u *User) bool {
 
 func (c *Course) IsViewableBy(u *User) bool {
 	return u.IsAdmin() || c.IsLive() || c.IsTaughtBy(u)
-}
-
-func (c *Course) IsAmendable() bool {
-	return c.Status == CourseStatusDraft
 }

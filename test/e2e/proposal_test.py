@@ -24,6 +24,7 @@ class TestProposalCreate:
             "learning_objectives": "Learn everything",
             "outline": "- item 1\n- item 2",
             "assumed_prerequisites": "Basic programming",
+            "qualifications": "10 years experience",
         }
         r = session.post(f"{api_url}/proposals", json=payload)
         assert r.status_code == HTTPStatus.CREATED
@@ -31,26 +32,9 @@ class TestProposalCreate:
         proposal_id = r.json()["id"]
         r = session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.status_code == HTTPStatus.OK
+
         for key, value in payload.items():
-            assert r.json()[key] == value
-
-    def test_creates_proposal_with_qualifications(self, api_url):
-        session = register_and_login(api_url, "author@example.com", "password123")
-
-        r = session.post(
-            f"{api_url}/proposals",
-            json={
-                "title": "Course",
-                "summary": "Summary",
-                "qualifications": "10 years experience",
-            },
-        )
-        assert r.status_code == HTTPStatus.CREATED
-
-        proposal_id = r.json()["id"]
-        r = session.get(f"{api_url}/proposals/{proposal_id}")
-        assert r.status_code == HTTPStatus.OK
-        assert r.json()["qualifications"] == "10 years experience"
+            assert r.json()[key] == value.strip()
 
     def test_new_proposal_has_draft_status(self, api_url, user_session):
         r = user_session.post(
@@ -62,6 +46,15 @@ class TestProposalCreate:
         proposal_id = r.json()["id"]
         r = user_session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["status"] == "draft"
+
+    def test_new_proposal_has_author_id(self, api_url):
+        session = register_and_login(api_url, "author@example.com", "password123")
+
+        payload = {"title": "Course", "summary": "A course."}
+        r = session.post(f"{api_url}/proposals", json=payload)
+        assert r.status_code == HTTPStatus.CREATED
+
+        assert r.json()["author_id"] == session.user_id
 
 
 class TestProposalRead:
@@ -80,7 +73,7 @@ class TestProposalRead:
         r = session.get(f"{api_url}/proposals")
         assert r.status_code == HTTPStatus.OK
 
-        proposals = sorted(r.json(), key=lambda p: p["id"])
+        proposals = sorted(r.json(), key=lambda p: p["created_at"])
         assert len(proposals) == 2
         assert proposals[0]["title"] == "First Course"
         assert proposals[1]["title"] == "Second Course"
@@ -104,6 +97,7 @@ class TestProposalRead:
         r = session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.status_code == HTTPStatus.OK
         assert r.json()["title"] == "My Course"
+        assert r.json()["author_id"] == session.user_id
 
     def test_returns_404_for_nonexistent_proposal(self, api_url):
         session = register_and_login(api_url, "author@example.com", "password123")
@@ -130,12 +124,13 @@ class TestProposalUpdate:
 
         r = session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["title"] == "New Title"
+        assert r.json()["summary"] == "New Summary"
 
     def test_patch_replaces_all_fields(self, api_url, user_session):
         r = user_session.post(
@@ -146,13 +141,13 @@ class TestProposalUpdate:
 
         r = user_session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
         r = user_session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["title"] == "New Title"
-        assert r.json()["summary"] == ""
+        assert r.json()["summary"] == "New Summary"
         assert r.json()["outline"] == ""
 
     def test_rejects_update_on_submitted_proposal(self, api_url, user_session):
@@ -166,7 +161,7 @@ class TestProposalUpdate:
 
         r = user_session.patch(
             f"{api_url}/proposals/{proposal_id}",
-            json={"title": "New Title"},
+            json={"title": "New Title", "summary": "New Summary"},
         )
         assert r.status_code == HTTPStatus.CONFLICT
 
@@ -186,7 +181,7 @@ class TestProposalDelete:
         assert r.status_code == HTTPStatus.NOT_FOUND
 
 
-class TestProposalActions:
+class TestProposalUpdateStatus:
     def test_submit_changes_status_to_submitted(self, api_url):
         session = register_and_login(api_url, "author@example.com", "password123")
 
@@ -202,7 +197,7 @@ class TestProposalActions:
         r = session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["status"] == "submitted"
 
-    def test_unknown_action_returns_400(self, api_url):
+    def test_unknown_status_returns_400(self, api_url):
         session = register_and_login(api_url, "author@example.com", "password123")
 
         r = session.post(
@@ -211,8 +206,109 @@ class TestProposalActions:
         )
         proposal_id = r.json()["id"]
 
-        r = session.post(f"{api_url}/proposals/{proposal_id}/actions/unknown")
-        assert r.status_code == HTTPStatus.BAD_REQUEST
+        r = session.post(f"{api_url}/proposals/{proposal_id}/actions/invalid-action")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_submit_fails_on_already_submitted_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_submit_fails_on_approved_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_submit_fails_on_rejected_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_submit_fails_on_withdrawn_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_submit_succeeds_from_changes_requested(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "submitted"
+
+    def test_submit_fails_on_nonexistent_proposal(self, api_url, user_session):
+        r = user_session.post(f"{api_url}/proposals/{2**63 - 1}/actions/submit")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_withdraw_fails_on_nonexistent_proposal(self, api_url, user_session):
+        r = user_session.post(f"{api_url}/proposals/{2**63 - 1}/actions/withdraw")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_update_fails_on_nonexistent_proposal(self, api_url, user_session):
+        r = user_session.patch(
+            f"{api_url}/proposals/{2**63 - 1}",
+            json={"title": "New Title", "summary": "New Summary"},
+        )
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_delete_fails_on_nonexistent_proposal(self, api_url, user_session):
+        r = user_session.delete(f"{api_url}/proposals/{2**63 - 1}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
 
 
 class TestProposalPermissions:
@@ -249,6 +345,168 @@ class TestProposalPermissions:
         r = user_b.get(f"{api_url}/proposals")
         assert len(r.json()) == 1
         assert r.json()[0]["title"] == "B's Proposal"
+
+    def test_users_cannot_approve_their_own_proposals(self, api_url):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Draft Proposal", "summary": "Summary"},
+        )
+        assert "id" in r.json()
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Submitted Proposal", "summary": "Summary"},
+        )
+        submitted_id = r.json()["id"]
+        user.post(f"{api_url}/proposals/{submitted_id}/actions/submit")
+
+        r = user.post(f"{api_url}/proposals/{submitted_id}/actions/approve")
+        assert r.status_code == HTTPStatus.FORBIDDEN
+
+        r = user.get(f"{api_url}/proposals/{submitted_id}")
+        assert r.json()["status"] == "submitted"
+        assert r.json()["reviewer_id"] is None
+
+    def test_user_cannot_submit_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_b.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_user_cannot_withdraw_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user_a.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_b.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_user_cannot_update_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_b.patch(
+            f"{api_url}/proposals/{proposal_id}",
+            json={"title": "B's Title", "summary": "B's Summary"},
+        )
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_user_cannot_delete_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_b.delete(f"{api_url}/proposals/{proposal_id}")
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_user_cannot_approve_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user_a.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_b.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+        assert r.status_code == HTTPStatus.FORBIDDEN
+
+    def test_user_cannot_reject_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user_a.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_b.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+        assert r.status_code == HTTPStatus.FORBIDDEN
+
+    def test_user_cannot_request_changes_on_other_users_proposal(self, api_url):
+        user_a = register_and_login(api_url, "usera@example.com", "password")
+        user_b = register_and_login(api_url, "userb@example.com", "password")
+
+        r = user_a.post(
+            f"{api_url}/proposals",
+            json={"title": "A's Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user_a.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user_b.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        assert r.status_code == HTTPStatus.FORBIDDEN
+
+    def test_user_cannot_reject_their_own_proposal(self, api_url):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "My Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+        assert r.status_code == HTTPStatus.FORBIDDEN
+
+    def test_user_cannot_request_changes_on_their_own_proposal(self, api_url):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "My Proposal", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = user.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        assert r.status_code == HTTPStatus.FORBIDDEN
 
 
 class TestAdminProposalAccess:
@@ -300,17 +558,6 @@ class TestAdminProposalAccess:
         assert r.status_code == HTTPStatus.OK
         assert r.json()["title"] == "To Submit"
 
-    def test_admin_sees_own_proposals_via_mine_endpoint(self, api_url, admin_session):
-        r = admin_session.post(
-            f"{api_url}/proposals",
-            json={"title": "Admin's Proposal", "summary": "Summary"},
-        )
-        admin_proposal_id = r.json()["id"]
-
-        r = admin_session.get(f"{api_url}/proposals/mine")
-        assert r.status_code == HTTPStatus.OK
-        assert any(p["id"] == admin_proposal_id for p in r.json())
-
 
 class TestProposalWorkflowHappyPath:
     def test_draft_submit_approve_workflow(self, api_url, user_session, admin_session):
@@ -346,6 +593,7 @@ class TestProposalWorkflowHappyPath:
 
         r = user_session.get(f"{api_url}/proposals/{proposal_id}")
         assert r.json()["status"] == "approved"
+        assert r.json()["review_notes"] == "Looks good!"
 
 
 class TestProposalWorkflowChangesRequested:
@@ -366,7 +614,9 @@ class TestProposalWorkflowChangesRequested:
 
         r = admin_session.post(
             f"{api_url}/proposals/{proposal_id}/actions/request-changes",
-            json={"review_notes": "Please add more detail"},
+            json={
+                "review_notes": "Please add more detail",
+            },
         )
         assert r.status_code == HTTPStatus.NO_CONTENT
 
@@ -488,3 +738,292 @@ class TestProposalWorkflowWithdrawal:
             json={"title": "New Title"},
         )
         assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_withdraw_fails_on_draft_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_withdraw_fails_on_already_withdrawn_proposal(self, api_url, user_session):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_withdraw_fails_on_approved_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_withdraw_fails_on_rejected_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_withdraw_fails_on_changes_requested_proposal(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+
+        r = user_session.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+        assert r.status_code == HTTPStatus.CONFLICT
+
+
+class TestProposalStateTransitions:
+    def test_approve_fails_on_draft_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_approve_fails_on_withdrawn_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_approve_fails_on_already_approved_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved again"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_approve_fails_on_rejected_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_reject_fails_on_draft_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_reject_fails_on_withdrawn_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_reject_fails_on_already_rejected_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/reject",
+            json={"review_notes": "Rejected again"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_request_changes_fails_on_draft_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_request_changes_fails_on_withdrawn_proposal(self, api_url, admin_session):
+        user = register_and_login(api_url, "author@example.com", "password123")
+
+        r = user.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        user.post(f"{api_url}/proposals/{proposal_id}/actions/withdraw")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        assert r.status_code == HTTPStatus.CONFLICT
+
+    def test_admin_actions_succeed_on_changes_requested_after_resubmission(
+        self, api_url, user_session, admin_session
+    ):
+        r = user_session.post(
+            f"{api_url}/proposals",
+            json={"title": "Title", "summary": "Summary"},
+        )
+        proposal_id = r.json()["id"]
+
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+        admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        user_session.post(f"{api_url}/proposals/{proposal_id}/actions/submit")
+
+        r = admin_session.post(
+            f"{api_url}/proposals/{proposal_id}/actions/approve",
+            json={"review_notes": "Approved after resubmission"},
+        )
+        assert r.status_code == HTTPStatus.NO_CONTENT
+
+        r = user_session.get(f"{api_url}/proposals/{proposal_id}")
+        assert r.json()["status"] == "approved"
+
+    def test_approve_fails_on_nonexistent_proposal(self, api_url, admin_session):
+        r = admin_session.post(
+            f"{api_url}/proposals/{2**63 - 1}/actions/approve",
+            json={"review_notes": "Approved"},
+        )
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_reject_fails_on_nonexistent_proposal(self, api_url, admin_session):
+        r = admin_session.post(
+            f"{api_url}/proposals/{2**63 - 1}/actions/reject",
+            json={"review_notes": "Rejected"},
+        )
+        assert r.status_code == HTTPStatus.NOT_FOUND
+
+    def test_request_changes_fails_on_nonexistent_proposal(
+        self, api_url, admin_session
+    ):
+        r = admin_session.post(
+            f"{api_url}/proposals/{2**63 - 1}/actions/request-changes",
+            json={"review_notes": "Need changes"},
+        )
+        assert r.status_code == HTTPStatus.NOT_FOUND

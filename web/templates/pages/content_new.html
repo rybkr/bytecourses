@@ -1,0 +1,68 @@
+{{template "layout" .}} {{define "title"}}New Content - {{.Module.Title}} - {{.Course.Title}} - ByteCourses{{end}}
+{{define "content"}}
+{{template "course-navbar" .}}
+
+<div class="content-new-container">
+    <div class="content-new-header-section">
+        <div class="content-new-breadcrumb">
+            <a href="/courses/{{.Course.ID}}/modules">Content</a>
+            <span> / </span>
+            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
+            <span> / </span>
+            <span>New Content</span>
+        </div>
+        <h1 class="content-new-title">New Content</h1>
+        <p class="content-new-subtitle">Add new content to <strong>{{.Module.Title}}</strong></p>
+    </div>
+
+    <div class="content-new-form">
+        <div id="content-new-error" class="error-message hidden" role="alert" aria-live="assertive"></div>
+        <p class="content-type-label">Content type: Reading</p>
+
+        <div class="content-new-form-header">
+            <div class="content-new-form-header-left">
+                <label for="content-title" class="sr-only">Content title</label>
+                <input type="text" id="content-title" class="lecture-title-input" placeholder="Content title..."
+                    required>
+                <span id="title-error" class="field-error hidden" role="alert"></span>
+            </div>
+            <div class="content-new-form-header-right">
+                <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">Cancel</a>
+                <button type="button" id="save-btn" class="btn btn-primary">Create</button>
+            </div>
+        </div>
+
+        <div class="lecture-editor">
+            <div class="lecture-editor-pane">
+                <div class="lecture-editor-pane-header">
+                    <span>Markdown</span>
+                </div>
+                <textarea id="content-body" class="lecture-content-textarea"
+                    placeholder="Write your content here using Markdown..."></textarea>
+            </div>
+            <div class="lecture-editor-pane">
+                <div class="lecture-editor-pane-header">
+                    <span>Preview</span>
+                </div>
+                <div id="content-preview" class="lecture-preview">
+                    <div id="content-preview-placeholder" class="content-preview-placeholder">Preview will appear here as you write.</div>
+                    <div class="proposal-content-value"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    window.CONTENT_NEW_DATA = {
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}}
+    };
+</script>
+{{end}}
+
+{{define "scripts"}}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3/dist/purify.min.js"></script>
+<script type="module" src="/static/js/pages/content_new.js"></script>
+{{end}}

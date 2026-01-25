@@ -18,15 +18,18 @@ document.addEventListener("DOMContentLoaded", () => {
     function updatePreview() {
         if (typeof marked !== "undefined") {
             const html = marked.parse(contentTextarea.value || "");
-            previewDiv.querySelector(".proposal-content-value").innerHTML = html;
+            previewDiv.querySelector(".proposal-content-value").innerHTML =
+                html;
         }
     }
 
     async function getNextReadingOrder() {
-        const response = await api.get(`/api/courses/${courseId}/modules/${moduleId}/content`);
+        const response = await api.get(
+            `/api/courses/${courseId}/modules/${moduleId}/content`,
+        );
         const readings = await response.json();
         if (!readings || readings.length === 0) return 0;
-        return Math.max(...readings.map(r => r.order || 0)) + 1;
+        return Math.max(...readings.map((r) => r.order || 0)) + 1;
     }
 
     async function createContent() {
@@ -47,13 +50,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const order = await getNextReadingOrder();
-            const response = await api.post(`/api/courses/${courseId}/modules/${moduleId}/content`, {
-                type: contentType,
-                title: title,
-                order: order,
-                format: "markdown",
-                content: content,
-            });
+            const response = await api.post(
+                `/api/courses/${courseId}/modules/${moduleId}/content`,
+                {
+                    type: contentType,
+                    title: title,
+                    order: order,
+                    format: "markdown",
+                    content: content,
+                },
+            );
             const reading = await response.json();
             window.location.href = `/courses/${courseId}/content?readingId=${reading.id}`;
         } catch (error) {
@@ -66,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (contentTypeCard) {
         contentTypeCard.addEventListener("click", () => {
-            document.querySelectorAll(".content-type-card").forEach(card => {
+            document.querySelectorAll(".content-type-card").forEach((card) => {
                 card.classList.remove("active");
             });
             contentTypeCard.classList.add("active");

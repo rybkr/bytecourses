@@ -15,7 +15,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const publishBtn = $("#publishBtn");
     const saveBtn = $("#saveBtn");
 
-    const fieldIds = ["title", "summary", "target_audience", "learning_objectives", "assumed_prerequisites"];
+    const fieldIds = [
+        "title",
+        "summary",
+        "target_audience",
+        "learning_objectives",
+        "assumed_prerequisites",
+    ];
 
     form.addEventListener("submit", (e) => e.preventDefault());
 

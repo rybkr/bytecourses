@@ -25,7 +25,7 @@ ByteCourses{{end}} {{define "content"}}
         <a href="/proposals" class="btn btn-outline">Back to Proposals</a>
     </div>
 </div>
-<div id="error-message" class="error-message" style="display: none"></div>
+<div id="error-message" class="error-message hidden" data-proposal-id="{{.Proposal.ID}}"></div>
 <div class="proposal-meta-bar">
     <div class="status-container">
         <span class="status-badge status-{{.Proposal.Status}}">{{.Proposal.Status}}</span>
@@ -55,7 +55,7 @@ ByteCourses{{end}} {{define "content"}}
 {{if and (eq .User.Role "admin") (eq .Proposal.Status "submitted")}}
 <div class="review-card">
     <h2>Review Proposal</h2>
-    <div id="review-error" class="error-message" style="display: none"></div>
+    <div id="review-error" class="error-message hidden"></div>
     <div class="form-group">
         <label for="review-notes">Review Notes</label>
         <textarea id="review-notes" rows="4" placeholder="Add your review notes here...">{{.Proposal.ReviewNotes}}</textarea>
@@ -69,18 +69,7 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 {{end}}
-{{if .Proposal.ReviewNotes}}
-<div class="review-notes-card {{if eq .Proposal.Status " changes_requested"}}review-notes-highlight{{end}}">
-    <h3>Review Notes</h3>
-    <div class="review-notes-content">{{markdown .Proposal.ReviewNotes}}</div>
-    {{if .Proposal.ReviewerID}}
-    <div class="review-notes-meta">
-        <span>Reviewed by Admin</span>
-        <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
-    </div>
-    {{end}}
-</div>
-{{end}}
+{{template "review-notes-card" .}}
 <div class="status-help-text">
     {{if eq .User.Role "admin"}}
     {{if eq .Proposal.Status "submitted"}}Review this proposal and provide feedback using the actions below.{{end}}
@@ -130,240 +119,5 @@ ByteCourses{{end}} {{define "content"}}
     </div>
 </div>
 {{end}} {{define "scripts"}}
-<script type="module">
-    import Modal from "/static/js/components/Modal.js";
-    
-    document.addEventListener("DOMContentLoaded", () => {
-        const proposalId = {{.Proposal.ID}};
-        if (!proposalId || proposalId <= 0) {
-            console.error("Invalid proposal ID:", proposalId);
-            return;
-        }
-        const submitBtn = document.getElementById("submitBtn");
-    const withdrawBtn = document.getElementById("withdrawBtn");
-    const deleteBtn = document.getElementById("deleteBtn");
-    const createCourseBtn = document.getElementById("createCourseBtn");
-    const errorDiv = document.getElementById("error-message");
-    const createCourseModal = new Modal("#create-course-modal");
-
-    if (submitBtn) {
-        async function submit() {
-            errorDiv.style.display = "none";
-            errorDiv.textContent = "";
-            submitBtn.disabled = true;
-
-            try {
-                const res = await fetch(`/api/proposals/${proposalId}/actions/submit`, {
-                    method: "POST",
-                });
-
-                if (!res.ok) {
-                    const txt = await res.text();
-                    errorDiv.textContent = txt || "Submit failed";
-                    errorDiv.style.display = "block";
-                    submitBtn.disabled = false;
-                    return;
-                }
-
-                window.location.reload();
-            } catch (error) {
-                errorDiv.textContent = "Network error. Please try again.";
-                errorDiv.style.display = "block";
-                submitBtn.disabled = false;
-            }
-        }
-
-        submitBtn.addEventListener("click", submit);
-    }
-
-    if (withdrawBtn) {
-        async function withdraw() {
-            if (!confirm("Are you sure you want to withdraw this proposal? It will be removed from review.")) {
-                return;
-            }
-
-            errorDiv.style.display = "none";
-            errorDiv.textContent = "";
-            withdrawBtn.disabled = true;
-
-            try {
-                const res = await fetch(`/api/proposals/${proposalId}/actions/withdraw`, {
-                    method: "POST",
-                });
-
-                if (!res.ok) {
-                    const txt = await res.text();
-                    errorDiv.textContent = txt || "Withdraw failed";
-                    errorDiv.style.display = "block";
-                    withdrawBtn.disabled = false;
-                    return;
-                }
-
-                window.location.reload();
-            } catch (error) {
-                errorDiv.textContent = "Network error. Please try again.";
-                errorDiv.style.display = "block";
-                withdrawBtn.disabled = false;
-            }
-        }
-
-        withdrawBtn.addEventListener("click", withdraw);
-    }
-
-    if (deleteBtn) {
-        async function deleteProposal() {
-            if (!confirm("Are you sure you want to delete this proposal? This action cannot be undone.")) {
-                return;
-            }
-
-            errorDiv.style.display = "none";
-            errorDiv.textContent = "";
-            deleteBtn.disabled = true;
-
-            try {
-                const res = await fetch(`/api/proposals/${proposalId}`, {
-                    method: "DELETE",
-                });
-
-                if (!res.ok) {
-                    const txt = await res.text();
-                    errorDiv.textContent = txt || "Delete failed";
-                    errorDiv.style.display = "block";
-                    deleteBtn.disabled = false;
-                    return;
-                }
-
-                window.location.href = "/proposals";
-            } catch (error) {
-                errorDiv.textContent = "Network error. Please try again.";
-                errorDiv.style.display = "block";
-                deleteBtn.disabled = false;
-            }
-        }
-
-        deleteBtn.addEventListener("click", deleteProposal);
-    }
-
-    if (createCourseBtn) {
-        createCourseBtn.addEventListener("click", () => {
-            createCourseModal.open();
-        });
-    }
-
-    const confirmCreateCourseBtn = document.getElementById("confirm-create-course");
-    if (confirmCreateCourseBtn) {
-        async function createCourse() {
-            errorDiv.style.display = "none";
-            errorDiv.textContent = "";
-            confirmCreateCourseBtn.disabled = true;
-
-            try {
-                const res = await fetch(`/api/proposals/${proposalId}/actions/create-course`, {
-                    method: "POST",
-                });
-
-                if (!res.ok) {
-                    const txt = await res.text();
-                    let errorMsg = txt || "Create course failed";
-                    if (res.status === 409) {
-                        try {
-                            const data = await res.json();
-                            if (data.course_id) {
-                                window.location.href = `/courses/${data.course_id}/edit`;
-                                return;
-                            }
-                        } catch (e) {
-                        }
-                    }
-                    errorDiv.textContent = errorMsg;
-                    errorDiv.style.display = "block";
-                    confirmCreateCourseBtn.disabled = false;
-                    return;
-                }
-
-                const course = await res.json();
-                createCourseModal.close();
-                window.location.href = `/courses/${course.id}/edit`;
-            } catch (error) {
-                errorDiv.textContent = "Network error. Please try again.";
-                errorDiv.style.display = "block";
-                confirmCreateCourseBtn.disabled = false;
-            }
-        }
-
-        confirmCreateCourseBtn.addEventListener("click", createCourse);
-    }
-
-    const approveBtn = document.getElementById("approveBtn");
-    const requestChangesBtn = document.getElementById("requestChangesBtn");
-    const rejectBtn = document.getElementById("rejectBtn");
-    const reviewErrorDiv = document.getElementById("review-error");
-    const reviewNotes = document.getElementById("review-notes");
-
-    async function handleReviewAction(action) {
-        if (!proposalId || proposalId <= 0) {
-            reviewErrorDiv.textContent = "Invalid proposal ID";
-            reviewErrorDiv.style.display = "block";
-            return;
-        }
-
-        reviewErrorDiv.style.display = "none";
-        reviewErrorDiv.textContent = "";
-
-        const buttons = [approveBtn, requestChangesBtn, rejectBtn];
-        buttons.forEach(btn => {
-            if (btn) btn.disabled = true;
-        });
-
-        const url = `/api/proposals/${proposalId}/actions/${action}`;
-        try {
-            const res = await fetch(url, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    review_notes: reviewNotes ? reviewNotes.value : "",
-                }),
-            });
-
-            if (!res.ok) {
-                const txt = await res.text();
-                let errorMsg = txt || "Action failed";
-                if (res.status === 404) {
-                    errorMsg = "Proposal not found. Please refresh the page and try again.";
-                } else if (res.status === 403) {
-                    errorMsg = "You don't have permission to perform this action.";
-                } else if (res.status === 409) {
-                    errorMsg = "Proposal status has changed. Please refresh the page.";
-                }
-                reviewErrorDiv.textContent = errorMsg;
-                reviewErrorDiv.style.display = "block";
-                buttons.forEach(btn => {
-                    if (btn) btn.disabled = false;
-                });
-                return;
-            }
-
-            window.location.reload();
-        } catch (error) {
-            reviewErrorDiv.textContent = "Network error. Please try again.";
-            reviewErrorDiv.style.display = "block";
-            buttons.forEach(btn => {
-                if (btn) btn.disabled = false;
-            });
-        }
-    }
-
-    if (approveBtn) {
-        approveBtn.addEventListener("click", () => handleReviewAction("approve"));
-    }
-    if (requestChangesBtn) {
-        requestChangesBtn.addEventListener("click", () => handleReviewAction("request-changes"));
-    }
-    if (rejectBtn) {
-        rejectBtn.addEventListener("click", () => handleReviewAction("reject"));
-    }
-    });
-</script>
+<script type="module" src="/static/js/pages/proposal_view.js"></script>
 {{end}}

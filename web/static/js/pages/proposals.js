@@ -33,14 +33,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     let actionsHtml = "";
                     if (!isAdmin) {
                         const actions = [];
-                        if (p.status === "draft" || p.status === "changes_requested") {
+                        if (
+                            p.status === "draft" ||
+                            p.status === "changes_requested"
+                        ) {
                             actions.push(
-                                `<a href="/proposals/${p.id}/edit" class="btn btn-secondary btn-sm">Edit</a>`
+                                `<a href="/proposals/${p.id}/edit" class="btn btn-secondary btn-sm">Edit</a>`,
                             );
                         }
                         if (p.status === "submitted") {
                             actions.push(
-                                `<button class="btn btn-secondary btn-sm" data-withdraw-id="${p.id}">Withdraw</button>`
+                                `<button class="btn btn-secondary btn-sm" data-withdraw-id="${p.id}">Withdraw</button>`,
                             );
                         }
                         if (
@@ -49,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             p.status === "rejected"
                         ) {
                             actions.push(
-                                `<button class="btn btn-danger btn-sm" data-delete-id="${p.id}">Delete</button>`
+                                `<button class="btn btn-danger btn-sm" data-delete-id="${p.id}">Delete</button>`,
                             );
                         }
                         if (actions.length > 0) {
@@ -89,7 +92,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const proposalId = target.getAttribute("data-delete-id");
         const card = target.closest(".proposal-card");
 
-        if (!confirmAction("Are you sure you want to delete this proposal? This action cannot be undone.")) {
+        if (
+            !confirmAction(
+                "Are you sure you want to delete this proposal? This action cannot be undone.",
+            )
+        ) {
             return;
         }
 
@@ -102,7 +109,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (error.message === "Failed to fetch") {
                 alert("Network error. Please try again.");
             } else {
-                alert(error.message || "Failed to delete proposal. Please try again.");
+                alert(
+                    error.message ||
+                        "Failed to delete proposal. Please try again.",
+                );
             }
         }
     });
@@ -111,7 +121,11 @@ document.addEventListener("DOMContentLoaded", () => {
         e.preventDefault();
         const proposalId = target.getAttribute("data-withdraw-id");
 
-        if (!confirmAction("Are you sure you want to withdraw this proposal? It will be removed from review.")) {
+        if (
+            !confirmAction(
+                "Are you sure you want to withdraw this proposal? It will be removed from review.",
+            )
+        ) {
             return;
         }
 
@@ -122,7 +136,10 @@ document.addEventListener("DOMContentLoaded", () => {
             if (error.message === "Failed to fetch") {
                 alert("Network error. Please try again.");
             } else {
-                alert(error.message || "Failed to withdraw proposal. Please try again.");
+                alert(
+                    error.message ||
+                        "Failed to withdraw proposal. Please try again.",
+                );
             }
         }
     });

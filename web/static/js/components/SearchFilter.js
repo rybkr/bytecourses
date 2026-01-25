@@ -16,7 +16,10 @@ export default class SearchFilter {
         };
 
         this.noResults = $(this.options.noResultsSelector);
-        this.performSearch = debounce(this.performSearch.bind(this), this.options.debounceMs);
+        this.performSearch = debounce(
+            this.performSearch.bind(this),
+            this.options.debounceMs,
+        );
 
         this.input.addEventListener("input", this.performSearch);
         this.performSearch();
@@ -24,7 +27,9 @@ export default class SearchFilter {
 
     performSearch() {
         const query = this.input.value.toLowerCase().trim();
-        const items = this.container.querySelectorAll(this.options.itemSelector);
+        const items = this.container.querySelectorAll(
+            this.options.itemSelector,
+        );
         let visibleCount = 0;
 
         items.forEach((item) => {

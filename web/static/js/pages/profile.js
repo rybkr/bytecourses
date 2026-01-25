@@ -1,5 +1,6 @@
 import api from "../core/api.js";
 import { $ } from "../core/dom.js";
+import { showError, hideError } from "../core/utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const form = $("#profile-form");
@@ -13,16 +14,19 @@ document.addEventListener("DOMContentLoaded", () => {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        nameError.style.display = "none";
-        statusDiv.style.display = "none";
-        statusDiv.className = "";
-        statusDiv.textContent = "";
+        hideError(nameError);
+        if (statusDiv) {
+            statusDiv.classList.add("hidden");
+            statusDiv.className = statusDiv.className
+                .replace(/\b(success-message|error-message)\b/g, "")
+                .trim();
+            statusDiv.textContent = "";
+        }
 
         const name = nameInput.value.trim();
 
         if (!name) {
-            nameError.textContent = "Name is required";
-            nameError.style.display = "block";
+            showError("Name is required", nameError);
             return;
         }
 
@@ -32,21 +36,29 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             await api.patch("/api/me", { name });
 
-            statusDiv.textContent = "Profile updated successfully";
-            statusDiv.className = "success-message";
-            statusDiv.style.display = "block";
-            statusDiv.style.background = "var(--success-color, #4a9a9a)";
-            statusDiv.style.color = "white";
+            if (statusDiv) {
+                statusDiv.textContent = "Profile updated successfully";
+                statusDiv.className = "success-message";
+                statusDiv.classList.remove("hidden");
+            }
 
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
         } catch (error) {
-            statusDiv.textContent = error.message || "Failed to update profile. Please try again.";
-            statusDiv.className = "error-message";
-            statusDiv.style.display = "block";
-            statusDiv.style.background = "var(--danger-color, #c85a5a)";
-            statusDiv.style.color = "white";
+            if (statusDiv) {
+                showError(
+                    error.message ||
+                        "Failed to update profile. Please try again.",
+                    statusDiv,
+                );
+            } else {
+                showError(
+                    error.message ||
+                        "Failed to update profile. Please try again.",
+                    nameError,
+                );
+            }
         } finally {
             saveBtn.disabled = false;
             saveBtn.textContent = "Save Changes";

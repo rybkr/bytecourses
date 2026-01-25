@@ -2,16 +2,14 @@ import api from "../core/api.js";
 import { $, on } from "../core/dom.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const pathMatch = window.location.pathname.match(/\/courses\/(\d+)\/content/);
+    const pathMatch = window.location.pathname.match(
+        /\/courses\/(\d+)\/content/,
+    );
     const courseId = pathMatch ? Number(pathMatch[1]) : null;
 
     if (!courseId || !Number.isFinite(courseId) || courseId <= 0) {
         return;
     }
-
-    // ========================
-    // Module Accordion
-    // ========================
 
     document.querySelectorAll(".module-toggle").forEach((btn) => {
         on(btn, "click", () => {
@@ -22,51 +20,55 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // Auto-expand module with active content
     const activeContent = $(".content-item-link.active");
     if (activeContent) {
         const module = activeContent.closest(".course-content-module");
         if (module) {
             module.classList.add("expanded");
             setTimeout(() => {
-                activeContent.scrollIntoView({ behavior: "smooth", block: "center" });
+                activeContent.scrollIntoView({
+                    behavior: "smooth",
+                    block: "center",
+                });
             }, 100);
         }
     }
-
-    // ========================
-    // Helpers
-    // ========================
 
     async function getNextModuleOrder() {
         const response = await api.get(`/api/courses/${courseId}/modules`);
         const modules = await response.json();
         if (!modules || modules.length === 0) return 0;
-        return Math.max(...modules.map(m => m.order || 0)) + 1;
+        return Math.max(...modules.map((m) => m.order || 0)) + 1;
     }
 
     async function getNextReadingOrder(moduleId) {
-        const response = await api.get(`/api/courses/${courseId}/modules/${moduleId}/content`);
+        const response = await api.get(
+            `/api/courses/${courseId}/modules/${moduleId}/content`,
+        );
         const readings = await response.json();
         if (!readings || readings.length === 0) return 0;
-        return Math.max(...readings.map(r => r.order || 0)) + 1;
+        return Math.max(...readings.map((r) => r.order || 0)) + 1;
     }
 
     function hideAllForms() {
-        document.querySelectorAll(".inline-edit-form, .delete-confirm, .add-content-menu, .delete-confirm-inline").forEach(el => {
-            el.style.display = "none";
-        });
-        document.querySelectorAll(".module-header, .add-content-trigger, .content-item").forEach(el => {
-            el.style.display = "";
-        });
-        document.querySelectorAll(".btn-delete-content").forEach(el => {
+        document
+            .querySelectorAll(
+                ".inline-edit-form, .delete-confirm, .add-content-menu, .delete-confirm-inline",
+            )
+            .forEach((el) => {
+                el.style.display = "none";
+            });
+        document
+            .querySelectorAll(
+                ".module-header, .add-content-trigger, .content-item",
+            )
+            .forEach((el) => {
+                el.style.display = "";
+            });
+        document.querySelectorAll(".btn-delete-content").forEach((el) => {
             el.style.display = "";
         });
     }
-
-    // ========================
-    // Module Edit
-    // ========================
 
     document.querySelectorAll(".btn-edit-module").forEach((btn) => {
         on(btn, "click", (e) => {
@@ -74,7 +76,9 @@ document.addEventListener("DOMContentLoaded", () => {
             hideAllForms();
 
             const moduleId = btn.dataset.moduleId;
-            const moduleEl = document.querySelector(`.course-content-module[data-module-id="${moduleId}"]`);
+            const moduleEl = document.querySelector(
+                `.course-content-module[data-module-id="${moduleId}"]`,
+            );
             if (!moduleEl) return;
 
             const header = moduleEl.querySelector(".module-header");
@@ -107,11 +111,14 @@ document.addEventListener("DOMContentLoaded", () => {
             const currentOrder = moduleEl ? Number(moduleEl.dataset.order) : 0;
 
             try {
-                await api.patch(`/api/courses/${courseId}/modules/${moduleId}`, {
-                    title: title,
-                    description: descInput.value.trim(),
-                    order: currentOrder,
-                });
+                await api.patch(
+                    `/api/courses/${courseId}/modules/${moduleId}`,
+                    {
+                        title: title,
+                        description: descInput.value.trim(),
+                        order: currentOrder,
+                    },
+                );
 
                 const titleSpan = moduleEl.querySelector(".module-title");
                 if (titleSpan) titleSpan.textContent = title;
@@ -127,17 +134,15 @@ document.addEventListener("DOMContentLoaded", () => {
         on(btn, "click", () => hideAllForms());
     });
 
-    // ========================
-    // Module Delete
-    // ========================
-
     document.querySelectorAll(".btn-delete-module").forEach((btn) => {
         on(btn, "click", (e) => {
             e.stopPropagation();
             hideAllForms();
 
             const moduleId = btn.dataset.moduleId;
-            const moduleEl = document.querySelector(`.course-content-module[data-module-id="${moduleId}"]`);
+            const moduleEl = document.querySelector(
+                `.course-content-module[data-module-id="${moduleId}"]`,
+            );
             if (!moduleEl) return;
 
             const header = moduleEl.querySelector(".module-header");
@@ -158,8 +163,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const moduleId = Number(confirm.dataset.moduleId);
 
             try {
-                await api.delete(`/api/courses/${courseId}/modules/${moduleId}`);
-                const moduleEl = document.querySelector(`.course-content-module[data-module-id="${moduleId}"]`);
+                await api.delete(
+                    `/api/courses/${courseId}/modules/${moduleId}`,
+                );
+                const moduleEl = document.querySelector(
+                    `.course-content-module[data-module-id="${moduleId}"]`,
+                );
                 if (moduleEl) {
                     moduleEl.style.opacity = "0";
                     moduleEl.style.transform = "translateX(-10px)";
@@ -176,10 +185,6 @@ document.addEventListener("DOMContentLoaded", () => {
         on(btn, "click", () => hideAllForms());
     });
 
-    // ========================
-    // New Module
-    // ========================
-
     const addModuleBtn = $("#add-module-btn");
     const newModuleForm = $("#new-module-form");
 
@@ -195,7 +200,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (createBtn) {
             on(createBtn, "click", async () => {
                 const titleInput = newModuleForm.querySelector(".inline-input");
-                const descInput = newModuleForm.querySelector(".inline-textarea");
+                const descInput =
+                    newModuleForm.querySelector(".inline-textarea");
                 const title = titleInput.value.trim();
 
                 if (!title) {
@@ -212,7 +218,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                     window.location.reload();
                 } catch (error) {
-                    showToast(error.message || "Failed to create module", "error");
+                    showToast(
+                        error.message || "Failed to create module",
+                        "error",
+                    );
                 }
             });
         }
@@ -227,10 +236,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
     }
-
-    // ========================
-    // Add Content Menu
-    // ========================
 
     document.querySelectorAll(".add-content-trigger").forEach((trigger) => {
         on(trigger, "click", () => {
@@ -255,11 +260,6 @@ document.addEventListener("DOMContentLoaded", () => {
             window.location.href = `/courses/${courseId}/modules/${moduleId}/content/new`;
         });
     });
-
-
-    // ========================
-    // Delete Content
-    // ========================
 
     document.querySelectorAll(".btn-delete-content").forEach((btn) => {
         on(btn, "click", (e) => {
@@ -293,7 +293,9 @@ document.addEventListener("DOMContentLoaded", () => {
             const moduleId = Number(moduleEl.dataset.moduleId);
 
             try {
-                await api.delete(`/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`);
+                await api.delete(
+                    `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`,
+                );
                 contentItem.style.opacity = "0";
                 contentItem.style.transform = "translateX(-10px)";
                 setTimeout(() => contentItem.remove(), 200);
@@ -311,10 +313,6 @@ document.addEventListener("DOMContentLoaded", () => {
             hideAllForms();
         });
     });
-
-    // ========================
-    // Toast Notifications
-    // ========================
 
     function showToast(message, type = "info") {
         const existing = document.querySelector(".toast");
@@ -335,7 +333,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
 
-    // Close forms on escape key
     document.addEventListener("keydown", (e) => {
         if (e.key === "Escape") {
             hideAllForms();
@@ -348,15 +345,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Close menus when clicking outside
     document.addEventListener("click", (e) => {
         if (!e.target.closest(".add-content-row")) {
-            document.querySelectorAll(".add-content-menu").forEach(menu => {
+            document.querySelectorAll(".add-content-menu").forEach((menu) => {
                 if (menu.style.display !== "none") {
                     menu.style.display = "none";
                     const row = menu.closest(".add-content-row");
                     if (row) {
-                        const trigger = row.querySelector(".add-content-trigger");
+                        const trigger = row.querySelector(
+                            ".add-content-trigger",
+                        );
                         if (trigger) trigger.style.display = "";
                     }
                 }

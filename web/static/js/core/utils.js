@@ -26,13 +26,13 @@ export function debounce(fn, delay) {
 export function showError(message, container) {
     if (!container) return;
     container.textContent = message;
-    container.style.display = "block";
+    container.classList.remove("hidden");
 }
 
 export function hideError(container) {
     if (!container) return;
     container.textContent = "";
-    container.style.display = "none";
+    container.classList.add("hidden");
 }
 
 export function confirmAction(message) {
@@ -41,5 +41,9 @@ export function confirmAction(message) {
 
 export function nowLabel() {
     const d = new Date();
-    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+    return d.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+    });
 }

@@ -43,9 +43,11 @@ export default class Dropdown {
     open() {
         if (this.isOpen) return;
 
-        document.querySelectorAll(".user-dropdown-menu, .teach-dropdown-menu").forEach((m) => {
-            m.classList.remove("show");
-        });
+        document
+            .querySelectorAll(".user-dropdown-menu, .teach-dropdown-menu")
+            .forEach((m) => {
+                m.classList.remove("show");
+            });
         document.querySelectorAll("[aria-expanded]").forEach((el) => {
             el.setAttribute("aria-expanded", "false");
         });

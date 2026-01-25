@@ -65,7 +65,8 @@ document.addEventListener("DOMContentLoaded", () => {
             await api.patch(apiUrl, body);
 
             lastSavedTitle = title !== undefined ? title : lastSavedTitle;
-            lastSavedContent = content !== undefined ? content : lastSavedContent;
+            lastSavedContent =
+                content !== undefined ? content : lastSavedContent;
 
             updateSaveStatus("saved", "Saved");
         } catch (error) {
@@ -79,7 +80,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const currentTitle = titleInput.value.trim();
         const currentContent = contentTextarea.value;
 
-        if (currentTitle !== lastSavedTitle || currentContent !== lastSavedContent) {
+        if (
+            currentTitle !== lastSavedTitle ||
+            currentContent !== lastSavedContent
+        ) {
             save(currentTitle, currentContent);
         }
     }, 2000);
@@ -110,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Unpublish functionality not yet implemented in service layer
     if (unpublishBtn) {
         unpublishBtn.style.display = "none";
     }

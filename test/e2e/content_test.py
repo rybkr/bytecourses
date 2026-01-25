@@ -4,10 +4,7 @@ from .conftest import register_and_login
 
 
 class TestContentEndpoints:
-    """Basic tests for content endpoints using new nested route structure."""
-
     def test_content_endpoints_use_nested_structure(self, api_url, admin_session):
-        """Verify content endpoints are accessible via new nested route structure."""
         author = register_and_login(api_url, "author@example.com", "password123")
 
         r = author.post(

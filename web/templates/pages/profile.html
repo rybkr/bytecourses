@@ -13,13 +13,13 @@
                 <div class="profile-field">
                     <label for="name">Name</label>
                     <input type="text" id="name" name="name" value="{{.User.Name}}" placeholder="Enter your name" required />
-                    <div id="name-error" class="error-message" style="display: none;"></div>
+                    <div id="name-error" class="error-message hidden"></div>
                 </div>
                 <div class="profile-field">
                     <label>Email</label>
                     <div class="profile-value">{{.User.Email}}</div>
                 </div>
-                <div id="profile-status" style="display: none; margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;"></div>
+                <div id="profile-status" class="hidden" style="margin-top: 1rem; padding: 0.75rem; border-radius: 0.5rem; font-size: 0.875rem;"></div>
                 <div class="profile-actions">
                     <button type="submit" id="save-btn" class="btn btn-primary">Save Changes</button>
                 </div>

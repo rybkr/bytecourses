@@ -9,7 +9,11 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/styles.css" />
+    <link rel="stylesheet" href="/static/css/base.css" />
+    <link rel="stylesheet" href="/static/css/components.css" />
+    <link rel="stylesheet" href="/static/css/layout.css" />
+    <link rel="stylesheet" href="/static/css/pages.css" />
+    <link rel="stylesheet" href="/static/css/utilities.css" />
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     {{block "head" .}}{{end}}
 </head>
@@ -26,79 +30,11 @@
                 <span class="hamburger-line"></span>
             </button>
             <div class="nav-links">
-                <a href="/about" class="nav-link">About</a>
-                <a href="/courses" class="nav-link">Browse Courses</a>
-                {{if .User}}
-                <div class="teach-dropdown">
-                    <a href="#" class="nav-link teach-menu-trigger">Teach</a>
-                    <div class="teach-dropdown-menu" id="teachDropdownMenu">
-                        <a href="/proposals/new" class="teach-dropdown-item">New Proposal</a>
-                        <a href="/proposals/mine" class="teach-dropdown-item">My Proposals</a>
-                        {{if eq .User.Role "admin"}}
-                        <a href="/proposals" class="teach-dropdown-item">All Proposals</a>
-                        {{end}}
-                    </div>
-                </div>
-                <div class="user-dropdown">
-                    <button class="user-menu-btn" aria-label="User menu"
-                        aria-expanded="false">
-                        <svg class="user-icon" width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
-                        <svg class="dropdown-arrow" width="12" height="12" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="6 9 12 15 18 9"></polyline>
-                        </svg>
-                    </button>
-                    <div class="user-dropdown-menu" id="userDropdownMenu">
-                        <div class="user-dropdown-header">
-                            <div class="user-dropdown-email">{{if .User.Name}}{{.User.Name}}{{else}}{{.User.Email}}{{end}}</div>
-                            <div class="user-dropdown-role">{{.User.Role}}</div>
-                        </div>
-                        <a href="/profile" class="user-dropdown-item">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            Profile
-                        </a>
-                        <div class="user-dropdown-divider"></div>
-                        <button class="user-dropdown-item user-dropdown-logout" data-logout>
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-                                <polyline points="16 17 21 12 16 7"></polyline>
-                                <line x1="21" y1="12" x2="9" y2="12"></line>
-                            </svg>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-                {{else}}
-                <a href="/login" class="nav-link">Login</a>
-                {{end}}
+                {{template "nav-items-desktop" .}}
             </div>
             <div class="mobile-menu-overlay" id="mobileMenuOverlay"></div>
             <div class="mobile-menu" id="mobileMenu">
-                <a href="/about" class="mobile-menu-item">About</a>
-                <a href="/courses" class="mobile-menu-item">Browse Courses</a>
-                {{if .User}}
-                <div class="mobile-menu-divider"></div>
-                <a href="/proposals/new" class="mobile-menu-item">New Proposal</a>
-                <a href="/proposals/mine" class="mobile-menu-item">My Proposals</a>
-                {{if eq .User.Role "admin"}}
-                <a href="/proposals" class="mobile-menu-item">All Proposals</a>
-                {{end}}
-                <div class="mobile-menu-divider"></div>
-                <a href="/profile" class="mobile-menu-item">Profile</a>
-                <button class="mobile-menu-item mobile-menu-logout" data-logout>Logout</button>
-                {{else}}
-                <div class="mobile-menu-divider"></div>
-                <a href="/login" class="mobile-menu-item">Login</a>
-                {{end}}
+                {{template "nav-items-mobile" .}}
             </div>
         </div>
     </nav>

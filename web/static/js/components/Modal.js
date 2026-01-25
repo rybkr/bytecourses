@@ -18,7 +18,9 @@ export default class Modal {
             closeBtn.addEventListener("click", () => this.close());
         }
 
-        const triggers = document.querySelectorAll(`[data-modal-open="${modalSelector}"]`);
+        const triggers = document.querySelectorAll(
+            `[data-modal-open="${modalSelector}"]`,
+        );
         triggers.forEach((trigger) => {
             trigger.addEventListener("click", (e) => {
                 e.preventDefault();

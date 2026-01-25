@@ -97,7 +97,10 @@ export default class FormHandler {
                 }
                 this.createInFlight = false;
             } else {
-                await api.patch(`${this.options.apiPath}/${this.entityId}`, payload);
+                await api.patch(
+                    `${this.options.apiPath}/${this.entityId}`,
+                    payload,
+                );
             }
             this.lastSavedJson = json;
             this.dirty = false;
@@ -121,7 +124,11 @@ export default class FormHandler {
         if (this.dirty || this.saveInFlight || this.createInFlight) {
             await new Promise((resolve) => {
                 const checkInterval = setInterval(() => {
-                    if (!this.dirty && !this.saveInFlight && !this.createInFlight) {
+                    if (
+                        !this.dirty &&
+                        !this.saveInFlight &&
+                        !this.createInFlight
+                    ) {
                         clearInterval(checkInterval);
                         resolve();
                     }

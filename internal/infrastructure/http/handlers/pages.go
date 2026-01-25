@@ -131,18 +131,21 @@ func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalServ
 
 		tmpl, err := template.New("").Funcs(funcMap).Parse(string(layoutContent))
 		if err != nil {
+			log.Printf("failed to parse layout for %s: %v", entry.Name(), err)
 			return nil
 		}
 
 		if partialsContent != "" {
 			tmpl, err = tmpl.Parse(partialsContent)
 			if err != nil {
+				log.Printf("failed to parse partials for %s: %v", entry.Name(), err)
 				return nil
 			}
 		}
 
 		tmpl, err = tmpl.Parse(string(pageContent))
 		if err != nil {
+			log.Printf("failed to parse page %s: %v", entry.Name(), err)
 			return nil
 		}
 

@@ -85,50 +85,18 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const order = await getNextReadingOrder();
-            const res = await fetch(
+            const res = await api.post(
                 `/api/courses/${courseId}/modules/${moduleId}/content`,
                 {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                        type: contentType,
-                        title,
-                        order,
-                        format: "markdown",
-                        content,
-                    }),
+                    type: contentType,
+                    title,
+                    order,
+                    format: "markdown",
+                    content,
                 },
             );
 
-            if (res.status === 401) {
-                navigatingAfterCreate = true;
-                const next = encodeURIComponent(
-                    window.location.pathname + window.location.search,
-                );
-                window.location.href = `/login?next=${next}`;
-                return;
-            }
-
-            if (!res.ok) {
-                const ct = res.headers.get("Content-Type") || "";
-                let msg = "Failed to create content";
-                if (ct.includes("application/json")) {
-                    try {
-                        const j = await res.json();
-                        if (j.error) msg = j.error;
-                        if (j.errors && Array.isArray(j.errors) && j.errors.length) {
-                            const parts = j.errors.map((e) => {
-                                const m = e.Message || e.message || String(e);
-                                return e.Field ? `${e.Field}: ${m}` : m;
-                            });
-                            if (parts.length) msg = parts.join("; ");
-                        }
-                    } catch (_) {}
-                } else {
-                    const text = await res.text();
-                    if (text) msg = text;
-                }
-                showError(msg, errorContainer);
+            if (!res) {
                 return;
             }
 

@@ -17,10 +17,10 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	r := chi.NewRouter()
 	r.Use(chimw.Recoverer)
 	r.Use(chimw.Logger)
-	r.Use(middleware.CSRFProtection())
+	r.Use(middleware.CSRFProtection(c.SessionStore, c.BaseURL))
 
 	pageHandler := handlers.NewPageHandler(webFS, c.ProposalService, c.CourseService, c.ModuleService, c.ContentService, c.EnrollmentService, c.UserRepo)
-	authHandler := handlers.NewAuthHandler(c.AuthService, c.BaseURL)
+	authHandler := handlers.NewAuthHandler(c.AuthService, c.SessionStore, c.BaseURL)
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 	moduleHandler := handlers.NewModuleHandler(c.ModuleService)

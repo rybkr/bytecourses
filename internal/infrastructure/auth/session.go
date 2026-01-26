@@ -12,6 +12,9 @@ type SessionStore interface {
 	Get(sessionID string) (userID int64, ok bool)
 	Delete(sessionID string) error
 	DeleteByUserID(userID int64) error
+	SetCSRFToken(sessionID, token string) error
+	GetCSRFToken(sessionID string) (string, bool)
+	DeleteCSRFToken(sessionID string) error
 }
 
 var (
@@ -21,6 +24,7 @@ var (
 type session struct {
 	userID    int64
 	expiresAt time.Time
+	csrfToken string
 }
 
 type InMemorySessionStore struct {
@@ -83,6 +87,50 @@ func (s *InMemorySessionStore) DeleteByUserID(userID int64) error {
 		}
 	}
 
+	return nil
+}
+
+func (s *InMemorySessionStore) SetCSRFToken(sessionID, token string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	sess, ok := s.sessions[sessionID]
+	if !ok || time.Now().After(sess.expiresAt) {
+		return nil
+	}
+
+	sess.csrfToken = token
+	s.sessions[sessionID] = sess
+	return nil
+}
+
+func (s *InMemorySessionStore) GetCSRFToken(sessionID string) (string, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	sess, ok := s.sessions[sessionID]
+	if !ok || time.Now().After(sess.expiresAt) {
+		return "", false
+	}
+
+	if sess.csrfToken == "" {
+		return "", false
+	}
+
+	return sess.csrfToken, true
+}
+
+func (s *InMemorySessionStore) DeleteCSRFToken(sessionID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	sess, ok := s.sessions[sessionID]
+	if !ok {
+		return nil
+	}
+
+	sess.csrfToken = ""
+	s.sessions[sessionID] = sess
 	return nil
 }
 

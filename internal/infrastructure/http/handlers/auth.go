@@ -4,20 +4,23 @@ import (
 	"net/http"
 	"strings"
 
+	"bytecourses/internal/infrastructure/auth"
 	"bytecourses/internal/infrastructure/http/middleware"
 	"bytecourses/internal/pkg/errors"
 	"bytecourses/internal/services"
 )
 
 type AuthHandler struct {
-	Service *services.AuthService
-	BaseURL string
+	Service      *services.AuthService
+	SessionStore auth.SessionStore
+	BaseURL      string
 }
 
-func NewAuthHandler(authService *services.AuthService, baseURL string) *AuthHandler {
+func NewAuthHandler(authService *services.AuthService, sessionStore auth.SessionStore, baseURL string) *AuthHandler {
 	return &AuthHandler{
-		Service: authService,
-		BaseURL: baseURL,
+		Service:      authService,
+		SessionStore: sessionStore,
+		BaseURL:      baseURL,
 	}
 }
 
@@ -74,6 +77,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	csrfToken, err := auth.GenerateCSRFToken()
+	if err != nil {
+		handleError(w, r, err)
+		return
+	}
+	if err := h.SessionStore.SetCSRFToken(sessionID, csrfToken); err != nil {
+		handleError(w, r, err)
+		return
+	}
+
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
@@ -81,7 +94,16 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode,
 		Secure:   isHTTPS(r),
-		MaxAge:   60 * 60 * 24, // 1 day
+		MaxAge:   60 * 60 * 24,
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf-token",
+		Value:    csrfToken,
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+		Secure:   isHTTPS(r),
+		MaxAge:   60 * 60 * 24,
 	})
 
 	w.WriteHeader(http.StatusOK)
@@ -90,6 +112,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	sessionID, ok := middleware.SessionFromContext(r.Context())
 	if ok && sessionID != "" {
+		_ = h.SessionStore.DeleteCSRFToken(sessionID)
 		_ = h.Service.Logout(r.Context(), &services.LogoutCommand{
 			SessionID: strings.TrimSpace(sessionID),
 		})
@@ -101,6 +124,15 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		MaxAge:   -1,
 		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   isHTTPS(r),
+	})
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "csrf-token",
+		Value:    "",
+		Path:     "/",
+		MaxAge:   -1,
 		SameSite: http.SameSiteStrictMode,
 		Secure:   isHTTPS(r),
 	})

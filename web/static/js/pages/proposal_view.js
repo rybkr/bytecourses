@@ -134,13 +134,10 @@ document.addEventListener("DOMContentLoaded", () => {
             } catch (error) {
                 if (error.message && error.message.includes("409")) {
                     try {
-                        const response = await fetch(
+                        const response = await api.post(
                             `/api/proposals/${proposalId}/actions/create-course`,
-                            {
-                                method: "POST",
-                            },
                         );
-                        if (response.status === 409) {
+                        if (response && response.status === 409) {
                             const data = await response.json();
                             if (data.course_id) {
                                 window.location.href = `/courses/${data.course_id}/edit`;

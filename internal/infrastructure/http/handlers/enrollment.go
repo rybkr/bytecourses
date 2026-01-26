@@ -25,13 +25,13 @@ func NewEnrollmentHandler(enrollmentService *services.EnrollmentService) *Enroll
 func (h *EnrollmentHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -39,7 +39,7 @@ func (h *EnrollmentHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 		CourseID: courseID,
 		UserID:   user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -49,13 +49,13 @@ func (h *EnrollmentHandler) Enroll(w http.ResponseWriter, r *http.Request) {
 func (h *EnrollmentHandler) Unenroll(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *EnrollmentHandler) Unenroll(w http.ResponseWriter, r *http.Request) {
 		CourseID: courseID,
 		UserID:   user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -73,13 +73,13 @@ func (h *EnrollmentHandler) Unenroll(w http.ResponseWriter, r *http.Request) {
 func (h *EnrollmentHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -88,7 +88,7 @@ func (h *EnrollmentHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		UserID:   user.ID,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -100,7 +100,7 @@ func (h *EnrollmentHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 func (h *EnrollmentHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -108,7 +108,7 @@ func (h *EnrollmentHandler) ListByUser(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

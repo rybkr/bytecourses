@@ -45,7 +45,7 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) error {
 		createdAt,
 	).Scan(&u.ID); err != nil {
 		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == "23505" {
-			return err
+			return errors.ErrConflict
 		}
 		return err
 	}

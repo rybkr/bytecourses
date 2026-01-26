@@ -174,8 +174,7 @@ func renderMarkdown(s string) template.HTML {
 func (h *PageHandler) render(w http.ResponseWriter, r *http.Request, name string, data any) {
 	tmpl, ok := h.templates[name]
 	if !ok {
-		log.Printf("template not found: %s", name)
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
@@ -188,8 +187,7 @@ func (h *PageHandler) render(w http.ResponseWriter, r *http.Request, name string
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -232,8 +230,7 @@ func (h *PageHandler) Profile(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) Courses(w http.ResponseWriter, r *http.Request) {
 	courses, err := h.courseService.List(r.Context())
 	if err != nil {
-		log.Printf("error fetching courses: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -277,15 +274,13 @@ func (h *PageHandler) Courses(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["courses.html"]
 	if !ok {
-		log.Printf("template not found: courses.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -297,7 +292,7 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -314,12 +309,7 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 		UserRole: userRole,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -388,15 +378,13 @@ func (h *PageHandler) CourseView(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["course_view.html"]
 	if !ok {
-		log.Printf("template not found: course_view.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -413,7 +401,7 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -423,12 +411,7 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -495,15 +478,13 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["course_home.html"]
 	if !ok {
-		log.Printf("template not found: course_home.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -513,13 +494,13 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -529,17 +510,12 @@ func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	if !course.IsTaughtBy(user) {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		handlePageError(w, r, errors.ErrForbidden)
 		return
 	}
 
@@ -588,15 +564,13 @@ func (h *PageHandler) CourseEdit(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["course_edit.html"]
 	if !ok {
-		log.Printf("template not found: course_edit.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -613,7 +587,7 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -623,12 +597,7 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -711,15 +680,13 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["course_content.html"]
 	if !ok {
-		log.Printf("template not found: course_content.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -737,13 +704,13 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -753,12 +720,7 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -790,12 +752,7 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "module not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching module: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -827,15 +784,13 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["module_view.html"]
 	if !ok {
-		log.Printf("template not found: module_view.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -849,13 +804,13 @@ func (h *PageHandler) Proposals(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -865,19 +820,13 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 		UserRole:   user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "proposal not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching proposal: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	tmpl, ok := h.templates["proposal_view.html"]
 	if !ok {
-		log.Printf("template not found: proposal_view.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
@@ -897,8 +846,7 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -908,21 +856,20 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	proposalIDStr := chi.URLParam(r, "id")
 	if proposalIDStr == "" {
 		if user.Role == domain.SystemRoleAdmin {
-			http.Error(w, "forbidden: admins cannot create proposals", http.StatusForbidden)
+			handlePageError(w, r, errors.ErrForbidden)
 			return
 		}
 
 		tmpl, ok := h.templates["proposal_edit.html"]
 		if !ok {
-			log.Printf("template not found: proposal_edit.html")
-			http.Error(w, "page not found", http.StatusNotFound)
+			handlePageError(w, r, errors.ErrNotFound)
 			return
 		}
 
@@ -936,8 +883,7 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 
 		var buf bytes.Buffer
 		if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-			log.Printf("template execution error: %v", err)
-			http.Error(w, "internal server error", http.StatusInternalServerError)
+			handlePageError(w, r, err)
 			return
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -947,7 +893,7 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 
 	proposalID, err := strconv.ParseInt(proposalIDStr, 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -957,19 +903,13 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 		UserRole:   user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "proposal not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching proposal: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	tmpl, ok := h.templates["proposal_edit.html"]
 	if !ok {
-		log.Printf("template not found: proposal_edit.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
@@ -980,8 +920,7 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -1021,25 +960,25 @@ type ContentNewPageData struct {
 func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -1093,19 +1032,48 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "reading not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching reading: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	reading, ok := content.(*domain.Reading)
 	if !ok {
-		http.Error(w, "invalid content type", http.StatusInternalServerError)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
+	}
+
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		handlePageError(w, r, err)
+		return
+	}
+
+	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
+		ModuleID: moduleID,
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		handlePageError(w, r, err)
+		return
+	}
+
+	isInstructor := course.IsTaughtBy(user)
+
+	var isEnrolled bool
+	if !isInstructor {
+		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: courseID,
+			UserID:   user.ID,
+		})
+		if err == nil {
+			isEnrolled = enrolled
+		}
 	}
 
 	pd := ReadingPageData{
@@ -1120,15 +1088,13 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["lecture_view.html"]
 	if !ok {
-		log.Printf("template not found: lecture_view.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -1138,25 +1104,25 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	readingID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -1167,18 +1133,13 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		UserRole:  user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "reading not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching reading: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	reading, ok := content.(*domain.Reading)
 	if !ok {
-		http.Error(w, "invalid content type", http.StatusInternalServerError)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -1188,7 +1149,7 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		http.Error(w, "course not found", http.StatusNotFound)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -1199,7 +1160,7 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		http.Error(w, "module not found", http.StatusNotFound)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -1228,15 +1189,13 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["lecture_edit.html"]
 	if !ok {
-		log.Printf("template not found: lecture_edit.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -1246,19 +1205,19 @@ func (h *PageHandler) LectureEdit(w http.ResponseWriter, r *http.Request) {
 func (h *PageHandler) ContentNew(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
+		handlePageError(w, r, errors.ErrUnauthorized)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handlePageError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -1268,18 +1227,13 @@ func (h *PageHandler) ContentNew(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "course not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching course: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
 	isInstructor := course.IsTaughtBy(user)
 	if !isInstructor {
-		http.Error(w, "forbidden", http.StatusForbidden)
+		handlePageError(w, r, errors.ErrForbidden)
 		return
 	}
 
@@ -1290,12 +1244,7 @@ func (h *PageHandler) ContentNew(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		if err == errors.ErrNotFound {
-			http.Error(w, "module not found", http.StatusNotFound)
-			return
-		}
-		log.Printf("error fetching module: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 
@@ -1309,15 +1258,13 @@ func (h *PageHandler) ContentNew(w http.ResponseWriter, r *http.Request) {
 
 	tmpl, ok := h.templates["content_new.html"]
 	if !ok {
-		log.Printf("template not found: content_new.html")
-		http.Error(w, "page not found", http.StatusNotFound)
+		handlePageError(w, r, errors.ErrNotFound)
 		return
 	}
 
 	var buf bytes.Buffer
 	if err := tmpl.ExecuteTemplate(&buf, "layout", pd); err != nil {
-		log.Printf("template execution error: %v", err)
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		handlePageError(w, r, err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

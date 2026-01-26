@@ -46,19 +46,19 @@ func (r *CreateContentRequest) ToCommand(moduleID, userID int64) *services.Creat
 func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -69,7 +69,7 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	content, err := h.Service.Create(r.Context(), req.ToCommand(moduleID, user.ID))
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -99,25 +99,25 @@ func (r *UpdateContentRequest) ToCommand(contentID, userID int64) *services.Upda
 func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -127,7 +127,7 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.Update(r.Context(), req.ToCommand(contentID, user.ID)); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -137,25 +137,25 @@ func (h *ContentHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -169,7 +169,7 @@ func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		ContentID: contentID,
 		UserID:    user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -179,25 +179,25 @@ func (h *ContentHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (h *ContentHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		ContentID: contentID,
 		UserID:    user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -263,19 +263,19 @@ func (h *ContentHandler) Unpublish(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) List(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -285,7 +285,7 @@ func (h *ContentHandler) List(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 	if items == nil {
@@ -298,25 +298,25 @@ func (h *ContentHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid content id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -327,7 +327,7 @@ func (h *ContentHandler) Get(w http.ResponseWriter, r *http.Request) {
 		UserRole:  user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

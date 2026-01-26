@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net/http"
 
-	"bytecourses/internal/pkg/errors"
+	apperrors "bytecourses/internal/pkg/errors"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func writeJSON(w http.ResponseWriter, status int, val any) {
@@ -23,54 +25,98 @@ func decodeJSON(w http.ResponseWriter, r *http.Request, dst any) bool {
 	decoder.DisallowUnknownFields()
 
 	if err := decoder.Decode(dst); err != nil {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return false
 	}
 	if err := decoder.Decode(&struct{}{}); err != io.EOF {
-		http.Error(w, "invalid json", http.StatusBadRequest)
+		http.Error(w, "Invalid JSON", http.StatusBadRequest)
 		return false
 	}
 
 	return true
 }
 
-func handleError(w http.ResponseWriter, err error) {
+func mapDatabaseError(err error) error {
+	var pgErr *pgconn.PgError
+	if !errors.As(err, &pgErr) {
+		return err
+	}
+
+	switch pgErr.Code {
+	case "23505":
+		return apperrors.ErrConflict
+	case "23503":
+		return apperrors.ErrInvalidInput
+	case "23502":
+		return apperrors.ErrInvalidInput
+	default:
+		return err
+	}
+}
+
+func handleError(w http.ResponseWriter, r *http.Request, err error) {
 	if err == nil {
 		return
 	}
 
-	if validationErrs, ok := err.(*errors.ValidationErrors); ok {
+	err = mapDatabaseError(err)
+
+	if validationErrs, ok := err.(*apperrors.ValidationErrors); ok {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusBadRequest)
 		_ = json.NewEncoder(w).Encode(map[string]any{
-			"error":  "validation failed",
+			"error":  "Validation failed",
 			"errors": validationErrs.Errors,
 		})
 		return
 	}
 
-	switch err {
-	case errors.ErrNotFound:
-		http.Error(w, "not found", http.StatusNotFound)
-	case errors.ErrUnauthorized:
-		http.Error(w, "unauthorized", http.StatusUnauthorized)
-	case errors.ErrForbidden:
-		http.Error(w, "forbidden", http.StatusForbidden)
-	case errors.ErrConflict:
-		http.Error(w, "conflict", http.StatusConflict)
-	case errors.ErrInvalidInput:
-		http.Error(w, "invalid input", http.StatusBadRequest)
-	case errors.ErrInvalidCredentials:
-		http.Error(w, "invalid credentials", http.StatusUnauthorized)
-	case errors.ErrInvalidToken:
-		http.Error(w, "invalid or expired token", http.StatusBadRequest)
-	case errors.ErrInvalidStatusTransition:
-		http.Error(w, "invalid status transition", http.StatusConflict)
-	case errors.ErrInvalidLogin:
-		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
-	default:
-		http.Error(w, "internal error", http.StatusInternalServerError)
+	statusCode := apperrors.GetStatusCode(err)
+	message := apperrors.GetUserMessage(err)
+
+	if statusCode == http.StatusInternalServerError {
+		slog.Error("unexpected error",
+			"error", err,
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
 	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	_ = json.NewEncoder(w).Encode(map[string]string{
+		"error": message,
+	})
+}
+
+func handlePageError(w http.ResponseWriter, r *http.Request, err error) {
+	if err == nil {
+		return
+	}
+
+	err = mapDatabaseError(err)
+
+	if validationErrs, ok := err.(*apperrors.ValidationErrors); ok {
+		if len(validationErrs.Errors) > 0 {
+			http.Error(w, validationErrs.Errors[0].Message, http.StatusBadRequest)
+			return
+		}
+		http.Error(w, "Validation failed", http.StatusBadRequest)
+		return
+	}
+
+	statusCode := apperrors.GetStatusCode(err)
+	message := apperrors.GetUserMessage(err)
+
+	if statusCode == http.StatusInternalServerError {
+		slog.Error("unexpected error",
+			"error", err,
+			"path", r.URL.Path,
+			"method", r.Method,
+		)
+	}
+
+	http.Error(w, message, statusCode)
 }
 
 func isHTTPS(r *http.Request) bool {

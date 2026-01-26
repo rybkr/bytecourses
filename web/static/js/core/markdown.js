@@ -1,12 +1,3 @@
-/**
- * Renders markdown content to HTML with sanitization.
- * Requires marked and DOMPurify to be loaded globally.
- *
- * @param {string} content - The markdown content to render
- * @param {Object} options - Optional configuration
- * @param {Object} options.sanitizerOptions - Options to pass to DOMPurify
- * @returns {string} The rendered and sanitized HTML
- */
 export function renderMarkdown(content, options = {}) {
     if (!content) return "";
 
@@ -24,17 +15,6 @@ export function renderMarkdown(content, options = {}) {
     return raw;
 }
 
-/**
- * Updates a preview element with rendered markdown content.
- * Handles showing/hiding placeholder elements.
- *
- * @param {string} content - The markdown content to render
- * @param {HTMLElement} previewEl - The container element for the preview
- * @param {Object} options - Optional configuration
- * @param {HTMLElement} options.placeholderEl - Element to show when content is empty
- * @param {HTMLElement} options.valueEl - Element to render content into (defaults to previewEl)
- * @param {string} options.wrapperClass - CSS class to wrap the rendered HTML
- */
 export function updateMarkdownPreview(content, previewEl, options = {}) {
     if (!previewEl) return;
 

@@ -116,23 +116,6 @@ ByteCourses{{end}} {{define "content"}}
     <span>Created: {{.Proposal.CreatedAt.Format "January 2, 2006"}}</span>
     <span>Updated: {{.Proposal.UpdatedAt.Format "January 2, 2006"}}</span>
 </div>
-<div id="create-course-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Create Course from Proposal</h2>
-            <button class="modal-close" type="button" data-modal-close aria-label="Close">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p>Your proposal will be copied into a <strong>draft</strong> course so you can refine the metadata before publishing.</p>
-            <p>Once published, your course will be visible to students.</p>
-            <p>The proposal stays linked for reference.</p>
-            <div class="modal-actions">
-                <button id="confirm-create-course" class="btn btn-primary">Create Course</button>
-                <button type="button" data-modal-close class="btn btn-outline">Cancel</button>
-            </div>
-        </div>
-    </div>
-</div>
 {{end}} {{define "scripts"}}
 <script type="module" src="/static/js/pages/proposal_view.js"></script>
 {{end}}

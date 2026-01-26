@@ -9,7 +9,7 @@ export default class ConfirmationModal {
             confirmText: "Confirm",
             cancelText: "Cancel",
             confirmButtonClass: "btn-primary",
-            variant: "info", // info, warning, danger
+            variant: "info",
             ...options,
         };
 
@@ -47,7 +47,7 @@ export default class ConfirmationModal {
     setupModal() {
         this.modalInstance = new Modal(`#${this.modal.id}`, {
             closeOnEscape: true,
-            closeOnOverlayClick: false, // Don't close on overlay click for confirmations
+            closeOnOverlayClick: false,
         });
 
         const confirmBtn = this.modal.querySelector("[data-confirm]");
@@ -60,7 +60,6 @@ export default class ConfirmationModal {
                 this.resolve(result);
                 this.resolve = null;
             }
-            // Clean up after animation
             setTimeout(() => {
                 if (this.modal && this.modal.parentNode) {
                     this.modal.parentNode.removeChild(this.modal);
@@ -80,7 +79,6 @@ export default class ConfirmationModal {
             closeBtn.addEventListener("click", () => close(false));
         }
 
-        // Handle Escape key
         const handleEscape = (e) => {
             if (e.key === "Escape" && this.modalInstance.isOpen) {
                 close(false);
@@ -93,7 +91,6 @@ export default class ConfirmationModal {
         return new Promise((resolve) => {
             this.resolve = resolve;
             this.modalInstance.open();
-            // Focus confirm button for accessibility
             const confirmBtn = this.modal.querySelector("[data-confirm]");
             if (confirmBtn) {
                 setTimeout(() => confirmBtn.focus(), 100);

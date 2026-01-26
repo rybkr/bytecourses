@@ -101,7 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 JSON.stringify(Array.from(expanded)),
             );
         } catch (e) {
-            /* ignore */
+
         }
     }
 

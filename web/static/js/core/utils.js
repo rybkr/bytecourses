@@ -1,7 +1,6 @@
 import ConfirmationModal from "../components/ConfirmationModal.js";
 import api from "./api.js";
 
-// Re-export from errors.js for backward compatibility
 export { extractErrorMessage } from "./errors.js";
 
 export function escapeHtml(text) {
@@ -88,7 +87,6 @@ export async function deleteProposal(proposalId, status, options = {}) {
 
     try {
         if (isSubmitted) {
-            // Withdraw first, then delete
             await api.post(`/api/proposals/${proposalId}/actions/withdraw`);
         }
         await api.delete(`/api/proposals/${proposalId}`);

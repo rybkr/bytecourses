@@ -2,13 +2,11 @@ import { parseErrorFromText } from "./errors.js";
 
 function handleResponse(response, path) {
     if (response.status === 401) {
-        // Don't redirect for auth endpoints - let them handle the error
         const authEndpoints = ['/api/login', '/api/register'];
         if (authEndpoints.includes(path)) {
             return response;
         }
         
-        // Don't redirect if already on login/register page
         const currentPath = window.location.pathname;
         if (currentPath === '/login' || currentPath === '/register') {
             return response;

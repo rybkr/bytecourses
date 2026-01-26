@@ -2,10 +2,6 @@ import { $ } from "../core/dom.js";
 import { showError, hideError } from "../core/utils.js";
 import api from "../core/api.js";
 
-/**
- * Generic auth form handler that reduces duplication across login, register,
- * forgot password, and reset password forms.
- */
 function createAuthFormHandler(config) {
     const form = $(config.formSelector);
     if (!form) return null;
@@ -25,10 +21,8 @@ function createAuthFormHandler(config) {
         if (submitBtn) submitBtn.disabled = true;
 
         try {
-            // Get form data
             const data = config.getFormData(form);
 
-            // Validate if needed
             if (config.validate) {
                 const validationError = config.validate(data, form);
                 if (validationError) {
@@ -39,7 +33,6 @@ function createAuthFormHandler(config) {
 
             const response = await api.post(config.endpoint, data);
 
-            // Check for success based on config
             const isSuccess = config.isSuccess
                 ? config.isSuccess(response)
                 : response && response.ok;

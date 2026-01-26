@@ -16,6 +16,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titleErrorEl = $("#title-error");
 
     let isSaving = false;
+    let navigatingAfterCreate = false;
     const initialTitle = titleInput.value.trim();
     const initialBody = contentTextarea.value;
 
@@ -100,6 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
             );
 
             if (res.status === 401) {
+                navigatingAfterCreate = true;
                 const next = encodeURIComponent(
                     window.location.pathname + window.location.search,
                 );
@@ -131,6 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             const reading = await res.json();
+            navigatingAfterCreate = true;
             window.location.href = `/courses/${courseId}/modules/${moduleId}`;
         } finally {
             isSaving = false;
@@ -176,6 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     window.addEventListener("beforeunload", (e) => {
+        if (navigatingAfterCreate) return;
         const dirty =
             titleInput.value.trim() !== initialTitle ||
             contentTextarea.value !== initialBody;

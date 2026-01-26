@@ -1,5 +1,6 @@
 import api from "../core/api.js";
 import FormHandler from "../components/FormHandler.js";
+import HelpTooltip from "../components/HelpTooltip.js";
 import { $, on } from "../core/dom.js";
 import { showError, hideError } from "../core/utils.js";
 
@@ -13,7 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveDelay = Number(form.dataset.autosaveDelay) || 2000;
     const errorDiv = $("#error-message");
     const publishBtn = $("#publishBtn");
-    const saveBtn = $("#saveBtn");
 
     const fieldIds = [
         "title",
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         publishBtn.disabled = true;
 
         try {
-            await api.post(`/api/courses/${courseId}/publish`);
+            await api.post(`/api/courses/${courseId}/actions/publish`);
             window.location.href = `/courses/${courseId}`;
         } catch (error) {
             showError(error.message || "Publish failed", errorDiv);
@@ -59,18 +59,11 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    if (saveBtn) {
-        on(saveBtn, "click", (e) => {
-            e.preventDefault();
-            handler.saveNow().catch(() => {
-                showError("Save failed", errorDiv);
-            });
-        });
-    }
-
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
             handler.saveNow().catch(() => {});
         }
     });
+
+    new HelpTooltip();
 });

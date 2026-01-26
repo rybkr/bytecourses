@@ -19,6 +19,20 @@
                     {{template "help-icon" "target_audience"}}
                     <br /><small>Who this course is for.</small></label>
                 <textarea id="target_audience" name="target_audience" rows="3">{{.Course.TargetAudience}}</textarea>
+                <div class="help-panel" id="help-target_audience" style="display: none; position: absolute; left: -9999px;">
+                    <div class="help-panel-content">
+                        <h4>What we're looking for</h4>
+                        <p>A description of who should take this course. Specify the skill level (beginner, intermediate, advanced) and any relevant background learners should have.</p>
+                        <h4>Example</h4>
+                        <div class="help-example">Intermediate developers who already know basic Go and want to learn how to design, structure, and ship a maintainable backend service with real users and real constraints.
+                        </div>
+                        <h4>Tips</h4>
+                        <ul>
+                            <li>Describe the ideal learner: what problems are they trying to solve?</li>
+                            <li>Help learners self-select if the course is right for them</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -26,6 +40,24 @@
                     {{template "help-icon" "learning_objectives"}}
                     <br /><small>What learners will be able to do after completing this course.</small></label>
                 <textarea id="learning_objectives" name="learning_objectives" rows="5">{{.Course.LearningObjectives}}</textarea>
+                <div class="help-panel" id="help-learning_objectives" style="display: none; position: absolute; left: -9999px;">
+                    <div class="help-panel-content">
+                        <h4>What we're looking for</h4>
+                        <p>Specific, actionable skills that learners will gain. Each objective should state what learners will be able to do after completing the course.</p>
+                        <h4>Example</h4>
+                        <div class="help-example">- Implement authentication, authorization, and session management
+                            - Design clear domain, handler, service, and persistence boundaries in Go
+                            - Write effective tests at multiple layers (unit, integration, e2e)
+                            - Deploy a production Go service with a database and migration system
+                        </div>
+                        <h4>Tips</h4>
+                        <ul>
+                            <li>Start each objective with an action verb (design, build, implement, create, etc.)</li>
+                            <li>Aim for 3-6 learning objectives</li>
+                            <li>Focus on practical skills learners can apply immediately</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
@@ -33,17 +65,34 @@
                     {{template "help-icon" "assumed_prerequisites"}}
                     <br /><small>What learners should know before starting this course.</small></label>
                 <textarea id="assumed_prerequisites" name="assumed_prerequisites" rows="3">{{.Course.AssumedPrerequisites}}</textarea>
+                <div class="help-panel" id="help-assumed_prerequisites" style="display: none; position: absolute; left: -9999px;">
+                    <div class="help-panel-content">
+                        <h4>What we're looking for</h4>
+                        <p>Specific knowledge, skills, or tools that learners need to have before starting this course. Be honest about requirements to set proper expectations.</p>
+                        <h4>Example</h4>
+                        <div class="help-example">- Comfortable with Go syntax and tooling
+                            - Basic understanding of HTTP and REST APIs
+                            - Familiarity with SQL fundamentals is helpful but not required
+                        </div>
+                        <h4>Tips</h4>
+                        <ul>
+                            <li>Be specific about required knowledge or skills</li>
+                            <li>List concrete technologies, concepts, or tools</li>
+                            <li>If no prerequisites, say "None"</li>
+                            <li>Help learners determine if they're ready for the course</li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div id="error-message" class="error-message hidden"></div>
             <div id="save-status" style="font-size: 0.9rem; opacity: 0.8; margin-bottom: 8px"></div>
 
+            {{if eq .Course.Status "draft"}}
             <div class="form-actions">
-                <button type="button" id="saveBtn" class="btn btn-secondary">Save</button>
-                {{if eq .Course.Status "draft"}}
                 <button type="button" id="publishBtn" class="btn btn-primary">Publish Course</button>
-                {{end}}
             </div>
+            {{end}}
         </div>
     </div>
 </div>

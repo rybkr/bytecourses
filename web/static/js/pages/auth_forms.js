@@ -1,6 +1,8 @@
 import FormSubmitHandler from "../components/FormSubmitHandler.js";
 import { $ } from "../core/dom.js";
 import { showError, hideError, extractErrorMessage } from "../core/utils.js";
+import { showError, hideError } from "../core/utils.js";
+import api from "../core/api.js";
 
 function initAuthForm(config) {
     const form = $(config.formSelector);
@@ -41,15 +43,9 @@ function initAuthForm(config) {
 
             try {
                 const data = handler.getFormData();
-                const response = await fetch(handler.options.endpoint, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify(data),
-                });
+                const response = await api.post(handler.options.endpoint, data);
 
-                if (response.status === 202 || response.ok) {
+                if (response && (response.status === 202 || response.ok)) {
                     if (config.hideFormOnSuccess && form) {
                         form.style.display = "none";
                     }
@@ -121,15 +117,9 @@ export function initLoginForm() {
         }
 
         try {
-            const response = await fetch("/api/login", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email, password }),
-            });
+            const response = await api.post("/api/login", { email, password });
 
-            if (response.ok) {
+            if (response && response.ok) {
                 const nextUrl = validateNextUrl(getNextUrl());
                 window.location.href = nextUrl;
             } else {
@@ -137,7 +127,7 @@ export function initLoginForm() {
                 showError(errorMessage || "Invalid credentials", errorDiv);
             }
         } catch (error) {
-            showError("An error occurred. Please try again.", errorDiv);
+            showError(error.message || "Invalid credentials", errorDiv);
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -166,22 +156,16 @@ export function initRegisterForm() {
         }
 
         try {
-            const response = await fetch("/api/register", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ name, email, password }),
-            });
+            const response = await api.post("/api/register", { name, email, password });
 
-            if (response.ok) {
+            if (response && response.ok) {
                 window.location.href = "/login";
             } else {
                 const errorMessage = await extractErrorMessage(response);
                 showError(errorMessage || "Registration failed", errorDiv);
             }
         } catch (error) {
-            showError("An error occurred. Please try again.", errorDiv);
+            showError(error.message || "Registration failed", errorDiv);
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -212,15 +196,9 @@ export function initForgotPasswordForm() {
         }
 
         try {
-            const response = await fetch("/api/password-reset/request", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ email }),
-            });
+            const response = await api.post("/api/password-reset/request", { email });
 
-            if (response.status === 202) {
+            if (response && response.status === 202) {
                 form.style.display = "none";
                 if (successDiv) {
                     successDiv.textContent =
@@ -235,7 +213,7 @@ export function initForgotPasswordForm() {
                 );
             }
         } catch (error) {
-            showError("An error occurred. Please try again.", errorDiv);
+            showError(error.message || "An error occurred. Please try again.", errorDiv);
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;
@@ -287,18 +265,12 @@ export function initResetPasswordForm() {
         }
 
         try {
-            const response = await fetch(
+            const response = await api.post(
                 `/api/password-reset/confirm?token=${encodeURIComponent(token)}`,
-                {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({ new_password: password }),
-                },
+                { new_password: password },
             );
 
-            if (response.status === 204) {
+            if (response && response.status === 204) {
                 form.style.display = "none";
                 if (successDiv) {
                     successDiv.textContent =
@@ -317,7 +289,11 @@ export function initResetPasswordForm() {
                 );
             }
         } catch (error) {
-            showError("An error occurred. Please try again.", errorDiv);
+            showError(
+                error.message ||
+                    "Invalid or expired token. Please request a new password reset.",
+                errorDiv,
+            );
         } finally {
             if (submitBtn) {
                 submitBtn.disabled = false;

@@ -23,10 +23,13 @@
         </div>
     </div>
 
-    <div class="lecture-editor">
+    <div class="lecture-editor" id="lecture-editor">
         <div class="lecture-editor-pane">
             <div class="lecture-editor-pane-header">
                 <span>Markdown</span>
+                <button type="button" class="editor-toggle-btn mobile-only" id="toggle-preview-btn" aria-label="Switch to preview">
+                    Preview
+                </button>
             </div>
             <textarea id="lecture-content" class="markdown-editor-textarea" placeholder="Write your reading content here using Markdown...">{{if .Reading.Content}}{{.Reading.Content}}{{end}}</textarea>
         </div>
@@ -34,6 +37,9 @@
         <div class="lecture-editor-pane">
             <div class="lecture-editor-pane-header">
                 <span>Preview</span>
+                <button type="button" class="editor-toggle-btn mobile-only" id="toggle-markdown-btn" aria-label="Switch to markdown">
+                    Markdown
+                </button>
             </div>
             <div id="lecture-preview" class="lecture-preview">
                 <div class="proposal-content-value">{{if .Reading.Content}}{{markdown .Reading.Content}}{{end}}</div>

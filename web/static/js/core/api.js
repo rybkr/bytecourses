@@ -1,6 +1,9 @@
 function handleResponse(response) {
     if (response.status === 401) {
-        window.location.href = "/login";
+        const next = encodeURIComponent(
+            window.location.pathname + window.location.search,
+        );
+        window.location.href = `/login?next=${next}`;
         return null;
     }
     return response;

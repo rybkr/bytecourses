@@ -27,6 +27,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	enrollmentHandler := handlers.NewEnrollmentHandler(c.EnrollmentService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
+	requireLogin := middleware.RequireLogin(c.SessionStore, c.UserRepo)
 	requireAdmin := middleware.RequireAdmin(c.SessionStore, c.UserRepo)
 	optionalUser := middleware.OptionalUser(c.SessionStore, c.UserRepo)
 
@@ -111,7 +112,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	})
 
 	r.Group(func(r chi.Router) {
-		r.Use(requireUser)
+		r.Use(requireLogin)
 		r.Get("/profile", pageHandler.Profile)
 
 		r.Get("/proposals", pageHandler.Proposals)

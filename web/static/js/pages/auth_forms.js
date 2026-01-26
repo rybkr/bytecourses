@@ -87,6 +87,16 @@ function initAuthForm(config) {
     }
 }
 
+function validateNextUrl(next) {
+    if (!next || typeof next !== "string") return "/";
+    const s = next.trim();
+    if (s === "" || !s.startsWith("/") || s.startsWith("//")) return "/";
+    if (s.toLowerCase().startsWith("javascript:")) return "/";
+    if (s === "/login" || s === "/register") return "/";
+    if (s.startsWith("/login?") || s.startsWith("/register?")) return "/";
+    return s;
+}
+
 export function initLoginForm() {
     const form = $("#loginForm");
     if (!form) return;
@@ -120,8 +130,8 @@ export function initLoginForm() {
             });
 
             if (response.ok) {
-                const nextUrl = getNextUrl();
-                window.location.href = nextUrl || "/";
+                const nextUrl = validateNextUrl(getNextUrl());
+                window.location.href = nextUrl;
             } else {
                 const errorText = await response.text();
                 showError(errorText || "Invalid credentials", errorDiv);

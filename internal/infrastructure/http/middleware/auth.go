@@ -3,6 +3,7 @@ package middleware
 import (
 	"net/http"
 	"net/url"
+	"strings"
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/auth"
@@ -69,7 +70,8 @@ func RequireLogin(sessions auth.SessionStore, users persistence.UserRepository) 
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			user, sessionID, ok := userFromRequest(r, sessions, users)
 			if !ok {
-				http.Redirect(w, r, "/login?next="+url.QueryEscape(r.URL.Path), http.StatusSeeOther)
+				nextVal := nextRedirectTarget(r)
+				http.Redirect(w, r, "/login?next="+url.QueryEscape(nextVal), http.StatusSeeOther)
 				return
 			}
 
@@ -78,6 +80,26 @@ func RequireLogin(sessions auth.SessionStore, users persistence.UserRepository) 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}
+}
+
+func nextRedirectTarget(r *http.Request) string {
+	path := r.URL.Path
+	if path == "" {
+		path = "/"
+	}
+	raw := path
+	if r.URL.RawQuery != "" {
+		raw = path + "?" + r.URL.RawQuery
+	}
+	raw = strings.TrimSpace(raw)
+	if raw == "" || !strings.HasPrefix(raw, "/") || strings.HasPrefix(raw, "//") || strings.HasPrefix(strings.ToLower(raw), "javascript:") {
+		return path
+	}
+	switch {
+	case raw == "/login", raw == "/register", strings.HasPrefix(raw, "/login?"), strings.HasPrefix(raw, "/register?"):
+		return "/"
+	}
+	return raw
 }
 
 func OptionalUser(sessions auth.SessionStore, users persistence.UserRepository) func(http.Handler) http.Handler {

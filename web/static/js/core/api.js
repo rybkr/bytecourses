@@ -1,5 +1,17 @@
-function handleResponse(response) {
+function handleResponse(response, path) {
     if (response.status === 401) {
+        // Don't redirect for auth endpoints - let them handle the error
+        const authEndpoints = ['/api/login', '/api/register'];
+        if (authEndpoints.includes(path)) {
+            return response;
+        }
+        
+        // Don't redirect if already on login/register page
+        const currentPath = window.location.pathname;
+        if (currentPath === '/login' || currentPath === '/register') {
+            return response;
+        }
+        
         const next = encodeURIComponent(
             window.location.pathname + window.location.search,
         );
@@ -69,7 +81,7 @@ function getCSRFToken() {
 const api = {
     async get(path) {
         const response = await fetch(path);
-        const handled = handleResponse(response);
+        const handled = handleResponse(response, path);
         if (!handled) return null;
         if (!response.ok) {
             await handleError(response);
@@ -92,7 +104,7 @@ const api = {
         }
         options.headers = headers;
         const response = await fetch(path, options);
-        const handled = handleResponse(response);
+        const handled = handleResponse(response, path);
         if (!handled) return null;
         if (!response.ok) {
             await handleError(response);
@@ -111,7 +123,7 @@ const api = {
             headers: headers,
             body: JSON.stringify(data),
         });
-        const handled = handleResponse(response);
+        const handled = handleResponse(response, path);
         if (!handled) return null;
         if (!response.ok) {
             await handleError(response);
@@ -132,7 +144,7 @@ const api = {
             options.headers = headers;
         }
         const response = await fetch(path, options);
-        const handled = handleResponse(response);
+        const handled = handleResponse(response, path);
         if (!handled) return null;
         if (!response.ok) {
             await handleError(response);

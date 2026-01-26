@@ -1,7 +1,6 @@
 import FormSubmitHandler from "../components/FormSubmitHandler.js";
 import { $ } from "../core/dom.js";
 import { showError, hideError, extractErrorMessage } from "../core/utils.js";
-import { showError, hideError } from "../core/utils.js";
 import api from "../core/api.js";
 
 function initAuthForm(config) {

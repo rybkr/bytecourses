@@ -28,23 +28,48 @@
                 {{$readings := index $.ReadingsByModule $module.ID}}
                 {{$moduleNum := add $moduleIndex 1}}
                 <div class="course-content-module{{if $.CurrentModule}}{{if eq $module.ID $.CurrentModule.ID}} active{{end}}{{end}}"
-                    data-module-id="{{$module.ID}}" data-course-id="{{$.Course.ID}}">
+                    data-module-id="{{$module.ID}}" data-course-id="{{$.Course.ID}}" data-module-status="{{$module.Status}}">
                     <div class="course-content-module-header-wrapper">
-                        <div class="module-card-icon" aria-hidden="true">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-                            </svg>
+                        <div class="module-number">{{$moduleNum}}</div>
+                        <div class="module-info">
+                            <a href="/courses/{{$.Course.ID}}/modules/{{$module.ID}}" class="module-card-title-link" title="View module">
+                                <span class="module-card-title">{{$module.Title}}</span>
+                            </a>
+                            <div class="module-meta">
+                                <span class="module-card-count">{{if $readings}}{{len $readings}} item{{if gt (len $readings) 1}}s{{end}}{{else}}No content{{end}}</span>
+                                {{if $.IsInstructor}}
+                                <span class="module-status-badge module-status-{{$module.Status}}">{{$module.Status}}</span>
+                                {{end}}
+                            </div>
                         </div>
-                        <a href="/courses/{{$.Course.ID}}/modules/{{$module.ID}}" class="module-card-title-link" title="View module">
-                            <span class="module-order">{{$moduleNum}}</span>
-                            <span class="module-card-title">{{$module.Title}}</span>
-                        </a>
-                        <span class="module-card-count">{{if $readings}}{{len $readings}} item{{if gt (len $readings) 1}}s{{end}}{{else}}Empty{{end}}</span>
-                        {{if $.IsInstructor}}{{if eq $module.Status "draft"}}
-                        <button type="button" class="publish-module-btn btn btn-small btn-success" data-course-id="{{$.Course.ID}}" data-module-id="{{$module.ID}}">Publish</button>
-                        {{end}}{{end}}
+                        {{if $.IsInstructor}}
+                        <div class="module-actions-menu">
+                            <button type="button" class="module-menu-trigger" aria-label="Module options" aria-expanded="false">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="5" r="1"></circle>
+                                    <circle cx="12" cy="12" r="1"></circle>
+                                    <circle cx="12" cy="19" r="1"></circle>
+                                </svg>
+                            </button>
+                            <div class="module-menu-dropdown">
+                                {{if eq $module.Status "draft"}}
+                                <button type="button" class="module-menu-item module-publish-btn" data-course-id="{{$.Course.ID}}" data-module-id="{{$module.ID}}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="20 6 9 17 4 12"></polyline>
+                                    </svg>
+                                    Publish
+                                </button>
+                                {{end}}
+                                <button type="button" class="module-menu-item module-delete-btn" data-course-id="{{$.Course.ID}}" data-module-id="{{$module.ID}}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <polyline points="3 6 5 6 21 6"></polyline>
+                                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    </svg>
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                        {{end}}
                         <button type="button" class="course-content-module-toggle" aria-expanded="false" aria-controls="module-{{$module.ID}}-content" aria-label="Expand module {{$module.Title}}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

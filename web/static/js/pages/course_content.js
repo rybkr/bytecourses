@@ -1,5 +1,6 @@
 import api from "../core/api.js";
 import { $, on } from "../core/dom.js";
+import { confirmAction } from "../core/utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const pathMatch = window.location.pathname.match(
@@ -74,14 +75,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") {
-            if (newModuleForm && newModuleForm.style.display !== "none") {
-                newModuleForm.style.display = "none";
-                if (addModuleBtn) addModuleBtn.style.display = "";
-            }
-        }
-    });
 
     const storageKey = `course-${courseId}-expanded-modules`;
 
@@ -202,7 +195,82 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
 
+    function closeAllMenus() {
+        document.querySelectorAll(".module-actions-menu.open").forEach((menu) => {
+            menu.classList.remove("open");
+            const trigger = menu.querySelector(".module-menu-trigger");
+            if (trigger) trigger.setAttribute("aria-expanded", "false");
+        });
+    }
+
     document.addEventListener("click", async (e) => {
+        const menuTrigger = e.target.closest(".module-menu-trigger");
+        if (menuTrigger) {
+            e.preventDefault();
+            e.stopPropagation();
+            const menu = menuTrigger.closest(".module-actions-menu");
+            const isOpen = menu.classList.contains("open");
+            closeAllMenus();
+            if (!isOpen) {
+                menu.classList.add("open");
+                menuTrigger.setAttribute("aria-expanded", "true");
+            }
+            return;
+        }
+
+        if (!e.target.closest(".module-actions-menu")) {
+            closeAllMenus();
+        }
+
+        const modPubDropdown = e.target.closest(".module-publish-btn");
+        if (modPubDropdown) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cid = modPubDropdown.dataset.courseId;
+            const mid = modPubDropdown.dataset.moduleId;
+            if (!cid || !mid) return;
+            closeAllMenus();
+            try {
+                await api.post(
+                    `/api/courses/${cid}/modules/${mid}/actions/publish`,
+                );
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to publish module", "error");
+            }
+            return;
+        }
+
+        const modDelete = e.target.closest(".module-delete-btn");
+        if (modDelete) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cid = modDelete.dataset.courseId;
+            const mid = modDelete.dataset.moduleId;
+            if (!cid || !mid) return;
+            closeAllMenus();
+
+            const confirmed = await confirmAction(
+                "This will permanently delete the module and all its content. This action cannot be undone.",
+                {
+                    title: "Delete Module?",
+                    confirmText: "Delete",
+                    confirmButtonClass: "btn-danger",
+                    variant: "danger",
+                }
+            );
+
+            if (!confirmed) return;
+
+            try {
+                await api.delete(`/api/courses/${cid}/modules/${mid}`);
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to delete module", "error");
+            }
+            return;
+        }
+
         const modPub = e.target.closest(".publish-module-btn");
         if (modPub) {
             e.preventDefault();
@@ -250,6 +318,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 window.location.reload();
             } catch (err) {
                 showToast(err.message || "Failed to unpublish", "error");
+            }
+        }
+    });
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeAllMenus();
+            if (newModuleForm && newModuleForm.style.display !== "none") {
+                newModuleForm.style.display = "none";
+                if (addModuleBtn) addModuleBtn.style.display = "";
             }
         }
     });

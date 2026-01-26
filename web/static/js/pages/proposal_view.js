@@ -145,7 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
                             }
                         }
                     } catch (e) {
-                        // Fall through to show error
+
                     }
                 }
                 showError(error.message || "Create course failed", errorDiv);

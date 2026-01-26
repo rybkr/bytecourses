@@ -61,7 +61,7 @@
 
 .EasyMDEContainer .CodeMirror-gutters {
     background-color: var(--bg-tertiary);
-    border-right: 1px solid var(--border-color);
+    border-right: none;
 }
 
 /* CodeMirror 5 Scrollbar */
@@ -72,7 +72,7 @@
 /* EasyMDE Status Bar */
 .EasyMDEContainer .editor-statusbar {
     background-color: var(--bg-tertiary);
-    border-top: 1px solid var(--border-color);
+    border-top: none;
     color: var(--text-muted);
     font-size: 0.75rem;
     padding: 0.5rem;

@@ -7,6 +7,7 @@ import {
     setupScrollSync,
     addCustomShortcut,
 } from "../core/markdown-editor.js";
+import { createResizer } from "../core/resizer.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const { courseId, moduleId } = window.CONTENT_NEW_DATA || {};
@@ -61,6 +62,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Setup scroll sync
         setupScrollSync(markdownEditor.editor, previewDiv);
+
+        // Initialize resizer
+        const leftPane = document.querySelector(".lecture-editor-pane:first-child");
+        const rightPane = document.querySelector(".lecture-editor-pane:last-child");
+        const resizer = document.getElementById("editor-resizer");
+        if (resizer && leftPane && rightPane) {
+            createResizer(resizer, leftPane, rightPane, {
+                storageKey: "markdown-editor-split",
+                defaultRatio: 0.5,
+                minLeftWidth: 200,
+                minRightWidth: 200,
+            });
+        }
 
         initialBody = markdownEditor.getValue();
     } catch (error) {

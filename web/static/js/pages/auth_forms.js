@@ -1,6 +1,6 @@
 import FormSubmitHandler from "../components/FormSubmitHandler.js";
 import { $ } from "../core/dom.js";
-import { showError, hideError } from "../core/utils.js";
+import { showError, hideError, extractErrorMessage } from "../core/utils.js";
 
 function initAuthForm(config) {
     const form = $(config.formSelector);
@@ -63,9 +63,9 @@ function initAuthForm(config) {
                         }, config.redirectDelay || 2000);
                     }
                 } else {
-                    const errorText = await response.text();
+                    const errorMessage = await extractErrorMessage(response);
                     showError(
-                        errorText ||
+                        errorMessage ||
                             config.defaultError ||
                             "An error occurred. Please try again.",
                         errorDiv,
@@ -133,8 +133,8 @@ export function initLoginForm() {
                 const nextUrl = validateNextUrl(getNextUrl());
                 window.location.href = nextUrl;
             } else {
-                const errorText = await response.text();
-                showError(errorText || "Invalid credentials", errorDiv);
+                const errorMessage = await extractErrorMessage(response);
+                showError(errorMessage || "Invalid credentials", errorDiv);
             }
         } catch (error) {
             showError("An error occurred. Please try again.", errorDiv);
@@ -177,8 +177,8 @@ export function initRegisterForm() {
             if (response.ok) {
                 window.location.href = "/login";
             } else {
-                const errorText = await response.text();
-                showError(errorText || "Registration failed", errorDiv);
+                const errorMessage = await extractErrorMessage(response);
+                showError(errorMessage || "Registration failed", errorDiv);
             }
         } catch (error) {
             showError("An error occurred. Please try again.", errorDiv);
@@ -228,9 +228,9 @@ export function initForgotPasswordForm() {
                     successDiv.classList.remove("hidden");
                 }
             } else {
-                const errorText = await response.text();
+                const errorMessage = await extractErrorMessage(response);
                 showError(
-                    errorText || "An error occurred. Please try again.",
+                    errorMessage || "An error occurred. Please try again.",
                     errorDiv,
                 );
             }
@@ -309,9 +309,9 @@ export function initResetPasswordForm() {
                     window.location.href = "/login";
                 }, 2000);
             } else {
-                const errorText = await response.text();
+                const errorMessage = await extractErrorMessage(response);
                 showError(
-                    errorText ||
+                    errorMessage ||
                         "Invalid or expired token. Please request a new password reset.",
                     errorDiv,
                 );

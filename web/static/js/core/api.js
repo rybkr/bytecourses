@@ -14,6 +14,10 @@ async function handleError(response) {
         throw new Error("Not found");
     }
     if (response.status === 403) {
+        const text = await response.text();
+        if (text.includes("CSRF")) {
+            throw new Error("CSRF token validation failed - please refresh the page");
+        }
         throw new Error("Permission denied");
     }
     if (response.status === 409) {
@@ -21,6 +25,22 @@ async function handleError(response) {
     }
     const text = await response.text();
     throw new Error(text || "Request failed");
+}
+
+function getCSRFToken() {
+    const name = "csrf-token=";
+    const decodedCookie = decodeURIComponent(document.cookie);
+    const cookieArray = decodedCookie.split(";");
+    for (let i = 0; i < cookieArray.length; i++) {
+        let cookie = cookieArray[i];
+        while (cookie.charAt(0) === " ") {
+            cookie = cookie.substring(1);
+        }
+        if (cookie.indexOf(name) === 0) {
+            return cookie.substring(name.length, cookie.length);
+        }
+    }
+    return "";
 }
 
 const api = {
@@ -38,10 +58,16 @@ const api = {
         const options = {
             method: "POST",
         };
+        const headers = {};
         if (data !== undefined) {
-            options.headers = { "Content-Type": "application/json" };
+            headers["Content-Type"] = "application/json";
             options.body = JSON.stringify(data);
         }
+        const csrfToken = getCSRFToken();
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+        options.headers = headers;
         const response = await fetch(path, options);
         const handled = handleResponse(response);
         if (!handled) return null;
@@ -52,9 +78,14 @@ const api = {
     },
 
     async patch(path, data) {
+        const headers = { "Content-Type": "application/json" };
+        const csrfToken = getCSRFToken();
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
         const response = await fetch(path, {
             method: "PATCH",
-            headers: { "Content-Type": "application/json" },
+            headers: headers,
             body: JSON.stringify(data),
         });
         const handled = handleResponse(response);
@@ -66,9 +97,18 @@ const api = {
     },
 
     async delete(path) {
-        const response = await fetch(path, {
+        const headers = {};
+        const csrfToken = getCSRFToken();
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+        const options = {
             method: "DELETE",
-        });
+        };
+        if (Object.keys(headers).length > 0) {
+            options.headers = headers;
+        }
+        const response = await fetch(path, options);
         const handled = handleResponse(response);
         if (!handled) return null;
         if (!response.ok) {

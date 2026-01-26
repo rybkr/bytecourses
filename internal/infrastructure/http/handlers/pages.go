@@ -21,8 +21,9 @@ import (
 )
 
 type PageData struct {
-	User *domain.User
-	Data any
+	User      *domain.User
+	Data      any
+	CSRFToken string
 }
 
 type ProposalPageData struct {
@@ -181,9 +182,15 @@ func (h *PageHandler) render(w http.ResponseWriter, r *http.Request, name string
 
 	user, _ := middleware.UserFromContext(r.Context())
 
+	csrfToken := ""
+	if cookie, err := r.Cookie("csrf-token"); err == nil && cookie.Value != "" {
+		csrfToken = cookie.Value
+	}
+
 	pd := PageData{
-		User: user,
-		Data: data,
+		User:      user,
+		Data:      data,
+		CSRFToken: csrfToken,
 	}
 
 	var buf bytes.Buffer

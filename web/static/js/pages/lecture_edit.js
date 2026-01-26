@@ -2,9 +2,14 @@ import api from "../core/api.js";
 import { debounce, showError, hideError } from "../core/utils.js";
 import { $ } from "../core/dom.js";
 import { updateMarkdownPreview } from "../core/markdown.js";
+import {
+    createMarkdownEditor,
+    setupScrollSync,
+    addCustomShortcut,
+} from "../core/markdown-editor.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const { courseId, moduleId, readingId, order } = window.LECTURE_DATA || {};
+    const { courseId, moduleId, readingId, order, initialContent: initialContentFromData } = window.LECTURE_DATA || {};
 
     if (!courseId || !moduleId || !readingId) return;
 
@@ -18,15 +23,47 @@ document.addEventListener("DOMContentLoaded", () => {
     const errorContainer = $("#lecture-error");
 
     let lastSavedTitle = titleInput.value;
-    let lastSavedContent = contentTextarea.value;
+    let markdownEditor = null;
+    let lastSavedContent = initialContentFromData || "";
     let isSaving = false;
 
     const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`;
 
-    function updatePreview() {
-        updateMarkdownPreview(contentTextarea.value, previewDiv, {
+    // Debounced preview update
+    const debouncedUpdatePreview = debounce((content) => {
+        updateMarkdownPreview(content, previewDiv, {
             wrapperClass: "proposal-content-value",
         });
+    }, 300);
+
+    function updatePreview(content) {
+        debouncedUpdatePreview(content);
+    }
+
+    // Initialize EasyMDE editor
+    try {
+        markdownEditor = createMarkdownEditor(contentTextarea, {
+            initialValue: initialContentFromData || "",
+            placeholder: "Write your reading content here using Markdown...",
+            lineNumbers: true,
+            onUpdate: (content) => {
+                updatePreview(content);
+            },
+        });
+
+        // Add custom keyboard shortcut for Ctrl/Cmd+S to save
+        addCustomShortcut(markdownEditor.editor, "Mod-s", () => {
+            save(titleInput.value.trim(), markdownEditor.getValue());
+        });
+
+        // Setup scroll sync
+        setupScrollSync(markdownEditor.editor, previewDiv);
+
+        lastSavedContent = markdownEditor.getValue();
+        updatePreview(lastSavedContent);
+    } catch (error) {
+        console.error("Failed to initialize markdown editor:", error);
+        showError("Failed to load editor. Please refresh the page.", errorContainer);
     }
 
     function updateSaveStatus(type, text) {
@@ -43,10 +80,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function save(title, content) {
-        if (isSaving) return;
+        if (isSaving || !markdownEditor) return;
 
         const currentTitle = title !== undefined ? title : titleInput.value.trim();
-        const currentContent = content !== undefined ? content : contentTextarea.value;
+        const currentContent =
+            content !== undefined ? content : markdownEditor.getValue();
         const hasChanges =
             currentTitle !== lastSavedTitle || currentContent !== lastSavedContent;
 
@@ -80,8 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const scheduleAutosave = debounce(() => {
+        if (!markdownEditor) return;
         const currentTitle = titleInput.value.trim();
-        const currentContent = contentTextarea.value;
+        const currentContent = markdownEditor.getValue();
 
         if (
             currentTitle !== lastSavedTitle ||
@@ -91,22 +130,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 2000);
 
-    updatePreview();
-
-    contentTextarea.addEventListener("input", () => {
-        updatePreview();
-        scheduleAutosave();
-    });
-
+    // Setup autosave on title changes
     titleInput.addEventListener("input", scheduleAutosave);
 
     saveBtn.addEventListener("click", () => {
-        save(titleInput.value.trim(), contentTextarea.value);
+        if (markdownEditor) {
+            save(titleInput.value.trim(), markdownEditor.getValue());
+        }
     });
 
     if (publishBtn) {
         publishBtn.addEventListener("click", async () => {
-            await save(titleInput.value.trim(), contentTextarea.value);
+            if (markdownEditor) {
+                await save(titleInput.value.trim(), markdownEditor.getValue());
+            }
 
             try {
                 await api.post(`${apiUrl}/actions/publish`);
@@ -119,7 +156,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (unpublishBtn) {
         unpublishBtn.addEventListener("click", async () => {
-            await save(titleInput.value.trim(), contentTextarea.value);
+            if (markdownEditor) {
+                await save(titleInput.value.trim(), markdownEditor.getValue());
+            }
 
             try {
                 await api.post(`${apiUrl}/actions/unpublish`);
@@ -131,20 +170,15 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.addEventListener("beforeunload", (e) => {
+        if (!markdownEditor) return;
+        const currentContent = markdownEditor.getValue();
         const hasUnsavedChanges =
             titleInput.value.trim() !== lastSavedTitle ||
-            contentTextarea.value !== lastSavedContent;
+            currentContent !== lastSavedContent;
 
         if (hasUnsavedChanges) {
             e.preventDefault();
             e.returnValue = "";
-        }
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-            e.preventDefault();
-            save(titleInput.value.trim(), contentTextarea.value);
         }
     });
 });

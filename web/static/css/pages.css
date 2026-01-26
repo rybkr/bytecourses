@@ -2237,10 +2237,9 @@
 }
 
 .lecture-editor {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+    display: flex;
     min-height: 500px;
+    position: relative;
 }
 
 .lecture-editor-pane {
@@ -2249,6 +2248,54 @@
     border: 1px solid var(--border-color);
     border-radius: 0.5rem;
     overflow: hidden;
+    flex: 1;
+    min-width: 0;
+}
+
+.lecture-editor-pane:first-child {
+    flex: 0 0 50%;
+}
+
+.lecture-editor-pane:last-child {
+    flex: 1;
+}
+
+/* Resizer between panes */
+.lecture-editor-resizer {
+    width: 6px;
+    background-color: var(--border-color);
+    cursor: col-resize;
+    position: relative;
+    flex-shrink: 0;
+    transition: background-color 0.15s ease;
+    z-index: 10;
+}
+
+.lecture-editor-resizer:hover {
+    background-color: var(--primary-color);
+}
+
+.lecture-editor-resizer.is-dragging {
+    background-color: var(--primary-color);
+    width: 8px;
+}
+
+.lecture-editor-resizer::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 2px;
+    height: 40px;
+    background-color: var(--text-muted);
+    opacity: 0.5;
+    transition: opacity 0.15s ease;
+}
+
+.lecture-editor-resizer:hover::before,
+.lecture-editor-resizer.is-dragging::before {
+    opacity: 1;
 }
 
 .lecture-editor-pane-header {
@@ -2261,6 +2308,11 @@
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--text-secondary);
+    gap: 0.5rem;
+}
+
+.lecture-editor-pane-header > span:first-child {
+    font-weight: 500;
 }
 
 .lecture-content-textarea {
@@ -2277,6 +2329,15 @@
 
 .lecture-content-textarea:focus {
     outline: none;
+}
+
+/* Markdown editor textarea (EasyMDE will replace it) */
+.markdown-editor-textarea {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 400px;
+    background-color: var(--bg-color);
 }
 
 .lecture-preview {
@@ -2316,11 +2377,19 @@
 
 @media (max-width: 900px) {
     .lecture-editor {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .lecture-editor-pane:first-child {
+        flex: 1;
     }
 
     .lecture-editor-pane:last-child {
         min-height: 300px;
+    }
+
+    .lecture-editor-resizer {
+        display: none;
     }
 }
 

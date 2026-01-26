@@ -667,9 +667,10 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 	for i := range modulesList {
 		module := &modulesList[i]
 		items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
-			ModuleID: module.ID,
-			UserID:   user.ID,
-			UserRole: user.Role,
+			ModuleID:        module.ID,
+			UserID:          user.ID,
+			UserRole:        user.Role,
+			EnrolledLearner: !isInstructor && isEnrolled,
 		})
 		if err == nil {
 			readings := make([]domain.Reading, 0, len(items))
@@ -793,9 +794,10 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
-		ModuleID: moduleID,
-		UserID:   user.ID,
-		UserRole: user.Role,
+		ModuleID:        moduleID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	var readings []domain.Reading
 	if err == nil {
@@ -1035,11 +1037,48 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		http.Error(w, "course not found", http.StatusNotFound)
+		return
+	}
+
+	isInstructor := course.IsTaughtBy(user)
+
+	var isEnrolled bool
+	if !isInstructor {
+		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: courseID,
+			UserID:   user.ID,
+		})
+		if err != nil || !enrolled {
+			http.Redirect(w, r, "/courses/"+strconv.FormatInt(courseID, 10), http.StatusFound)
+			return
+		}
+		isEnrolled = true
+	}
+
+	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
+		ModuleID: moduleID,
+		CourseID: courseID,
+		UserID:   user.ID,
+		UserRole: user.Role,
+	})
+	if err != nil {
+		http.Error(w, "module not found", http.StatusNotFound)
+		return
+	}
+
 	content, err := h.contentService.Get(r.Context(), &services.GetContentQuery{
-		ContentID: readingID,
-		ModuleID:  moduleID,
-		UserID:    user.ID,
-		UserRole:  user.Role,
+		ContentID:       readingID,
+		ModuleID:        moduleID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
 		if err == errors.ErrNotFound {
@@ -1055,40 +1094,6 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		http.Error(w, "invalid content type", http.StatusInternalServerError)
 		return
-	}
-
-	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
-	})
-	if err != nil {
-		http.Error(w, "course not found", http.StatusNotFound)
-		return
-	}
-
-	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
-		ModuleID: moduleID,
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
-	})
-	if err != nil {
-		http.Error(w, "module not found", http.StatusNotFound)
-		return
-	}
-
-	isInstructor := course.IsTaughtBy(user)
-
-	var isEnrolled bool
-	if !isInstructor {
-		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
-			CourseID: courseID,
-			UserID:   user.ID,
-		})
-		if err == nil {
-			isEnrolled = enrolled
-		}
 	}
 
 	pd := ReadingPageData{

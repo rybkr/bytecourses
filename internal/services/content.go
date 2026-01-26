@@ -15,6 +15,7 @@ var (
 	_ Command = (*UpdateContentCommand)(nil)
 	_ Command = (*DeleteContentCommand)(nil)
 	_ Command = (*PublishContentCommand)(nil)
+	_ Command = (*UnpublishContentCommand)(nil)
 )
 
 var (
@@ -302,10 +303,69 @@ func (s *ContentService) publishReading(ctx context.Context, cmd *PublishContent
 	return nil
 }
 
+type UnpublishContentCommand struct {
+	Type      domain.ContentType `json:"type"`
+	ContentID int64              `json:"content_id"`
+	UserID    int64              `json:"user_id"`
+}
+
+func (c *UnpublishContentCommand) Validate(v *validation.Validator) {
+	v.Field(string(c.Type), "type").Required()
+	v.Field(c.ContentID, "content_id").EntityID()
+	v.Field(c.UserID, "user_id").EntityID()
+}
+
+func (s *ContentService) Unpublish(ctx context.Context, cmd *UnpublishContentCommand) error {
+	if err := validation.Validate(cmd); err != nil {
+		return err
+	}
+
+	switch cmd.Type {
+	case domain.ContentTypeReading:
+		return s.unpublishReading(ctx, cmd)
+	default:
+		return errors.ErrInvalidInput
+	}
+}
+
+func (s *ContentService) unpublishReading(ctx context.Context, cmd *UnpublishContentCommand) error {
+	reading, ok := s.Readings.GetByID(ctx, cmd.ContentID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	module, ok := s.Modules.GetByID(ctx, reading.ModuleID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+
+	course, ok := s.Courses.GetByID(ctx, module.CourseID)
+	if !ok {
+		return errors.ErrNotFound
+	}
+	if course.InstructorID != cmd.UserID {
+		return errors.ErrNotFound
+	}
+	if reading.Status != domain.ContentStatusPublished {
+		return errors.ErrInvalidStatusTransition
+	}
+
+	reading.Status = domain.ContentStatusDraft
+	if err := s.Readings.Update(ctx, reading); err != nil {
+		return err
+	}
+
+	event := domain.NewContentUnpublishedEvent(domain.ContentTypeReading, reading.ID, reading.ModuleID, module.CourseID, course.InstructorID)
+	_ = s.Events.Publish(ctx, event)
+
+	return nil
+}
+
 type ListContentQuery struct {
-	ModuleID int64             `json:"module_id"`
-	UserID   int64             `json:"user_id"`
-	UserRole domain.SystemRole `json:"user_role"`
+	ModuleID        int64             `json:"module_id"`
+	UserID          int64             `json:"user_id"`
+	UserRole        domain.SystemRole `json:"user_role"`
+	EnrolledLearner bool              `json:"enrolled_learner"`
 }
 
 func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]domain.ContentItem, error) {
@@ -323,6 +383,8 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 
 	} else if course.InstructorID == query.UserID {
 
+	} else if query.EnrolledLearner {
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -330,6 +392,16 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 	readings, err := s.Readings.ListByModuleID(ctx, query.ModuleID)
 	if err != nil {
 		return nil, err
+	}
+
+	if query.EnrolledLearner {
+		filtered := make([]domain.Reading, 0, len(readings))
+		for i := range readings {
+			if readings[i].Status == domain.ContentStatusPublished {
+				filtered = append(filtered, readings[i])
+			}
+		}
+		readings = filtered
 	}
 
 	items := make([]domain.ContentItem, len(readings))
@@ -341,10 +413,11 @@ func (s *ContentService) List(ctx context.Context, query *ListContentQuery) ([]d
 }
 
 type GetContentQuery struct {
-	ContentID int64             `json:"content_id"`
-	ModuleID  int64             `json:"module_id"`
-	UserID    int64             `json:"user_id"`
-	UserRole  domain.SystemRole `json:"user_role"`
+	ContentID       int64             `json:"content_id"`
+	ModuleID        int64             `json:"module_id"`
+	UserID          int64             `json:"user_id"`
+	UserRole        domain.SystemRole `json:"user_role"`
+	EnrolledLearner bool              `json:"enrolled_learner"`
 }
 
 func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domain.ContentItem, error) {
@@ -362,6 +435,8 @@ func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domai
 
 	} else if course.InstructorID == query.UserID {
 
+	} else if query.EnrolledLearner {
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -372,6 +447,10 @@ func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domai
 	}
 
 	if reading.ModuleID != query.ModuleID {
+		return nil, errors.ErrNotFound
+	}
+
+	if query.EnrolledLearner && reading.Status != domain.ContentStatusPublished {
 		return nil, errors.ErrNotFound
 	}
 

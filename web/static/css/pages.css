@@ -3607,6 +3607,24 @@
     margin-left: 1.25rem;
 }
 
+.course-content-reading-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.course-content-reading-row .course-content-reading {
+    flex: 1;
+    min-width: 0;
+}
+
+.course-content-reading-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
 .course-content-reading {
     display: flex;
     align-items: center;
@@ -4236,13 +4254,33 @@
     background: var(--bg-color);
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
-    text-decoration: none;
     transition: all 0.15s ease;
 }
 
 .module-reading-card:hover {
     border-color: var(--primary-color);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.reading-card-link {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+.reading-card-link:hover {
+    color: inherit;
+}
+
+.reading-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
 }
 
 .reading-card-number {

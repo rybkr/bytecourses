@@ -90,6 +90,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 					r.Patch("/{contentId}", contentHandler.Update)
 					r.Delete("/{contentId}", contentHandler.Delete)
 					r.Post("/{contentId}/actions/publish", contentHandler.Publish)
+					r.Post("/{contentId}/actions/unpublish", contentHandler.Unpublish)
 				})
 			})
 		})

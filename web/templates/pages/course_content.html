@@ -54,18 +54,32 @@
                         <div class="course-content-readings">
                             {{range $readingIndex, $reading := $readings}}
                             {{$readingNum := printf "%d.%d" $moduleNum (add $readingIndex 1)}}
-                            <a href="/courses/{{$.Course.ID}}/modules/{{$module.ID}}/content/{{$reading.ID}}"
-                                class="course-content-reading{{if $.CurrentReading}}{{if eq $reading.ID $.CurrentReading.ID}} active{{end}}{{end}}">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                    <polyline points="14 2 14 8 20 8"></polyline>
-                                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                                </svg>
-                                <span class="reading-order">{{$readingNum}}</span>
-                                <span>{{$reading.Title}}</span>
-                            </a>
+                            <div class="course-content-reading-row" data-course-id="{{$.Course.ID}}"
+                                data-module-id="{{$module.ID}}" data-reading-id="{{$reading.ID}}"
+                                data-status="{{$reading.Status}}">
+                                <a href="/courses/{{$.Course.ID}}/modules/{{$module.ID}}/content/{{$reading.ID}}"
+                                    class="course-content-reading{{if $.CurrentReading}}{{if eq $reading.ID $.CurrentReading.ID}} active{{end}}{{end}}">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                        <polyline points="14 2 14 8 20 8"></polyline>
+                                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    </svg>
+                                    <span class="reading-order">{{$readingNum}}</span>
+                                    <span>{{$reading.Title}}</span>
+                                </a>
+                                {{if $.IsInstructor}}
+                                <div class="course-content-reading-actions">
+                                    <span class="content-status-badge content-status-{{$reading.Status}}">{{$reading.Status}}</span>
+                                    {{if eq $reading.Status "draft"}}
+                                    <button type="button" class="btn btn-small btn-success sidebar-publish-btn">Publish</button>
+                                    {{else}}
+                                    <button type="button" class="btn btn-small btn-secondary sidebar-unpublish-btn">Unpublish</button>
+                                    {{end}}
+                                </div>
+                                {{end}}
+                            </div>
                             {{end}}
                         </div>
                         {{else}}

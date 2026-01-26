@@ -218,6 +218,48 @@ func (h *ContentHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *ContentHandler) Unpublish(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, errors.ErrInvalidCredentials)
+		return
+	}
+
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid course id", http.StatusBadRequest)
+		return
+	}
+
+	_, err = strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid module id", http.StatusBadRequest)
+		return
+	}
+
+	contentID, err := strconv.ParseInt(chi.URLParam(r, "contentId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid content id", http.StatusBadRequest)
+		return
+	}
+
+	contentTypeStr := r.URL.Query().Get("type")
+	if contentTypeStr == "" {
+		contentTypeStr = string(domain.ContentTypeReading)
+	}
+
+	if err := h.Service.Unpublish(r.Context(), &services.UnpublishContentCommand{
+		Type:      domain.ContentType(contentTypeStr),
+		ContentID: contentID,
+		UserID:    user.ID,
+	}); err != nil {
+		handleError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *ContentHandler) List(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {

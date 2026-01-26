@@ -34,6 +34,7 @@ var (
 	_ Event = (*ContentUpdatedEvent)(nil)
 	_ Event = (*ContentDeletedEvent)(nil)
 	_ Event = (*ContentPublishedEvent)(nil)
+	_ Event = (*ContentUnpublishedEvent)(nil)
 	_ Event = (*EnrollmentCreatedEvent)(nil)
 	_ Event = (*EnrollmentDeletedEvent)(nil)
 )
@@ -536,6 +537,30 @@ func NewContentPublishedEvent(contentType ContentType, contentID, moduleID, cour
 
 func (e *ContentPublishedEvent) EventName() string {
 	return "content.published"
+}
+
+type ContentUnpublishedEvent struct {
+	BaseEvent
+	ContentType  ContentType
+	ContentID    int64
+	ModuleID     int64
+	CourseID     int64
+	InstructorID int64
+}
+
+func NewContentUnpublishedEvent(contentType ContentType, contentID, moduleID, courseID, instructorID int64) *ContentUnpublishedEvent {
+	return &ContentUnpublishedEvent{
+		BaseEvent:    NewBaseEvent(),
+		ContentType:  contentType,
+		ContentID:    contentID,
+		ModuleID:     moduleID,
+		CourseID:     courseID,
+		InstructorID: instructorID,
+	}
+}
+
+func (e *ContentUnpublishedEvent) EventName() string {
+	return "content.unpublished"
 }
 
 type EnrollmentCreatedEvent struct {

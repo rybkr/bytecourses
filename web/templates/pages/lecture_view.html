@@ -15,6 +15,11 @@
         <div class="lecture-view-meta">
             {{if .IsInstructor}}
             <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
+            {{if eq .Reading.Status "draft"}}
+            <button type="button" id="publish-btn" class="btn btn-small btn-success">Publish</button>
+            {{else}}
+            <button type="button" id="unpublish-btn" class="btn btn-small btn-secondary">Unpublish</button>
+            {{end}}
             <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}/edit"
                 class="btn btn-small btn-secondary">Edit</a>
             {{end}}
@@ -37,4 +42,16 @@
         {{end}}
     </div>
 </div>
+
+<script>
+    window.LECTURE_VIEW_DATA = {
+        courseId: {{.Course.ID}},
+        moduleId: {{.Module.ID}},
+        readingId: {{.Reading.ID}}
+    };
+</script>
+{{end}}
+
+{{define "scripts"}}
+<script type="module" src="/static/js/pages/lecture_view.js"></script>
 {{end}}

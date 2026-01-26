@@ -119,7 +119,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (unpublishBtn) {
-        unpublishBtn.style.display = "none";
+        unpublishBtn.addEventListener("click", async () => {
+            await save(titleInput.value.trim(), contentTextarea.value);
+
+            try {
+                await api.post(`${apiUrl}/actions/unpublish`);
+                window.location.reload();
+            } catch (error) {
+                alert(error.message || "Failed to unpublish");
+            }
+        });
     }
 
     window.addEventListener("beforeunload", (e) => {

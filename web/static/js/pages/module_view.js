@@ -31,4 +31,38 @@ document.addEventListener("DOMContentLoaded", () => {
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
+
+    document.addEventListener("click", async (e) => {
+        const pub = e.target.closest(".module-card-publish-btn");
+        const unpub = e.target.closest(".module-card-unpublish-btn");
+        const card = e.target.closest(".module-reading-card");
+        if (!card) return;
+        const cid = card.dataset.courseId;
+        const mid = card.dataset.moduleId;
+        const rid = card.dataset.readingId;
+        if (!cid || !mid || !rid) return;
+
+        const base = `/api/courses/${cid}/modules/${mid}/content/${rid}`;
+        if (pub) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                await api.post(`${base}/actions/publish`);
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to publish", "error");
+            }
+            return;
+        }
+        if (unpub) {
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                await api.post(`${base}/actions/unpublish`);
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to unpublish", "error");
+            }
+        }
+    });
 });

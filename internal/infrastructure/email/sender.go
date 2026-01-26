@@ -11,6 +11,7 @@ type Sender interface {
 	SendProposalApprovedEmail(ctx context.Context, email, name, title, courseURL string) error
 	SendProposalRejectedEmail(ctx context.Context, email, name, title, reviewNotes, newProposalURL string) error
 	SendProposalChangesRequestedEmail(ctx context.Context, email, name, title, reviewNotes, proposalURL string) error
+	SendEnrollmentConfirmationEmail(ctx context.Context, email, name, courseTitle, courseURL string) error
 }
 
 var (
@@ -45,5 +46,9 @@ func (s *NullSender) SendProposalRejectedEmail(ctx context.Context, email, name,
 }
 
 func (s *NullSender) SendProposalChangesRequestedEmail(ctx context.Context, email, name, title, reviewNotes, proposalURL string) error {
+	return nil
+}
+
+func (s *NullSender) SendEnrollmentConfirmationEmail(ctx context.Context, email, name, courseTitle, courseURL string) error {
 	return nil
 }

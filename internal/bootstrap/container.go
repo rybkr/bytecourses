@@ -252,6 +252,20 @@ func (c *Container) setupEventSubscribers() {
 		proposalURL := c.BaseURL + "/proposals/" + strconv.FormatInt(event.ProposalID, 10) + "/edit"
 		return c.EmailSender.SendProposalChangesRequestedEmail(ctx, author.Email, author.Name, event.Title, event.ReviewNotes, proposalURL)
 	})
+
+	c.EventBus.Subscribe("enrollment.created", func(ctx context.Context, e domain.Event) error {
+		event := e.(*domain.EnrollmentCreatedEvent)
+		user, ok := c.UserRepo.GetByID(ctx, event.UserID)
+		if !ok {
+			return nil
+		}
+		course, ok := c.CourseRepo.GetByID(ctx, event.CourseID)
+		if !ok {
+			return nil
+		}
+		courseURL := c.BaseURL + "/courses/" + strconv.FormatInt(event.CourseID, 10)
+		return c.EmailSender.SendEnrollmentConfirmationEmail(ctx, user.Email, user.Name, course.Title, courseURL)
+	})
 }
 
 func (c *Container) Close() error {

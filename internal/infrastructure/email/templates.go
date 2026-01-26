@@ -9,12 +9,13 @@ import (
 var templateFS embed.FS
 
 var (
-	welcomeTemplate           *template.Template
-	passwordResetTemplate     *template.Template
-	proposalSubmittedTemplate *template.Template
-	proposalApprovedTemplate  *template.Template
-	proposalRejectedTemplate  *template.Template
-	proposalChangesTemplate   *template.Template
+	welcomeTemplate                *template.Template
+	passwordResetTemplate          *template.Template
+	proposalSubmittedTemplate      *template.Template
+	proposalApprovedTemplate       *template.Template
+	proposalRejectedTemplate       *template.Template
+	proposalChangesTemplate        *template.Template
+	enrollmentConfirmationTemplate *template.Template
 )
 
 func init() {
@@ -48,5 +49,10 @@ func init() {
 	proposalChangesTemplate, err = template.ParseFS(templateFS, "templates/proposal_changes_requested.html")
 	if err != nil {
 		panic("failed to parse proposal changes requested template: " + err.Error())
+	}
+
+	enrollmentConfirmationTemplate, err = template.ParseFS(templateFS, "templates/enrollment_confirmation.html")
+	if err != nil {
+		panic("failed to parse enrollment confirmation template: " + err.Error())
 	}
 }

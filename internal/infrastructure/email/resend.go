@@ -163,3 +163,17 @@ func (s *ResendSender) SendProposalChangesRequestedEmail(ctx context.Context, em
 	}
 	return s.sendEmail(ctx, email, subject, buf.String())
 }
+
+func (s *ResendSender) SendEnrollmentConfirmationEmail(ctx context.Context, email, name, courseTitle, courseURL string) error {
+	subject := "You're Enrolled!"
+	var buf bytes.Buffer
+	data := struct {
+		Name        string
+		CourseTitle string
+		CourseURL   string
+	}{Name: name, CourseTitle: courseTitle, CourseURL: courseURL}
+	if err := enrollmentConfirmationTemplate.Execute(&buf, data); err != nil {
+		return fmt.Errorf("failed to execute enrollment confirmation template: %w", err)
+	}
+	return s.sendEmail(ctx, email, subject, buf.String())
+}

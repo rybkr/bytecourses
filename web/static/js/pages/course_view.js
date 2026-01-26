@@ -31,6 +31,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            const confirmed = await confirmAction(
+                "You will be enrolled in this course and receive a confirmation email.",
+                {
+                    title: "Enroll in Course?",
+                    confirmText: "Enroll",
+                    confirmButtonClass: "btn-primary",
+                    variant: "info",
+                }
+            );
+
+            if (!confirmed) return;
+
             enrollBtn.disabled = true;
             enrollBtn.textContent = "Enrolling...";
 

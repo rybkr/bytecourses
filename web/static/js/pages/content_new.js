@@ -9,13 +9,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const titleInput = $("#content-title");
     const contentTextarea = $("#content-body");
+    const typeSelect = $("#content-type");
     const previewDiv = $("#content-preview");
     const saveBtn = $("#save-btn");
     const errorContainer = $("#content-new-error");
     const titleErrorEl = $("#title-error");
 
     let isSaving = false;
-    let selectedContentType = "reading";
     const initialTitle = titleInput.value.trim();
     const initialBody = contentTextarea.value;
 
@@ -61,7 +61,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const title = titleInput.value.trim();
         const content = contentTextarea.value;
-        const contentType = selectedContentType;
+        const contentType = typeSelect ? typeSelect.value.trim() : "reading";
 
         if (!title) {
             if (titleErrorEl) {

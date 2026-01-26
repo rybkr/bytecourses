@@ -203,6 +203,24 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     document.addEventListener("click", async (e) => {
+        const modPub = e.target.closest(".publish-module-btn");
+        if (modPub) {
+            e.preventDefault();
+            e.stopPropagation();
+            const cid = modPub.dataset.courseId;
+            const mid = modPub.dataset.moduleId;
+            if (!cid || !mid) return;
+            try {
+                await api.post(
+                    `/api/courses/${cid}/modules/${mid}/actions/publish`,
+                );
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to publish module", "error");
+            }
+            return;
+        }
+
         const pub = e.target.closest(".sidebar-publish-btn");
         const unpub = e.target.closest(".sidebar-unpublish-btn");
         const row = e.target.closest(".course-content-reading-row");

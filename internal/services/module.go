@@ -212,9 +212,10 @@ func (s *ModuleService) Publish(ctx context.Context, cmd *PublishModuleCommand) 
 }
 
 type ListModulesQuery struct {
-	CourseID int64             `json:"course_id"`
-	UserID   int64             `json:"user_id"`
-	UserRole domain.SystemRole `json:"user_role"`
+	CourseID        int64             `json:"course_id"`
+	UserID          int64             `json:"user_id"`
+	UserRole        domain.SystemRole `json:"user_role"`
+	EnrolledLearner bool              `json:"enrolled_learner"`
 }
 
 func (s *ModuleService) List(ctx context.Context, query *ListModulesQuery) ([]domain.Module, error) {
@@ -227,6 +228,8 @@ func (s *ModuleService) List(ctx context.Context, query *ListModulesQuery) ([]do
 
 	} else if course.InstructorID == query.UserID {
 
+	} else if query.EnrolledLearner {
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -236,14 +239,25 @@ func (s *ModuleService) List(ctx context.Context, query *ListModulesQuery) ([]do
 		return nil, err
 	}
 
+	if query.EnrolledLearner {
+		filtered := make([]domain.Module, 0, len(modules))
+		for i := range modules {
+			if modules[i].Status == domain.ModuleStatusPublished {
+				filtered = append(filtered, modules[i])
+			}
+		}
+		modules = filtered
+	}
+
 	return modules, nil
 }
 
 type GetModuleQuery struct {
-	ModuleID int64             `json:"module_id"`
-	CourseID int64             `json:"course_id"`
-	UserID   int64             `json:"user_id"`
-	UserRole domain.SystemRole `json:"user_role"`
+	ModuleID        int64             `json:"module_id"`
+	CourseID        int64             `json:"course_id"`
+	UserID          int64             `json:"user_id"`
+	UserRole        domain.SystemRole `json:"user_role"`
+	EnrolledLearner bool              `json:"enrolled_learner"`
 }
 
 func (s *ModuleService) Get(ctx context.Context, query *GetModuleQuery) (*domain.Module, error) {
@@ -256,6 +270,8 @@ func (s *ModuleService) Get(ctx context.Context, query *GetModuleQuery) (*domain
 
 	} else if course.InstructorID == query.UserID {
 
+	} else if query.EnrolledLearner {
+
 	} else {
 		return nil, errors.ErrForbidden
 	}
@@ -266,6 +282,10 @@ func (s *ModuleService) Get(ctx context.Context, query *GetModuleQuery) (*domain
 	}
 
 	if module.CourseID != query.CourseID {
+		return nil, errors.ErrNotFound
+	}
+
+	if query.EnrolledLearner && module.Status != domain.ModuleStatusPublished {
 		return nil, errors.ErrNotFound
 	}
 

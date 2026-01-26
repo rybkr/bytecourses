@@ -3553,6 +3553,10 @@
     color: var(--text-muted);
 }
 
+.course-content-module-header-wrapper .publish-module-btn {
+    flex-shrink: 0;
+}
+
 .course-content-module-toggle {
     display: flex;
     align-items: center;

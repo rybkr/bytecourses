@@ -32,6 +32,20 @@ document.addEventListener("DOMContentLoaded", () => {
         }, 3000);
     }
 
+    const publishModuleBtn = $(".publish-module-btn");
+    if (publishModuleBtn) {
+        publishModuleBtn.addEventListener("click", async () => {
+            try {
+                await api.post(
+                    `/api/courses/${courseId}/modules/${moduleId}/actions/publish`,
+                );
+                window.location.reload();
+            } catch (err) {
+                showToast(err.message || "Failed to publish module", "error");
+            }
+        });
+    }
+
     document.addEventListener("click", async (e) => {
         const pub = e.target.closest(".module-card-publish-btn");
         const unpub = e.target.closest(".module-card-unpublish-btn");

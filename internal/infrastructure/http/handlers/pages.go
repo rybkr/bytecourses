@@ -439,6 +439,7 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 
 	isInstructor := course.IsTaughtBy(user)
 
+	var isEnrolled bool
 	if !isInstructor {
 		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
 			CourseID: courseID,
@@ -448,12 +449,14 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 			http.Redirect(w, r, "/courses/"+strconv.FormatInt(courseID, 10), http.StatusFound)
 			return
 		}
+		isEnrolled = true
 	}
 
 	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
+		CourseID:        courseID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
 		log.Printf("error fetching modules: %v", err)
@@ -463,9 +466,10 @@ func (h *PageHandler) CourseHome(w http.ResponseWriter, r *http.Request) {
 	readingsByModule := make(map[int64][]domain.Reading)
 	for _, module := range modulesList {
 		items, err := h.contentService.List(r.Context(), &services.ListContentQuery{
-			ModuleID: module.ID,
-			UserID:   user.ID,
-			UserRole: user.Role,
+			ModuleID:        module.ID,
+			UserID:          user.ID,
+			UserRole:        user.Role,
+			EnrolledLearner: !isInstructor && isEnrolled,
 		})
 		if err == nil {
 			readings := make([]domain.Reading, 0, len(items))
@@ -649,9 +653,10 @@ func (h *PageHandler) CourseContent(w http.ResponseWriter, r *http.Request) {
 	}
 
 	modulesList, err := h.moduleService.List(r.Context(), &services.ListModulesQuery{
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
+		CourseID:        courseID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
 		log.Printf("error fetching modules: %v", err)
@@ -778,10 +783,11 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
-		ModuleID: moduleID,
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
+		ModuleID:        moduleID,
+		CourseID:        courseID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
 		if err == errors.ErrNotFound {
@@ -1063,13 +1069,19 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
-		ModuleID: moduleID,
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
+		ModuleID:        moduleID,
+		CourseID:        courseID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: !isInstructor && isEnrolled,
 	})
 	if err != nil {
-		http.Error(w, "module not found", http.StatusNotFound)
+		if err == errors.ErrNotFound {
+			http.Error(w, "module not found", http.StatusNotFound)
+			return
+		}
+		log.Printf("error fetching module: %v", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 

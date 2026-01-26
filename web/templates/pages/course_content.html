@@ -28,7 +28,7 @@
                 {{$readings := index $.ReadingsByModule $module.ID}}
                 {{$moduleNum := add $moduleIndex 1}}
                 <div class="course-content-module{{if $.CurrentModule}}{{if eq $module.ID $.CurrentModule.ID}} active{{end}}{{end}}"
-                    data-module-id="{{$module.ID}}">
+                    data-module-id="{{$module.ID}}" data-course-id="{{$.Course.ID}}">
                     <div class="course-content-module-header-wrapper">
                         <div class="module-card-icon" aria-hidden="true">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -42,6 +42,9 @@
                             <span class="module-card-title">{{$module.Title}}</span>
                         </a>
                         <span class="module-card-count">{{if $readings}}{{len $readings}} item{{if gt (len $readings) 1}}s{{end}}{{else}}Empty{{end}}</span>
+                        {{if $.IsInstructor}}{{if eq $module.Status "draft"}}
+                        <button type="button" class="publish-module-btn btn btn-small btn-success" data-course-id="{{$.Course.ID}}" data-module-id="{{$module.ID}}">Publish</button>
+                        {{end}}{{end}}
                         <button type="button" class="course-content-module-toggle" aria-expanded="false" aria-controls="module-{{$module.ID}}-content" aria-label="Expand module {{$module.Title}}">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

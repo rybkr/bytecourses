@@ -2100,7 +2100,7 @@
 }
 
 .content-new-header-section {
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
 }
 
 .content-new-breadcrumb {
@@ -2112,57 +2112,74 @@
 .content-new-breadcrumb a {
     color: var(--primary-color);
     text-decoration: none;
+    transition: color 0.15s ease;
 }
 
 .content-new-breadcrumb a:hover {
+    color: var(--primary-color);
     text-decoration: underline;
 }
 
 .content-new-title {
     margin: 0;
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--text-color);
+    line-height: 1.2;
 }
 
 .content-new-subtitle {
-    margin: 0.5rem 0 0 0;
+    margin: 0.75rem 0 0 0;
     color: var(--text-secondary);
-    font-size: 1rem;
+    font-size: 1.125rem;
+    line-height: 1.6;
 }
 
 .content-new-form {
-    margin-top: 1.5rem;
+    background: var(--bg-color);
+    padding: 2.5rem;
+    border-radius: 1.25rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
 }
 
 .content-new-type-row {
-    margin-bottom: 1.25rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .content-new-type-row label {
     display: block;
-    margin-bottom: 0.5rem;
-    font-size: 0.875rem;
-    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--text-color);
 }
 
 .content-new-type-row select {
     display: block;
     width: 100%;
-    max-width: 12rem;
-    padding: 0.5rem 0.875rem;
+    max-width: 14rem;
+    padding: 0.625rem 1rem;
     font-size: 0.9375rem;
     font-family: inherit;
     color: var(--text-color);
     background: var(--bg-color);
-    border: 1px solid var(--border-color);
-    border-radius: 0.375rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 0.5rem;
     cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.content-new-type-row select:hover {
+    border-color: var(--primary-light);
 }
 
 .content-new-type-row select:focus {
     outline: none;
     border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
 }
 
 .lecture-edit-container {
@@ -2196,8 +2213,10 @@
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
     flex-wrap: wrap;
 }
 
@@ -2215,18 +2234,18 @@
 
 .lecture-title-input {
     width: 100%;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: 600;
-    padding: 0.5rem;
-    border: 2px solid transparent;
-    border-radius: 0.375rem;
-    background-color: transparent;
-    transition:
-        border-color 0.15s ease,
-        background-color 0.15s ease;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--border-color);
+    border-radius: 0.5rem;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: all 0.15s ease;
 }
 
 .lecture-title-input:hover {
+    border-color: var(--primary-light);
     background-color: var(--bg-secondary);
 }
 
@@ -2234,6 +2253,7 @@
     outline: none;
     border-color: var(--primary-color);
     background-color: var(--bg-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.1);
 }
 
 .lecture-editor {
@@ -2419,6 +2439,38 @@
 }
 
 @media (max-width: 900px) {
+    .content-new-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .content-new-title {
+        font-size: 2rem;
+    }
+
+    .content-new-form {
+        padding: 1.5rem;
+        border-radius: 1rem;
+    }
+
+    .content-new-form-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .content-new-form-header-left {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .content-new-form-header-right {
+        flex-shrink: 0;
+    }
+
+    .lecture-title-input {
+        font-size: 1.25rem;
+    }
+
     .lecture-editor {
         flex-direction: column;
     }

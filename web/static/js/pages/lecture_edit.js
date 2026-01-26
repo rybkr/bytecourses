@@ -30,7 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`;
 
-    // Debounced preview update
     const debouncedUpdatePreview = debounce((content) => {
         updateMarkdownPreview(content, previewDiv, {
             wrapperClass: "proposal-content-value",
@@ -41,26 +40,25 @@ document.addEventListener("DOMContentLoaded", () => {
         debouncedUpdatePreview(content);
     }
 
-    // Initialize EasyMDE editor
     try {
+        const editorContainer = document.getElementById("lecture-editor");
         markdownEditor = createMarkdownEditor(contentTextarea, {
             initialValue: initialContentFromData || "",
             placeholder: "Write your reading content here using Markdown...",
             lineNumbers: true,
+            customPreviewElement: previewDiv,
+            editorContainer: editorContainer,
             onUpdate: (content) => {
                 updatePreview(content);
             },
         });
 
-        // Add custom keyboard shortcut for Ctrl/Cmd+S to save
         addCustomShortcut(markdownEditor.editor, "Mod-s", () => {
             save(titleInput.value.trim(), markdownEditor.getValue());
         });
 
-        // Setup scroll sync
         setupScrollSync(markdownEditor.editor, previewDiv);
 
-        // Initialize resizer
         const leftPane = document.querySelector(".lecture-editor-pane:first-child");
         const rightPane = document.querySelector(".lecture-editor-pane:last-child");
         const resizer = document.getElementById("editor-resizer");
@@ -73,8 +71,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Initialize editor mode toggle
-        const editorContainer = document.getElementById("lecture-editor");
         const togglePreviewBtn = document.getElementById("toggle-preview-btn");
         const toggleMarkdownBtn = document.getElementById("toggle-markdown-btn");
         const storageKey = "markdown-editor-mode";
@@ -82,25 +78,20 @@ document.addEventListener("DOMContentLoaded", () => {
         function setEditorMode(mode) {
             if (!editorContainer) return;
 
-            // Remove existing mode classes
             editorContainer.classList.remove("mode-markdown", "mode-preview", "mode-split");
 
-            // Check if mobile
             const isMobile = window.matchMedia("(max-width: 900px)").matches;
 
             if (isMobile) {
-                // On mobile, use markdown or preview
                 if (mode === "preview") {
                     editorContainer.classList.add("mode-preview");
                 } else {
                     editorContainer.classList.add("mode-markdown");
                 }
             } else {
-                // On desktop, always use split mode
                 editorContainer.classList.add("mode-split");
             }
 
-            // Save to localStorage
             try {
                 localStorage.setItem(storageKey, mode);
             } catch (e) {
@@ -116,11 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         }
 
-        // Load saved mode or default
         const savedMode = getEditorMode();
         setEditorMode(savedMode);
 
-        // Handle toggle buttons
         if (togglePreviewBtn) {
             togglePreviewBtn.addEventListener("click", () => {
                 setEditorMode("preview");
@@ -133,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         }
 
-        // Handle window resize to switch modes
         let resizeTimeout;
         window.addEventListener("resize", () => {
             clearTimeout(resizeTimeout);
@@ -215,7 +203,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }, 2000);
 
-    // Setup autosave on title changes
     titleInput.addEventListener("input", scheduleAutosave);
 
     saveBtn.addEventListener("click", () => {

@@ -1,15 +1,3 @@
-/**
- * Resizable Split Pane Module
- * Provides draggable resizer functionality for split-screen layouts
- */
-
-/**
- * Create a resizable split pane
- * @param {HTMLElement} resizerElement - The resizer element
- * @param {HTMLElement} leftPane - Left pane element
- * @param {HTMLElement} rightPane - Right pane element
- * @param {Object} options - Configuration options
- */
 export function createResizer(resizerElement, leftPane, rightPane, options = {}) {
     if (!resizerElement || !leftPane || !rightPane) {
         console.warn("Resizer: Missing required elements");
@@ -27,7 +15,6 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
     let startX = 0;
     let startLeftWidth = 0;
 
-    // Parse min widths (support both px and %)
     function parseMinWidth(value) {
         if (typeof value === "number") return value;
         if (typeof value === "string") {
@@ -44,14 +31,12 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
     const minLeft = parseMinWidth(minLeftWidth);
     const minRight = parseMinWidth(minRightWidth);
 
-    // Get container (parent of panes)
     const container = leftPane.parentElement;
     if (!container) {
         console.warn("Resizer: Could not find container");
         return;
     }
 
-    // Load saved ratio from localStorage
     function loadSavedRatio() {
         if (!storageKey) return null;
         try {
@@ -68,7 +53,6 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
         return null;
     }
 
-    // Save ratio to localStorage
     function saveRatio(ratio) {
         if (!storageKey) return;
         try {
@@ -78,24 +62,20 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
         }
     }
 
-    // Calculate ratio from left pane width
     function getRatio() {
         const containerWidth = container.clientWidth;
         const leftWidth = leftPane.offsetWidth;
         return leftWidth / containerWidth;
     }
 
-    // Set pane widths based on ratio
     function setRatio(ratio) {
         const containerWidth = container.clientWidth;
         const resizerWidth = resizerElement.offsetWidth;
         const availableWidth = containerWidth - resizerWidth;
 
-        // Calculate widths
         let leftWidth = availableWidth * ratio;
         const rightWidth = availableWidth - leftWidth;
 
-        // Apply constraints
         const minLeftPx = typeof minLeft === "number" ? minLeft : (availableWidth * minLeft);
         const minRightPx = typeof minRight === "number" ? minRight : (availableWidth * minRight);
 
@@ -105,19 +85,16 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
             leftWidth = availableWidth - minRightPx;
         }
 
-        // Apply widths
         leftPane.style.flex = `0 0 ${leftWidth}px`;
         rightPane.style.flex = "1";
     }
 
-    // Initialize with saved ratio or default
     function initialize() {
         const savedRatio = loadSavedRatio();
         const ratio = savedRatio !== null ? savedRatio : defaultRatio;
         setRatio(ratio);
     }
 
-    // Start resizing
     function startResize(e) {
         e.preventDefault();
         e.stopPropagation();
@@ -125,17 +102,14 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
         startX = e.clientX;
         startLeftWidth = leftPane.offsetWidth;
 
-        // Add visual feedback
         resizerElement.classList.add("is-dragging");
         document.body.style.cursor = "col-resize";
         document.body.style.userSelect = "none";
 
-        // Add event listeners
         document.addEventListener("mousemove", handleResize);
         document.addEventListener("mouseup", stopResize);
     }
 
-    // Handle resize
     function handleResize(e) {
         if (!isResizing) return;
 
@@ -146,11 +120,9 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
         const deltaX = e.clientX - startX;
         const newLeftWidth = startLeftWidth + deltaX;
 
-        // Calculate ratio
         const availableWidth = containerWidth - resizerWidth;
         let ratio = newLeftWidth / availableWidth;
 
-        // Apply constraints
         const minLeftPx = typeof minLeft === "number" ? minLeft : (availableWidth * minLeft);
         const minRightPx = typeof minRight === "number" ? minRight : (availableWidth * minRight);
 
@@ -163,43 +135,34 @@ export function createResizer(resizerElement, leftPane, rightPane, options = {})
         setRatio(ratio);
     }
 
-    // Stop resizing
     function stopResize(e) {
         if (!isResizing) return;
 
         isResizing = false;
 
-        // Remove visual feedback
         resizerElement.classList.remove("is-dragging");
         document.body.style.cursor = "";
         document.body.style.userSelect = "";
 
-        // Save ratio
         const ratio = getRatio();
         saveRatio(ratio);
 
-        // Remove event listeners
         document.removeEventListener("mousemove", handleResize);
         document.removeEventListener("mouseup", stopResize);
     }
 
-    // Handle window resize
     function handleWindowResize() {
         if (!isResizing) {
-            // Maintain ratio on window resize
             const ratio = getRatio();
             setRatio(ratio);
         }
     }
 
-    // Initialize
     initialize();
 
-    // Attach event listeners
     resizerElement.addEventListener("mousedown", startResize);
     window.addEventListener("resize", handleWindowResize);
 
-    // Return cleanup function
     return {
         destroy: () => {
             resizerElement.removeEventListener("mousedown", startResize);

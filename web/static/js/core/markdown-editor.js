@@ -1,14 +1,3 @@
-/**
- * Markdown Editor Module using EasyMDE
- * Provides a reusable markdown editor with syntax highlighting, toolbar, and keyboard shortcuts
- */
-
-/**
- * Create a markdown editor instance using EasyMDE
- * @param {HTMLTextAreaElement} textarea - Textarea element for the editor
- * @param {Object} options - Configuration options
- * @returns {{ editor: EasyMDE, getValue: Function, setValue: Function, focus: Function, getEditor: Function }}
- */
 export function createMarkdownEditor(textarea, options = {}) {
     if (typeof EasyMDE === "undefined") {
         throw new Error("EasyMDE is not loaded. Make sure easymde.min.js is included before this script.");
@@ -21,17 +10,14 @@ export function createMarkdownEditor(textarea, options = {}) {
         onUpdate = null,
     } = options;
 
-    // Set initial value if provided
     if (initialValue) {
         textarea.value = initialValue;
     }
 
-    // Set placeholder
     if (placeholder && !textarea.placeholder) {
         textarea.placeholder = placeholder;
     }
 
-    // Configure EasyMDE
     const easyMDE = new EasyMDE({
         element: textarea,
         spellChecker: false,
@@ -40,6 +26,7 @@ export function createMarkdownEditor(textarea, options = {}) {
         tabSize: 4,
         autofocus: false,
         placeholder: placeholder,
+        sideBySideFullscreen: false,
         renderingConfig: {
             codeSyntaxHighlighting: true,
         },
@@ -78,7 +65,84 @@ export function createMarkdownEditor(textarea, options = {}) {
         },
     });
 
-    // Setup update listener if callback provided
+    const customPreviewElement = options.customPreviewElement || null;
+    const editorContainer = options.editorContainer || null;
+
+    if (editorContainer) {
+        const setupToolbarButtons = () => {
+            const easyMDEContainer = textarea.closest('.EasyMDEContainer');
+            const toolbar = easyMDEContainer ? easyMDEContainer.querySelector('.editor-toolbar') : null;
+            if (!toolbar) {
+                setTimeout(setupToolbarButtons, 50);
+                return;
+            }
+
+            const buttons = toolbar.querySelectorAll("button");
+            buttons.forEach((button) => {
+                const icon = button.querySelector("i");
+                if (!icon) return;
+
+                const iconClass = icon.className || "";
+
+                if (iconClass.includes("fa-eye") || iconClass.includes("fa-eye-slash")) {
+                    button.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        
+                        const isPreviewMode = editorContainer.classList.contains("mode-preview");
+                        if (isPreviewMode) {
+                            editorContainer.classList.remove("mode-preview");
+                            editorContainer.classList.add("mode-markdown");
+                            button.classList.remove("active");
+                        } else {
+                            editorContainer.classList.remove("mode-markdown", "mode-split");
+                            editorContainer.classList.add("mode-preview");
+                            button.classList.add("active");
+                        }
+                        return false;
+                    }, true);
+                }
+
+                if (iconClass.includes("fa-columns")) {
+                    button.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopImmediatePropagation();
+                        
+                        const isSplitMode = editorContainer.classList.contains("mode-split");
+                        if (isSplitMode) {
+                            editorContainer.classList.remove("mode-split");
+                            editorContainer.classList.add("mode-markdown");
+                            button.classList.remove("active");
+                        } else {
+                            editorContainer.classList.remove("mode-markdown", "mode-preview");
+                            editorContainer.classList.add("mode-split");
+                            button.classList.add("active");
+                        }
+                        return false;
+                    }, true);
+                }
+
+                if (iconClass.includes("fa-arrows-alt") || iconClass.includes("fa-compress")) {
+                    button.addEventListener("click", (e) => {
+                        setTimeout(() => {
+                            const isFullscreen = document.querySelector(".CodeMirror-fullscreen") || 
+                                               document.querySelector(".editor-preview-side") ||
+                                               document.body.classList.contains("EasyMDEContainer-fullscreen");
+                            if (isFullscreen && editorContainer) {
+                                if (!editorContainer.classList.contains("mode-preview")) {
+                                    editorContainer.classList.remove("mode-markdown");
+                                    editorContainer.classList.add("mode-split");
+                                }
+                            }
+                        }, 100);
+                    });
+                }
+            });
+        };
+
+        setupToolbarButtons();
+    }
+
     if (onUpdate) {
         easyMDE.codemirror.on("change", () => {
             onUpdate(easyMDE.value());
@@ -94,11 +158,6 @@ export function createMarkdownEditor(textarea, options = {}) {
     };
 }
 
-/**
- * Setup scroll synchronization between editor and preview
- * @param {EasyMDE} easyMDE - EasyMDE editor instance
- * @param {HTMLElement} previewElement - Preview container element
- */
 export function setupScrollSync(easyMDE, previewElement) {
     if (!easyMDE || !easyMDE.codemirror || !previewElement) {
         return;
@@ -106,7 +165,6 @@ export function setupScrollSync(easyMDE, previewElement) {
 
     let isScrolling = false;
 
-    // Sync editor scroll to preview
     function syncEditorToPreview() {
         if (isScrolling) return;
         isScrolling = true;
@@ -128,7 +186,6 @@ export function setupScrollSync(easyMDE, previewElement) {
         });
     }
 
-    // Sync preview scroll to editor
     function syncPreviewToEditor() {
         if (isScrolling) return;
         isScrolling = true;
@@ -149,39 +206,25 @@ export function setupScrollSync(easyMDE, previewElement) {
         });
     }
 
-    // Attach scroll listeners
     easyMDE.codemirror.on("scroll", syncEditorToPreview);
     previewElement.addEventListener("scroll", syncPreviewToEditor);
 }
 
-/**
- * Add custom keyboard shortcut to EasyMDE editor
- * @param {EasyMDE} easyMDE - EasyMDE editor instance
- * @param {string} key - Key combination (e.g., "Ctrl-Enter", "Mod-s")
- * @param {Function} handler - Handler function
- */
 export function addCustomShortcut(easyMDE, key, handler) {
     if (!easyMDE || !easyMDE.codemirror) {
         return;
     }
 
-    // Get existing extraKeys or empty object
     const existingKeys = easyMDE.codemirror.getOption("extraKeys") || {};
     
-    // Map Mod to Ctrl/Cmd - CodeMirror 5 uses "Ctrl" for both Ctrl and Cmd
-    // We need to handle both Ctrl and Cmd separately for cross-platform support
     const normalizedKey = key.replace("Mod-", "Ctrl-");
-    
-    // Create new extraKeys object
     const newKeys = { ...existingKeys };
     
-    // Add the shortcut
     newKeys[normalizedKey] = (cm) => {
         handler();
-        return true; // Prevent default behavior
+        return true;
     };
     
-    // Also add Cmd version for Mac
     if (key.includes("Mod-")) {
         const cmdKey = key.replace("Mod-", "Cmd-");
         newKeys[cmdKey] = (cm) => {

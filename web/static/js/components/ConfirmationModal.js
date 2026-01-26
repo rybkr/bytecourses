@@ -1,4 +1,5 @@
 import Modal from "./Modal.js";
+import { escapeHtml } from "../core/utils.js";
 
 export default class ConfirmationModal {
     constructor(options = {}) {
@@ -24,14 +25,14 @@ export default class ConfirmationModal {
                 <div class="modal-overlay"></div>
                 <div class="modal-content confirmation-modal-content confirmation-modal-${this.options.variant}">
                     <div class="modal-header">
-                        <h2>${this.escapeHtml(this.options.title)}</h2>
+                        <h2>${escapeHtml(this.options.title)}</h2>
                         <button class="modal-close" type="button" data-modal-close aria-label="Close">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <p>${this.escapeHtml(this.options.message)}</p>
+                        <p>${escapeHtml(this.options.message)}</p>
                         <div class="modal-actions">
-                            <button class="btn ${this.options.confirmButtonClass}" data-confirm>${this.escapeHtml(this.options.confirmText)}</button>
-                            <button type="button" class="btn btn-outline" data-cancel>${this.escapeHtml(this.options.cancelText)}</button>
+                            <button class="btn ${this.options.confirmButtonClass}" data-confirm>${escapeHtml(this.options.confirmText)}</button>
+                            <button type="button" class="btn btn-outline" data-cancel>${escapeHtml(this.options.cancelText)}</button>
                         </div>
                     </div>
                 </div>
@@ -100,10 +101,4 @@ export default class ConfirmationModal {
         });
     }
 
-    escapeHtml(text) {
-        if (!text) return "";
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
 }

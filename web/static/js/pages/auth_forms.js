@@ -1,85 +1,66 @@
-import FormSubmitHandler from "../components/FormSubmitHandler.js";
 import { $ } from "../core/dom.js";
-import { showError, hideError, extractErrorMessage } from "../core/utils.js";
+import { showError, hideError } from "../core/utils.js";
 import api from "../core/api.js";
 
-function initAuthForm(config) {
+/**
+ * Generic auth form handler that reduces duplication across login, register,
+ * forgot password, and reset password forms.
+ */
+function createAuthFormHandler(config) {
     const form = $(config.formSelector);
-    if (!form) return;
+    if (!form) return null;
 
     const errorDiv = $(config.errorContainer || "#error-message");
-    const successDiv = config.successContainer
-        ? $(config.successContainer)
-        : null;
+    const successDiv = config.successContainer ? $(config.successContainer) : null;
 
-    const handler = new FormSubmitHandler(config.formSelector, {
-        endpoint: config.endpoint,
-        method: "POST",
-        successRedirect: config.successRedirect,
-        errorContainer: config.errorContainer || "#error-message",
-        transformData: config.transformData || ((data) => data),
-        onSuccess: async (response) => {
-            if (config.onSuccess) {
-                await config.onSuccess(response);
-            } else if (config.successRedirect) {
-                window.location.href = config.successRedirect;
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        hideError(errorDiv);
+
+        if (successDiv) {
+            successDiv.classList.add("hidden");
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+
+        try {
+            // Get form data
+            const data = config.getFormData(form);
+
+            // Validate if needed
+            if (config.validate) {
+                const validationError = config.validate(data, form);
+                if (validationError) {
+                    showError(validationError, errorDiv);
+                    return;
+                }
             }
-        },
-        onError: (error) => {
-            if (config.onError) {
-                config.onError(error);
+
+            const response = await api.post(config.endpoint, data);
+
+            // Check for success based on config
+            const isSuccess = config.isSuccess
+                ? config.isSuccess(response)
+                : response && response.ok;
+
+            if (isSuccess) {
+                if (config.onSuccess) {
+                    config.onSuccess(response, form, successDiv);
+                } else if (config.successRedirect) {
+                    window.location.href = config.successRedirect;
+                }
+            } else {
+                showError(config.defaultError || "An error occurred. Please try again.", errorDiv);
             }
-        },
+        } catch (error) {
+            showError(error.message || config.defaultError || "An error occurred. Please try again.", errorDiv);
+        } finally {
+            if (submitBtn) submitBtn.disabled = false;
+        }
     });
 
-    if (config.handleSuccessMessage) {
-        const originalHandleSubmit = handler.handleSubmit.bind(handler);
-        handler.handleSubmit = async function () {
-            hideError(errorDiv);
-            if (successDiv) {
-                successDiv.classList.add("hidden");
-            }
-
-            try {
-                const data = handler.getFormData();
-                const response = await api.post(handler.options.endpoint, data);
-
-                if (response && (response.status === 202 || response.ok)) {
-                    if (config.hideFormOnSuccess && form) {
-                        form.style.display = "none";
-                    }
-                    if (successDiv && config.successMessage) {
-                        successDiv.textContent = config.successMessage;
-                        successDiv.classList.remove("hidden");
-                    }
-                    if (config.successRedirect) {
-                        setTimeout(() => {
-                            window.location.href = config.successRedirect;
-                        }, config.redirectDelay || 2000);
-                    }
-                } else {
-                    const errorMessage = await extractErrorMessage(response);
-                    showError(
-                        errorMessage ||
-                            config.defaultError ||
-                            "An error occurred. Please try again.",
-                        errorDiv,
-                    );
-                }
-            } catch (error) {
-                showError(
-                    error.message ||
-                        config.defaultError ||
-                        "An error occurred. Please try again.",
-                    errorDiv,
-                );
-            } finally {
-                if (handler.submitButton) {
-                    handler.submitButton.disabled = false;
-                }
-            }
-        };
-    }
+    return form;
 }
 
 function validateNextUrl(next) {
@@ -93,210 +74,100 @@ function validateNextUrl(next) {
 }
 
 export function initLoginForm() {
-    const form = $("#loginForm");
-    if (!form) return;
-
-    const errorDiv = $("#error-message");
-
-    function getNextUrl() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get("next");
-    }
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideError(errorDiv);
-
-        const email = form.email.value;
-        const password = form.password.value;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const response = await api.post("/api/login", { email, password });
-
-            if (response && response.ok) {
-                const nextUrl = validateNextUrl(getNextUrl());
-                window.location.href = nextUrl;
-            } else {
-                const errorMessage = await extractErrorMessage(response);
-                showError(errorMessage || "Invalid credentials", errorDiv);
-            }
-        } catch (error) {
-            showError(error.message || "Invalid credentials", errorDiv);
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-            }
-        }
+    createAuthFormHandler({
+        formSelector: "#loginForm",
+        endpoint: "/api/login",
+        errorContainer: "#error-message",
+        defaultError: "Invalid credentials",
+        getFormData: (form) => ({
+            email: form.email.value,
+            password: form.password.value,
+        }),
+        onSuccess: () => {
+            const params = new URLSearchParams(window.location.search);
+            const nextUrl = validateNextUrl(params.get("next"));
+            window.location.href = nextUrl;
+        },
     });
 }
 
 export function initRegisterForm() {
-    const form = $("#registerForm");
-    if (!form) return;
-
-    const errorDiv = $("#error-message");
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideError(errorDiv);
-
-        const name = form.name.value;
-        const email = form.email.value;
-        const password = form.password.value;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const response = await api.post("/api/register", { name, email, password });
-
-            if (response && response.ok) {
-                window.location.href = "/login";
-            } else {
-                const errorMessage = await extractErrorMessage(response);
-                showError(errorMessage || "Registration failed", errorDiv);
-            }
-        } catch (error) {
-            showError(error.message || "Registration failed", errorDiv);
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-            }
-        }
+    createAuthFormHandler({
+        formSelector: "#registerForm",
+        endpoint: "/api/register",
+        errorContainer: "#error-message",
+        defaultError: "Registration failed",
+        getFormData: (form) => ({
+            name: form.name.value,
+            email: form.email.value,
+            password: form.password.value,
+        }),
+        successRedirect: "/login",
     });
 }
 
 export function initForgotPasswordForm() {
-    const form = $("#forgotPasswordForm");
-    if (!form) return;
-
-    const errorDiv = $("#error-message");
-    const successDiv = $("#success-message");
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        hideError(errorDiv);
-        if (successDiv) {
-            successDiv.classList.add("hidden");
-        }
-
-        const email = form.email.value;
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const response = await api.post("/api/password-reset/request", { email });
-
-            if (response && response.status === 202) {
-                form.style.display = "none";
-                if (successDiv) {
-                    successDiv.textContent =
-                        "If an account exists with that email, you will receive password reset instructions shortly.";
-                    successDiv.classList.remove("hidden");
-                }
-            } else {
-                const errorMessage = await extractErrorMessage(response);
-                showError(
-                    errorMessage || "An error occurred. Please try again.",
-                    errorDiv,
-                );
+    createAuthFormHandler({
+        formSelector: "#forgotPasswordForm",
+        endpoint: "/api/password-reset/request",
+        errorContainer: "#error-message",
+        successContainer: "#success-message",
+        defaultError: "An error occurred. Please try again.",
+        getFormData: (form) => ({
+            email: form.email.value,
+        }),
+        isSuccess: (response) => response && response.status === 202,
+        onSuccess: (response, form, successDiv) => {
+            form.style.display = "none";
+            if (successDiv) {
+                successDiv.textContent =
+                    "If an account exists with that email, you will receive password reset instructions shortly.";
+                successDiv.classList.remove("hidden");
             }
-        } catch (error) {
-            showError(error.message || "An error occurred. Please try again.", errorDiv);
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
-            }
-        }
+        },
     });
 }
 
 export function initResetPasswordForm() {
-    const form = $("#resetPasswordForm");
-    if (!form) return;
-
-    const errorDiv = $("#error-message");
-    const successDiv = $("#success-message");
-
-    function getTokenFromURL() {
-        const params = new URLSearchParams(window.location.search);
-        return params.get("token");
-    }
-
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-
-        hideError(errorDiv);
-        if (successDiv) {
-            successDiv.style.display = "none";
-        }
-
-        const password = form.password.value;
-        const confirmPassword = form.confirmPassword.value;
-
-        const token = getTokenFromURL();
-        if (!token) {
-            showError(
-                "Invalid reset link. Please request a new password reset.",
-                errorDiv,
-            );
-            return;
-        }
-
-        if (password !== confirmPassword) {
-            showError("Passwords do not match.", errorDiv);
-            return;
-        }
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        if (submitBtn) {
-            submitBtn.disabled = true;
-        }
-
-        try {
-            const response = await api.post(
-                `/api/password-reset/confirm?token=${encodeURIComponent(token)}`,
-                { new_password: password },
-            );
-
-            if (response && response.status === 204) {
-                form.style.display = "none";
-                if (successDiv) {
-                    successDiv.textContent =
-                        "Password reset successfully! Redirecting to login...";
-                    successDiv.classList.remove("hidden");
-                }
-                setTimeout(() => {
-                    window.location.href = "/login";
-                }, 2000);
-            } else {
-                const errorMessage = await extractErrorMessage(response);
-                showError(
-                    errorMessage ||
-                        "Invalid or expired token. Please request a new password reset.",
-                    errorDiv,
-                );
+    createAuthFormHandler({
+        formSelector: "#resetPasswordForm",
+        errorContainer: "#error-message",
+        successContainer: "#success-message",
+        defaultError: "Invalid or expired token. Please request a new password reset.",
+        getFormData: (form) => {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            return {
+                new_password: form.password.value,
+                _token: token,
+                _confirmPassword: form.confirmPassword.value,
+            };
+        },
+        get endpoint() {
+            const params = new URLSearchParams(window.location.search);
+            const token = params.get("token");
+            return `/api/password-reset/confirm?token=${encodeURIComponent(token || "")}`;
+        },
+        validate: (data) => {
+            if (!data._token) {
+                return "Invalid reset link. Please request a new password reset.";
             }
-        } catch (error) {
-            showError(
-                error.message ||
-                    "Invalid or expired token. Please request a new password reset.",
-                errorDiv,
-            );
-        } finally {
-            if (submitBtn) {
-                submitBtn.disabled = false;
+            if (data.new_password !== data._confirmPassword) {
+                return "Passwords do not match.";
             }
-        }
+            return null;
+        },
+        isSuccess: (response) => response && response.status === 204,
+        onSuccess: (response, form, successDiv) => {
+            form.style.display = "none";
+            if (successDiv) {
+                successDiv.textContent =
+                    "Password reset successfully! Redirecting to login...";
+                successDiv.classList.remove("hidden");
+            }
+            setTimeout(() => {
+                window.location.href = "/login";
+            }, 2000);
+        },
     });
 }

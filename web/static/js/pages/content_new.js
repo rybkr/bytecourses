@@ -1,6 +1,7 @@
 import api from "../core/api.js";
 import { $ } from "../core/dom.js";
 import { showError, hideError } from "../core/utils.js";
+import { updateMarkdownPreview } from "../core/markdown.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const { courseId, moduleId } = window.CONTENT_NEW_DATA || {};
@@ -21,31 +22,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const initialBody = contentTextarea.value;
 
     function updatePreview() {
-        const body = contentTextarea.value.trim();
         const placeholder = document.getElementById("content-preview-placeholder");
         const valueEl = previewDiv?.querySelector(".proposal-content-value");
 
-        if (!body) {
-            if (placeholder) placeholder.classList.remove("hidden");
-            if (valueEl) {
-                valueEl.innerHTML = "";
-                valueEl.classList.add("hidden");
-            }
-            return;
-        }
-
-        if (placeholder) placeholder.classList.add("hidden");
-        if (valueEl) {
-            valueEl.classList.remove("hidden");
-            if (typeof marked !== "undefined") {
-                const raw = marked.parse(body);
-                const html =
-                    typeof DOMPurify !== "undefined"
-                        ? DOMPurify.sanitize(raw)
-                        : raw;
-                valueEl.innerHTML = html;
-            }
-        }
+        updateMarkdownPreview(contentTextarea.value, previewDiv, {
+            placeholderEl: placeholder,
+            valueEl: valueEl,
+        });
     }
 
     async function getNextReadingOrder() {

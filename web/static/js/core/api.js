@@ -1,3 +1,5 @@
+import { parseErrorFromText } from "./errors.js";
+
 function handleResponse(response, path) {
     if (response.status === 401) {
         // Don't redirect for auth endpoints - let them handle the error
@@ -35,30 +37,11 @@ async function handleError(response) {
     if (response.status === 409) {
         throw new Error("Conflict - please refresh the page");
     }
-    
+
     const contentType = response.headers.get("Content-Type") || "";
-    let message = "Request failed";
     const text = await response.text();
-    
-    if (contentType.includes("application/json") && text) {
-        try {
-            const data = JSON.parse(text);
-            if (data.error) {
-                message = data.error;
-            } else if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-                const parts = data.errors.map((e) => {
-                    const m = e.Message || e.message || String(e);
-                    return e.Field ? `${e.Field}: ${m}` : m;
-                });
-                message = parts.join("; ");
-            }
-        } catch (_) {
-            message = text || message;
-        }
-    } else {
-        message = text || message;
-    }
-    
+    const message = parseErrorFromText(text, contentType) || "Request failed";
+
     throw new Error(message);
 }
 

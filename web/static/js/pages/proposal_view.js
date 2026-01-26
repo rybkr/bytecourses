@@ -1,5 +1,4 @@
 import api from "../core/api.js";
-import Modal from "../components/Modal.js";
 import { $ } from "../core/dom.js";
 import { showError, hideError, confirmAction, deleteProposal } from "../core/utils.js";
 
@@ -21,9 +20,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteBtn = $("#deleteBtn");
     const createCourseBtn = $("#createCourseBtn");
     const errorDiv = $("#error-message");
-    const createCourseModal = $("#create-course-modal")
-        ? new Modal("#create-course-modal")
-        : null;
 
     if (submitBtn) {
         async function submit() {
@@ -108,17 +104,24 @@ document.addEventListener("DOMContentLoaded", () => {
         deleteBtn.addEventListener("click", handleDelete);
     }
 
-    if (createCourseBtn && createCourseModal) {
-        createCourseBtn.addEventListener("click", () => {
-            createCourseModal.open();
-        });
-    }
-
-    const confirmCreateCourseBtn = $("#confirm-create-course");
-    if (confirmCreateCourseBtn) {
+    if (createCourseBtn) {
         async function createCourse() {
+            const confirmed = await confirmAction(
+                "Your proposal will be copied into a draft course. Once published, your course will be visible to students.",
+                {
+                    title: "Create Course from Proposal?",
+                    confirmText: "Create Course",
+                    confirmButtonClass: "btn-primary",
+                    variant: "info",
+                }
+            );
+
+            if (!confirmed) {
+                return;
+            }
+
             hideError(errorDiv);
-            confirmCreateCourseBtn.disabled = true;
+            createCourseBtn.disabled = true;
 
             try {
                 const response = await api.post(
@@ -126,9 +129,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
                 if (response) {
                     const course = await response.json();
-                    if (createCourseModal) {
-                        createCourseModal.close();
-                    }
                     window.location.href = `/courses/${course.id}/edit`;
                 }
             } catch (error) {
@@ -149,11 +149,11 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                 }
                 showError(error.message || "Create course failed", errorDiv);
-                confirmCreateCourseBtn.disabled = false;
+                createCourseBtn.disabled = false;
             }
         }
 
-        confirmCreateCourseBtn.addEventListener("click", createCourse);
+        createCourseBtn.addEventListener("click", createCourse);
     }
 
     const approveBtn = $("#approveBtn");

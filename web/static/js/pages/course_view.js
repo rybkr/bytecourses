@@ -1,5 +1,6 @@
 import { $, on } from "../core/dom.js";
 import api from "../core/api.js";
+import { confirmAction } from "../core/utils.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const accordionHeaders = document.querySelectorAll(
@@ -49,9 +50,17 @@ document.addEventListener("DOMContentLoaded", () => {
             const courseId = unenrollBtn.dataset.courseId;
             if (!courseId) return;
 
-            if (!confirm("Are you sure you want to unenroll from this course?")) {
-                return;
-            }
+            const confirmed = await confirmAction(
+                "You will lose access to your progress and any course materials. You can re-enroll at any time.",
+                {
+                    title: "Unenroll from Course?",
+                    confirmText: "Unenroll",
+                    confirmButtonClass: "btn-danger",
+                    variant: "warning",
+                }
+            );
+
+            if (!confirmed) return;
 
             unenrollBtn.disabled = true;
             unenrollBtn.textContent = "Unenrolling...";

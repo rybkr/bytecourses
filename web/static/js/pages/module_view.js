@@ -1,5 +1,6 @@
 import api from "../core/api.js";
 import { $, on } from "../core/dom.js";
+import { showErrorToast } from "../components/Toast.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const pathMatch = window.location.pathname.match(
@@ -13,25 +14,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!courseId || !moduleId) return;
 
-    function showToast(message, type = "info") {
-        const existing = document.querySelector(".toast");
-        if (existing) existing.remove();
-
-        const toast = document.createElement("div");
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(() => {
-            toast.classList.add("show");
-        });
-
-        setTimeout(() => {
-            toast.classList.remove("show");
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
     const publishModuleBtn = $(".publish-module-btn");
     if (publishModuleBtn) {
         publishModuleBtn.addEventListener("click", async () => {
@@ -41,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 );
                 window.location.reload();
             } catch (err) {
-                showToast(err.message || "Failed to publish module", "error");
+                showErrorToast(err.message || "Failed to publish module");
             }
         });
     }
@@ -64,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await api.post(`${base}/actions/publish`);
                 window.location.reload();
             } catch (err) {
-                showToast(err.message || "Failed to publish", "error");
+                showErrorToast(err.message || "Failed to publish");
             }
             return;
         }
@@ -75,7 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await api.post(`${base}/actions/unpublish`);
                 window.location.reload();
             } catch (err) {
-                showToast(err.message || "Failed to unpublish", "error");
+                showErrorToast(err.message || "Failed to unpublish");
             }
         }
     });

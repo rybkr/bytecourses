@@ -1,6 +1,9 @@
 import ConfirmationModal from "../components/ConfirmationModal.js";
 import api from "./api.js";
 
+// Re-export from errors.js for backward compatibility
+export { extractErrorMessage } from "./errors.js";
+
 export function escapeHtml(text) {
     if (!text) return "";
     const div = document.createElement("div");
@@ -36,33 +39,6 @@ export function hideError(container) {
     if (!container) return;
     container.textContent = "";
     container.classList.add("hidden");
-}
-
-export async function extractErrorMessage(response) {
-    const contentType = response.headers.get("Content-Type") || "";
-    let message = "";
-    const text = await response.text();
-
-    if (contentType.includes("application/json") && text) {
-        try {
-            const data = JSON.parse(text);
-            if (data.error) {
-                message = data.error;
-            } else if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-                const parts = data.errors.map((e) => {
-                    const m = e.Message || e.message || String(e);
-                    return e.Field ? `${e.Field}: ${m}` : m;
-                });
-                message = parts.join("; ");
-            }
-        } catch (_) {
-            message = text || "";
-        }
-    } else {
-        message = text || "";
-    }
-
-    return message;
 }
 
 export async function confirmAction(message, options = {}) {

@@ -5,6 +5,8 @@
         <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}" class="btn btn-secondary">View</a>
     </div>
 
+    <div id="lecture-error" class="error-message hidden"></div>
+
     <div class="lecture-edit-header">
         <div class="lecture-edit-header-left">
             <input type="text" id="lecture-title" class="lecture-title-input" value="{{.Reading.Title}}" placeholder="Reading title...">

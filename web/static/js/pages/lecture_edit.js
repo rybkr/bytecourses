@@ -1,6 +1,7 @@
 import api from "../core/api.js";
-import { debounce } from "../core/utils.js";
+import { debounce, showError, hideError } from "../core/utils.js";
 import { $ } from "../core/dom.js";
+import { updateMarkdownPreview } from "../core/markdown.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     const { courseId, moduleId, readingId, order } = window.LECTURE_DATA || {};
@@ -14,6 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const saveBtn = $("#save-btn");
     const publishBtn = $("#publish-btn");
     const unpublishBtn = $("#unpublish-btn");
+    const errorContainer = $("#lecture-error");
 
     let lastSavedTitle = titleInput.value;
     let lastSavedContent = contentTextarea.value;
@@ -22,14 +24,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`;
 
     function updatePreview() {
-        if (typeof marked !== "undefined") {
-            const raw = marked.parse(contentTextarea.value || "");
-            const html =
-                typeof DOMPurify !== "undefined"
-                    ? DOMPurify.sanitize(raw)
-                    : raw;
-            previewDiv.innerHTML = `<div class="proposal-content-value">${html}</div>`;
-        }
+        updateMarkdownPreview(contentTextarea.value, previewDiv, {
+            wrapperClass: "proposal-content-value",
+        });
     }
 
     function updateSaveStatus(type, text) {
@@ -60,6 +57,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         isSaving = true;
         updateSaveStatus("saving", "Saving...");
+        hideError(errorContainer);
 
         try {
             await api.patch(apiUrl, {
@@ -75,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
             updateSaveStatus("saved", "Saved");
         } catch (error) {
             updateSaveStatus("error", "Failed to save");
+            showError(error.message || "Failed to save", errorContainer);
         } finally {
             isSaving = false;
         }
@@ -113,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await api.post(`${apiUrl}/actions/publish`);
                 window.location.reload();
             } catch (error) {
-                alert(error.message || "Failed to publish");
+                showError(error.message || "Failed to publish", errorContainer);
             }
         });
     }
@@ -126,7 +125,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 await api.post(`${apiUrl}/actions/unpublish`);
                 window.location.reload();
             } catch (error) {
-                alert(error.message || "Failed to unpublish");
+                showError(error.message || "Failed to unpublish", errorContainer);
             }
         });
     }

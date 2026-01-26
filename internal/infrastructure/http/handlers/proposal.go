@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 	"strings"
@@ -51,7 +50,7 @@ func (r *CreateProposalRequest) ToCommand(authorID int64) *services.CreatePropos
 func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -62,7 +61,7 @@ func (h *ProposalHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	proposal, err := h.Service.Create(r.Context(), req.ToCommand(user.ID))
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -96,13 +95,13 @@ func (r *UpdateProposalRequest) ToCommand(proposalID, userID int64) *services.Up
 func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -112,7 +111,7 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.Update(r.Context(), req.ToCommand(proposalID, user.ID)); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -122,13 +121,13 @@ func (h *ProposalHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -136,7 +135,7 @@ func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 		ProposalID: proposalID,
 		UserID:     user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -146,13 +145,13 @@ func (h *ProposalHandler) Submit(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -160,7 +159,7 @@ func (h *ProposalHandler) Withdraw(w http.ResponseWriter, r *http.Request) {
 		ProposalID: proposalID,
 		UserID:     user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -174,13 +173,13 @@ type ReviewProposalRequest struct {
 func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -194,7 +193,7 @@ func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
 		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
 		ReviewerID:  user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -204,13 +203,13 @@ func (h *ProposalHandler) Approve(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -224,7 +223,7 @@ func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
 		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
 		ReviewerID:  user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -234,13 +233,13 @@ func (h *ProposalHandler) Reject(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -254,7 +253,7 @@ func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request)
 		ReviewNotes: strings.TrimSpace(req.ReviewNotes),
 		ReviewerID:  user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -264,13 +263,13 @@ func (h *ProposalHandler) RequestChanges(w http.ResponseWriter, r *http.Request)
 func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -278,7 +277,7 @@ func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		ProposalID: proposalID,
 		UserID:     user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -288,13 +287,13 @@ func (h *ProposalHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -304,7 +303,7 @@ func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
 		UserRole:   user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -314,7 +313,7 @@ func (h *ProposalHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -323,7 +322,7 @@ func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -333,13 +332,13 @@ func (h *ProposalHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ProposalHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	proposalID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -348,19 +347,7 @@ func (h *ProposalHandler) CreateCourse(w http.ResponseWriter, r *http.Request) {
 		UserID:     user.ID,
 	})
 	if err != nil {
-		if err == errors.ErrConflict {
-			existing, _ := h.CourseService.Courses.GetByProposalID(r.Context(), proposalID)
-			if existing != nil {
-				w.Header().Set("Content-Type", "application/json")
-				w.WriteHeader(http.StatusConflict)
-				_ = json.NewEncoder(w).Encode(map[string]interface{}{
-					"error":     "course already exists for this proposal",
-					"course_id": existing.ID,
-				})
-				return
-			}
-		}
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

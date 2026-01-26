@@ -42,13 +42,13 @@ func (r *CreateModuleRequest) ToCommand(courseID, userID int64) *services.Create
 func (h *ModuleHandler) Create(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -59,7 +59,7 @@ func (h *ModuleHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	module, err := h.Service.Create(r.Context(), req.ToCommand(courseID, user.ID))
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -85,13 +85,13 @@ func (r *UpdateModuleRequest) ToCommand(moduleID, userID int64) *services.Update
 func (h *ModuleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -101,7 +101,7 @@ func (h *ModuleHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.Update(r.Context(), req.ToCommand(moduleID, user.ID)); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -111,13 +111,13 @@ func (h *ModuleHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *ModuleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -125,7 +125,7 @@ func (h *ModuleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		ModuleID: moduleID,
 		UserID:   user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -135,13 +135,13 @@ func (h *ModuleHandler) Delete(w http.ResponseWriter, r *http.Request) {
 func (h *ModuleHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -149,7 +149,7 @@ func (h *ModuleHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		ModuleID: moduleID,
 		UserID:   user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -159,13 +159,13 @@ func (h *ModuleHandler) Publish(w http.ResponseWriter, r *http.Request) {
 func (h *ModuleHandler) List(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -175,7 +175,7 @@ func (h *ModuleHandler) List(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 	if modules == nil {
@@ -188,19 +188,19 @@ func (h *ModuleHandler) List(w http.ResponseWriter, r *http.Request) {
 func (h *ModuleHandler) Get(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid course id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
 	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid module id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -211,7 +211,7 @@ func (h *ModuleHandler) Get(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

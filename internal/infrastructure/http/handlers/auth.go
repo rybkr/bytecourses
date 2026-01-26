@@ -43,7 +43,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.Service.Register(r.Context(), req.ToCommand())
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -70,7 +70,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	sessionID, err := h.Service.Login(r.Context(), req.ToCommand())
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -111,7 +111,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -132,7 +132,7 @@ func (r *UpdateProfileRequest) ToCommand(userID int64) *services.UpdateProfileCo
 func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -143,7 +143,7 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 
 	err := h.Service.UpdateProfile(r.Context(), req.ToCommand(user.ID))
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -153,7 +153,7 @@ func (h *AuthHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 func (h *AuthHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -161,7 +161,7 @@ func (h *AuthHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		UserID: user.ID,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -210,7 +210,7 @@ func (h *AuthHandler) ConfirmPasswordReset(w http.ResponseWriter, r *http.Reques
 
 	token := r.URL.Query().Get("token")
 	if err := h.Service.ConfirmPasswordReset(r.Context(), req.ToCommand(token)); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

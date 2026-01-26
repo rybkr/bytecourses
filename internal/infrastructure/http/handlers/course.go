@@ -46,13 +46,13 @@ func (r *UpdateCourseRequest) ToCommand(courseID, userID int64) *services.Update
 func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -62,7 +62,7 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.Service.Update(r.Context(), req.ToCommand(courseID, user.ID)); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -72,13 +72,13 @@ func (h *CourseHandler) Update(w http.ResponseWriter, r *http.Request) {
 func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
 		CourseID: courseID,
 		UserID:   user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -96,13 +96,13 @@ func (h *CourseHandler) Publish(w http.ResponseWriter, r *http.Request) {
 func (h *CourseHandler) Get(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
 	courseID, err := strconv.ParseInt(chi.URLParam(r, "id"), 10, 64)
 	if err != nil {
-		http.Error(w, "invalid id", http.StatusBadRequest)
+		handleError(w, r, errors.ErrInvalidInput)
 		return
 	}
 
@@ -112,7 +112,7 @@ func (h *CourseHandler) Get(w http.ResponseWriter, r *http.Request) {
 		UserRole: user.Role,
 	})
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 
@@ -122,7 +122,7 @@ func (h *CourseHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *CourseHandler) List(w http.ResponseWriter, r *http.Request) {
 	courses, err := h.Service.List(r.Context())
 	if err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 	if courses == nil {

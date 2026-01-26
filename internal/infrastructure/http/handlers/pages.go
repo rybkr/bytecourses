@@ -844,7 +844,7 @@ func (h *PageHandler) ProposalView(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if proposal.Status == domain.ProposalStatusApproved && proposal.AuthorID == user.ID {
-		existing, ok := h.courseService.Courses.GetByProposalID(r.Context(), proposalID)
+		existing, ok := h.courseService.GetByProposalID(r.Context(), proposalID)
 		if ok && existing != nil {
 			pd.CourseExists = true
 			pd.ExistingCourseID = &existing.ID
@@ -1047,40 +1047,6 @@ func (h *PageHandler) LectureView(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		handlePageError(w, r, errors.ErrInvalidInput)
 		return
-	}
-
-	course, err := h.courseService.Get(r.Context(), &services.GetCourseQuery{
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
-	})
-	if err != nil {
-		handlePageError(w, r, err)
-		return
-	}
-
-	module, err := h.moduleService.Get(r.Context(), &services.GetModuleQuery{
-		ModuleID: moduleID,
-		CourseID: courseID,
-		UserID:   user.ID,
-		UserRole: user.Role,
-	})
-	if err != nil {
-		handlePageError(w, r, err)
-		return
-	}
-
-	isInstructor := course.IsTaughtBy(user)
-
-	var isEnrolled bool
-	if !isInstructor {
-		enrolled, err := h.enrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
-			CourseID: courseID,
-			UserID:   user.ID,
-		})
-		if err == nil {
-			isEnrolled = enrolled
-		}
 	}
 
 	pd := ReadingPageData{

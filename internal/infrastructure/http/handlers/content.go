@@ -221,7 +221,7 @@ func (h *ContentHandler) Publish(w http.ResponseWriter, r *http.Request) {
 func (h *ContentHandler) Unpublish(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
-		handleError(w, errors.ErrInvalidCredentials)
+		handleError(w, r, errors.ErrInvalidCredentials)
 		return
 	}
 
@@ -253,7 +253,7 @@ func (h *ContentHandler) Unpublish(w http.ResponseWriter, r *http.Request) {
 		ContentID: contentID,
 		UserID:    user.ID,
 	}); err != nil {
-		handleError(w, err)
+		handleError(w, r, err)
 		return
 	}
 

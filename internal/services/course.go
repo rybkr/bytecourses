@@ -192,3 +192,7 @@ func (s *CourseService) Get(ctx context.Context, query *GetCourseQuery) (*domain
 func (s *CourseService) List(ctx context.Context) ([]domain.Course, error) {
 	return s.Courses.ListAllLive(ctx)
 }
+
+func (s *CourseService) GetByProposalID(ctx context.Context, proposalID int64) (*domain.Course, bool) {
+	return s.Courses.GetByProposalID(ctx, proposalID)
+}

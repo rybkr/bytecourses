@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
@@ -86,6 +87,87 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 const maxUploadSize = 50 << 20 // 50 MB
 
+var allowedFileTypes = map[string][]string{
+	".pdf":  {"application/pdf"},
+	".doc":  {"application/msword"},
+	".docx": {"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},
+	".ppt":  {"application/vnd.ms-powerpoint"},
+	".pptx": {"application/vnd.openxmlformats-officedocument.presentationml.presentation"},
+	".jpg":  {"image/jpeg"},
+	".jpeg": {"image/jpeg"},
+	".png":  {"image/png"},
+	".gif":  {"image/gif"},
+	".svg":  {"image/svg+xml"},
+	".webp": {"image/webp"},
+	".zip":  {"application/zip"},
+	".xls":  {"application/vnd.ms-excel"},
+	".xlsx": {"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+	".csv":  {"text/csv", "text/plain"},
+	".txt":  {"text/plain"},
+}
+
+func validateFileType(filename, mimeType string, content io.Reader) (io.Reader, error) {
+	ext := strings.ToLower(filepath.Ext(filename))
+	if ext == "" {
+		return nil, errors.NewAppError(http.StatusBadRequest, "File type not allowed. File must have an extension.")
+	}
+
+	allowedMimeTypes, ok := allowedFileTypes[ext]
+	if !ok {
+		allowedTypes := make([]string, 0, len(allowedFileTypes))
+		for k := range allowedFileTypes {
+			allowedTypes = append(allowedTypes, strings.ToUpper(k[1:]))
+		}
+		return nil, errors.NewAppError(http.StatusBadRequest, fmt.Sprintf("File type not allowed. Allowed types: %s", strings.Join(allowedTypes, ", ")))
+	}
+
+	mimeType = strings.ToLower(strings.TrimSpace(mimeType))
+	if mimeType == "" || mimeType == "application/octet-stream" {
+		mimeType = ""
+	}
+
+	var detectedMimeType string
+	buf := make([]byte, 512)
+	n, err := content.Read(buf)
+	if err != nil && err != io.EOF {
+		return nil, errors.NewAppError(http.StatusBadRequest, "Failed to read file content")
+	}
+
+	if n > 0 {
+		detectedMimeType = http.DetectContentType(buf[:n])
+		detectedMimeType = strings.ToLower(strings.Split(detectedMimeType, ";")[0])
+	}
+
+	if mimeType != "" {
+		found := false
+		for _, allowed := range allowedMimeTypes {
+			if strings.ToLower(allowed) == mimeType {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return nil, errors.NewAppError(http.StatusBadRequest, fmt.Sprintf("MIME type '%s' not allowed for file extension '%s'", mimeType, ext))
+		}
+	}
+
+	if detectedMimeType != "" {
+		matched := false
+		for _, allowed := range allowedMimeTypes {
+			if strings.ToLower(allowed) == detectedMimeType {
+				matched = true
+				break
+			}
+		}
+		if !matched && mimeType != "" {
+			return nil, errors.NewAppError(http.StatusBadRequest, fmt.Sprintf("File content does not match declared MIME type. Detected: %s", detectedMimeType))
+		}
+	}
+
+	combinedReader := io.MultiReader(bytes.NewReader(buf[:n]), content)
+	return combinedReader, nil
+}
+
 func (h *ContentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	user, ok := middleware.UserFromContext(r.Context())
 	if !ok {
@@ -118,6 +200,13 @@ func (h *ContentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	mimeType := header.Header.Get("Content-Type")
+	validatedContent, err := validateFileType(header.Filename, mimeType, file)
+	if err != nil {
+		handleError(w, r, err)
+		return
+	}
+
 	title := strings.TrimSpace(r.FormValue("title"))
 	if title == "" {
 		title = header.Filename
@@ -131,7 +220,6 @@ func (h *ContentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	ext := filepath.Ext(header.Filename)
 	storageName := fmt.Sprintf("%d/%d_%d%s", moduleID, time.Now().UnixNano(), user.ID, ext)
 
-	mimeType := header.Header.Get("Content-Type")
 	if mimeType == "" {
 		mimeType = "application/octet-stream"
 	}
@@ -144,7 +232,7 @@ func (h *ContentHandler) Upload(w http.ResponseWriter, r *http.Request) {
 		FileSize: header.Size,
 		MimeType: mimeType,
 		UserID:   user.ID,
-		Content:  file,
+		Content:  validatedContent,
 	})
 	if err != nil {
 		handleError(w, r, err)

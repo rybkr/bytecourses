@@ -4,6 +4,14 @@ import (
 	"time"
 )
 
+type ContentItem interface {
+	Type() ContentType
+}
+
+var (
+	_ ContentItem = (*Reading)(nil)
+)
+
 type ContentStatus string
 
 const (
@@ -15,14 +23,6 @@ type ContentType string
 
 const (
 	ContentTypeReading ContentType = "reading"
-)
-
-type ContentItem interface {
-	Type() ContentType
-}
-
-var (
-	_ ContentItem = (*Reading)(nil)
 )
 
 type BaseContentItem struct {
@@ -39,6 +39,8 @@ type ReadingFormat string
 
 const (
 	ReadingFormatMarkdown ReadingFormat = "markdown"
+	ReadingFormatPlain    ReadingFormat = "plain"
+	ReadingFormatHTML     ReadingFormat = "html"
 )
 
 type Reading struct {

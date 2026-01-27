@@ -4,8 +4,17 @@ DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'reading_format') THEN
         CREATE TYPE reading_format AS ENUM (
-            'markdown'
+            'markdown',
+            'plain',
+            'html'
         );
+    ELSE
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'plain' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'reading_format')) THEN
+            ALTER TYPE reading_format ADD VALUE 'plain';
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM pg_enum WHERE enumlabel = 'html' AND enumtypid = (SELECT oid FROM pg_type WHERE typname = 'reading_format')) THEN
+            ALTER TYPE reading_format ADD VALUE 'html';
+        END IF;
     END IF;
 END $$;
 -- +goose StatementEnd

@@ -61,7 +61,8 @@ func (c *CreateContentCommand) Validate(v *validation.Validator) {
 	v.Field(c.UserID, "user_id").EntityID()
 	if c.Type == domain.ContentTypeReading {
 		v.Field(c.Format, "format").Required()
-		if c.Format == string(domain.ReadingFormatMarkdown) {
+		format := domain.ReadingFormat(c.Format)
+		if format == domain.ReadingFormatMarkdown {
 			v.Field(c.Content, "content").Required()
 		}
 	}
@@ -94,7 +95,8 @@ func (s *ContentService) createReading(ctx context.Context, cmd *CreateContentCo
 		return nil, errors.ErrNotFound
 	}
 
-	if cmd.Format != string(domain.ReadingFormatMarkdown) {
+	format := domain.ReadingFormat(cmd.Format)
+	if format != domain.ReadingFormatMarkdown && format != domain.ReadingFormatPlain && format != domain.ReadingFormatHTML {
 		return nil, errors.ErrInvalidInput
 	}
 
@@ -105,7 +107,7 @@ func (s *ContentService) createReading(ctx context.Context, cmd *CreateContentCo
 			Order:    cmd.Order,
 			Status:   domain.ContentStatusDraft,
 		},
-		Format:  domain.ReadingFormat(cmd.Format),
+		Format:  format,
 		Content: &cmd.Content,
 	}
 	if err := s.Readings.Create(ctx, &reading); err != nil {
@@ -135,7 +137,8 @@ func (c *UpdateContentCommand) Validate(v *validation.Validator) {
 	v.Field(c.UserID, "user_id").EntityID()
 	if c.Type == domain.ContentTypeReading {
 		v.Field(c.Format, "format").Required()
-		if c.Format == string(domain.ReadingFormatMarkdown) {
+		format := domain.ReadingFormat(c.Format)
+		if format == domain.ReadingFormatMarkdown {
 			v.Field(c.Content, "content").Required()
 		}
 	}
@@ -173,13 +176,14 @@ func (s *ContentService) updateReading(ctx context.Context, cmd *UpdateContentCo
 		return errors.ErrNotFound
 	}
 
-	if cmd.Format != string(domain.ReadingFormatMarkdown) {
+	format := domain.ReadingFormat(cmd.Format)
+	if format != domain.ReadingFormatMarkdown && format != domain.ReadingFormatPlain && format != domain.ReadingFormatHTML {
 		return errors.ErrInvalidInput
 	}
 
 	reading.Title = cmd.Title
 	reading.Order = cmd.Order
-	reading.Format = domain.ReadingFormat(cmd.Format)
+	reading.Format = format
 	reading.Content = &cmd.Content
 	if err := s.Readings.Update(ctx, reading); err != nil {
 		return err

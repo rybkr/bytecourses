@@ -2,69 +2,104 @@ import api from "../core/api.js";
 import { debounce, showError, hideError } from "../core/utils.js";
 import { $ } from "../core/dom.js";
 import { updateMarkdownPreview } from "../core/markdown.js";
-import {
-    createMarkdownEditor,
-    setupScrollSync,
-    addCustomShortcut,
-} from "../core/markdown-editor.js";
+import { createUnifiedEditor } from "../core/unified-editor.js";
 import { createResizer } from "../core/resizer.js";
 
 document.addEventListener("DOMContentLoaded", () => {
-    const { courseId, moduleId, readingId, order, initialContent: initialContentFromData } = window.LECTURE_DATA || {};
+    const {
+        courseId,
+        moduleId,
+        readingId,
+        order,
+        format: initialFormat,
+        initialContent: initialContentFromData,
+    } = window.LECTURE_DATA || {};
 
     if (!courseId || !moduleId || !readingId) return;
 
     const titleInput = $("#lecture-title");
-    const contentTextarea = $("#lecture-content");
+    const formatSelect = $("#lecture-format");
     const previewDiv = $("#lecture-preview");
     const saveStatus = $("#save-status");
     const saveBtn = $("#save-btn");
     const publishBtn = $("#publish-btn");
     const unpublishBtn = $("#unpublish-btn");
     const errorContainer = $("#lecture-error");
+    const editorContainer = document.getElementById("lecture-editor");
+    const formatLabel = document.getElementById("editor-format-label");
 
     let lastSavedTitle = titleInput.value;
-    let markdownEditor = null;
+    let unifiedEditor = null;
     let lastSavedContent = initialContentFromData || "";
+    let lastSavedFormat = initialFormat || "markdown";
     let isSaving = false;
+    let currentFormat = initialFormat || "markdown";
 
     const apiUrl = `/api/courses/${courseId}/modules/${moduleId}/content/${readingId}`;
 
-    const debouncedUpdatePreview = debounce((content) => {
-        updateMarkdownPreview(content, previewDiv, {
-            wrapperClass: "proposal-content-value",
-        });
+    function updatePreviewForFormat(content, format) {
+        const valueEl = previewDiv?.querySelector(".proposal-content-value");
+        if (!valueEl) return;
+
+        if (!content || content.trim() === "") {
+            valueEl.innerHTML = "";
+            return;
+        }
+
+        if (format === "markdown") {
+            updateMarkdownPreview(content, previewDiv, {
+                wrapperClass: "proposal-content-value",
+            });
+        } else if (format === "html") {
+            const sanitized = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize(content) : content;
+            valueEl.innerHTML = sanitized;
+        } else {
+            const pre = document.createElement("pre");
+            pre.style.whiteSpace = "pre-wrap";
+            pre.textContent = content;
+            valueEl.innerHTML = "";
+            valueEl.appendChild(pre);
+        }
+    }
+
+    const debouncedUpdatePreview = debounce((content, format) => {
+        updatePreviewForFormat(content, format);
     }, 300);
 
-    function updatePreview(content) {
-        debouncedUpdatePreview(content);
+    function updatePreview(content, format) {
+        debouncedUpdatePreview(content, format || currentFormat);
     }
 
     try {
-        const editorContainer = document.getElementById("lecture-editor");
-        markdownEditor = createMarkdownEditor(contentTextarea, {
+        unifiedEditor = createUnifiedEditor(editorContainer, {
             initialValue: initialContentFromData || "",
-            placeholder: "Write your reading content here using Markdown...",
-            lineNumbers: true,
-            customPreviewElement: previewDiv,
+            initialFormat: currentFormat,
+            placeholder: "Write your content here...",
+            previewElement: previewDiv,
             editorContainer: editorContainer,
+            onFormatChange: async (newFormat, content) => {
+                currentFormat = newFormat;
+                const formatNames = {
+                    markdown: "Markdown",
+                    plain: "Plain Text",
+                    html: "Rich Text",
+                };
+                if (formatLabel) {
+                    formatLabel.textContent = formatNames[newFormat] || newFormat;
+                }
+                updatePreview(content, newFormat);
+            },
             onUpdate: (content) => {
-                updatePreview(content);
+                updatePreview(content, currentFormat);
             },
         });
-
-        addCustomShortcut(markdownEditor.editor, "Mod-s", () => {
-            save(titleInput.value.trim(), markdownEditor.getValue());
-        });
-
-        setupScrollSync(markdownEditor.editor, previewDiv);
 
         const leftPane = document.querySelector(".lecture-editor-pane:first-child");
         const rightPane = document.querySelector(".lecture-editor-pane:last-child");
         const resizer = document.getElementById("editor-resizer");
         if (resizer && leftPane && rightPane) {
             createResizer(resizer, leftPane, rightPane, {
-                storageKey: "markdown-editor-split",
+                storageKey: "unified-editor-split",
                 defaultRatio: 0.5,
                 minLeftWidth: 200,
                 minRightWidth: 200,
@@ -73,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const togglePreviewBtn = document.getElementById("toggle-preview-btn");
         const toggleMarkdownBtn = document.getElementById("toggle-markdown-btn");
-        const storageKey = "markdown-editor-mode";
+        const storageKey = "unified-editor-mode";
 
         function setEditorMode(mode) {
             if (!editorContainer) return;
@@ -132,10 +167,17 @@ document.addEventListener("DOMContentLoaded", () => {
             }, 100);
         });
 
-        lastSavedContent = markdownEditor.getValue();
-        updatePreview(lastSavedContent);
+        if (formatSelect) {
+            formatSelect.addEventListener("change", async (e) => {
+                const newFormat = e.target.value;
+                await unifiedEditor.setFormat(newFormat);
+            });
+        }
+
+        lastSavedContent = unifiedEditor.getValue();
+        updatePreview(lastSavedContent, currentFormat);
     } catch (error) {
-        console.error("Failed to initialize markdown editor:", error);
+        console.error("Failed to initialize editor:", error);
         showError("Failed to load editor. Please refresh the page.", errorContainer);
     }
 
@@ -152,14 +194,17 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    async function save(title, content) {
-        if (isSaving || !markdownEditor) return;
+    async function save(title, content, format) {
+        if (isSaving || !unifiedEditor) return;
 
         const currentTitle = title !== undefined ? title : titleInput.value.trim();
         const currentContent =
-            content !== undefined ? content : markdownEditor.getValue();
+            content !== undefined ? content : unifiedEditor.getValue();
+        const currentFormatValue = format !== undefined ? format : unifiedEditor.getFormat();
         const hasChanges =
-            currentTitle !== lastSavedTitle || currentContent !== lastSavedContent;
+            currentTitle !== lastSavedTitle ||
+            currentContent !== lastSavedContent ||
+            currentFormatValue !== lastSavedFormat;
 
         if (!hasChanges) {
             updateSaveStatus("saved", "Saved");
@@ -171,16 +216,22 @@ document.addEventListener("DOMContentLoaded", () => {
         hideError(errorContainer);
 
         try {
+            let sanitizedContent = currentContent;
+            if (currentFormatValue === "html" && typeof DOMPurify !== "undefined") {
+                sanitizedContent = DOMPurify.sanitize(currentContent);
+            }
+
             await api.patch(apiUrl, {
                 type: "reading",
                 title: currentTitle,
                 order: order ?? 0,
-                format: "markdown",
-                content: currentContent,
+                format: currentFormatValue,
+                content: sanitizedContent,
             });
 
             lastSavedTitle = currentTitle;
             lastSavedContent = currentContent;
+            lastSavedFormat = currentFormatValue;
             updateSaveStatus("saved", "Saved");
         } catch (error) {
             updateSaveStatus("error", "Failed to save");
@@ -191,30 +242,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const scheduleAutosave = debounce(() => {
-        if (!markdownEditor) return;
+        if (!unifiedEditor) return;
         const currentTitle = titleInput.value.trim();
-        const currentContent = markdownEditor.getValue();
+        const currentContent = unifiedEditor.getValue();
+        const currentFormatValue = unifiedEditor.getFormat();
 
         if (
             currentTitle !== lastSavedTitle ||
-            currentContent !== lastSavedContent
+            currentContent !== lastSavedContent ||
+            currentFormatValue !== lastSavedFormat
         ) {
-            save(currentTitle, currentContent);
+            save(currentTitle, currentContent, currentFormatValue);
         }
     }, 2000);
 
     titleInput.addEventListener("input", scheduleAutosave);
 
     saveBtn.addEventListener("click", () => {
-        if (markdownEditor) {
-            save(titleInput.value.trim(), markdownEditor.getValue());
+        if (unifiedEditor) {
+            save(
+                titleInput.value.trim(),
+                unifiedEditor.getValue(),
+                unifiedEditor.getFormat(),
+            );
         }
     });
 
     if (publishBtn) {
         publishBtn.addEventListener("click", async () => {
-            if (markdownEditor) {
-                await save(titleInput.value.trim(), markdownEditor.getValue());
+            if (unifiedEditor) {
+                await save(
+                    titleInput.value.trim(),
+                    unifiedEditor.getValue(),
+                    unifiedEditor.getFormat(),
+                );
             }
 
             try {
@@ -228,8 +289,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (unpublishBtn) {
         unpublishBtn.addEventListener("click", async () => {
-            if (markdownEditor) {
-                await save(titleInput.value.trim(), markdownEditor.getValue());
+            if (unifiedEditor) {
+                await save(
+                    titleInput.value.trim(),
+                    unifiedEditor.getValue(),
+                    unifiedEditor.getFormat(),
+                );
             }
 
             try {
@@ -242,11 +307,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     window.addEventListener("beforeunload", (e) => {
-        if (!markdownEditor) return;
-        const currentContent = markdownEditor.getValue();
+        if (!unifiedEditor) return;
+        const currentContent = unifiedEditor.getValue();
+        const currentFormatValue = unifiedEditor.getFormat();
         const hasUnsavedChanges =
             titleInput.value.trim() !== lastSavedTitle ||
-            currentContent !== lastSavedContent;
+            currentContent !== lastSavedContent ||
+            currentFormatValue !== lastSavedFormat;
 
         if (hasUnsavedChanges) {
             e.preventDefault();

@@ -28,7 +28,15 @@
 
     <div class="lecture-view-content">
         {{if .Reading.Content}}
+        {{if eq .Reading.Format "markdown"}}
         <div class="proposal-content-value">{{markdown .Reading.Content}}</div>
+        {{else if eq .Reading.Format "html"}}
+        <div class="proposal-content-value">{{sanitizeHTML .Reading.Content}}</div>
+        {{else}}
+        <div class="proposal-content-value">
+            <pre style="white-space: pre-wrap;">{{.Reading.Content}}</pre>
+        </div>
+        {{end}}
         {{else}}
         <p class="text-muted">No content available yet.</p>
         {{end}}
@@ -45,9 +53,9 @@
 
 <script>
     window.LECTURE_VIEW_DATA = {
-        courseId: {{.Course.ID}},
-        moduleId: {{.Module.ID}},
-        readingId: {{.Reading.ID}}
+        courseId: {{.Course.ID }},
+    moduleId: { {.Module.ID } },
+    readingId: { {.Reading.ID } }
     };
 </script>
 {{end}}

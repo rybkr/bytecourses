@@ -94,6 +94,7 @@ func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalServ
 		"add": func(a, b int) int {
 			return a + b
 		},
+		"sanitizeHTML": sanitizeHTML,
 	}
 
 	h := &PageHandler{
@@ -170,6 +171,13 @@ func renderMarkdown(s string) template.HTML {
 		return template.HTML(template.HTMLEscapeString(s))
 	}
 	return template.HTML(buf.String())
+}
+
+func sanitizeHTML(s string) template.HTML {
+	if s == "" {
+		return template.HTML("")
+	}
+	return template.HTML(s)
 }
 
 func (h *PageHandler) render(w http.ResponseWriter, r *http.Request, name string, data any) {

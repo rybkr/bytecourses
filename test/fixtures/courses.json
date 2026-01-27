@@ -1,22 +1,22 @@
 [
-  {
-    "id": 1,
-    "title": "Introduction to Go Programming",
-    "summary": "Learn the fundamentals of Go programming language, including syntax, data structures, concurrency, and best practices.",
-    "target_audience": "Beginners who want to learn Go programming from scratch",
-    "learning_objectives": "- Understand Go syntax and basic concepts\n- Work with Go data structures and types\n- Write concurrent programs using goroutines and channels\n- Build simple command-line and web applications",
-    "assumed_prerequisites": "Basic programming knowledge in any language",
-    "instructor_id": 1,
-    "status": "published"
-  },
-  {
-    "id": 2,
-    "title": "Advanced Go Patterns",
-    "summary": "Explore advanced patterns and techniques in Go, including interfaces, error handling, testing, and performance optimization.",
-    "target_audience": "Intermediate Go developers looking to deepen their understanding",
-    "learning_objectives": "- Master Go interfaces and type assertions\n- Implement effective error handling strategies\n- Write comprehensive tests\n- Optimize Go programs for performance",
-    "assumed_prerequisites": "Solid understanding of Go basics and at least 6 months of Go experience",
-    "instructor_id": 1,
-    "status": "draft"
-  }
+    {
+        "id": 1,
+        "title": "Introduction to Go Programming",
+        "summary": "Learn the fundamentals of Go programming language, including syntax, data structures, concurrency, and best practices.",
+        "target_audience": "Beginners who want to learn Go programming from scratch",
+        "learning_objectives": "- Understand Go syntax and basic concepts\n- Work with Go data structures and types\n- Write concurrent programs using goroutines and channels\n- Build simple command-line and web applications",
+        "assumed_prerequisites": "Basic programming knowledge in any language",
+        "instructor_id": 1,
+        "status": "published"
+    },
+    {
+        "id": 2,
+        "title": "Advanced Go Patterns",
+        "summary": "Explore advanced patterns and techniques in Go, including interfaces, error handling, testing, and performance optimization.",
+        "target_audience": "Intermediate Go developers looking to deepen their understanding",
+        "learning_objectives": "- Master Go interfaces and type assertions\n- Implement effective error handling strategies\n- Write comprehensive tests\n- Optimize Go programs for performance",
+        "assumed_prerequisites": "Solid understanding of Go basics and at least 6 months of Go experience",
+        "instructor_id": 1,
+        "status": "draft"
+    }
 ]

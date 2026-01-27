@@ -1,16 +1,16 @@
 [
-  {
-    "id": 1,
-    "name": "Guest User",
-    "email": "user@bytecourses.org",
-    "password": "user",
-    "role": "user"
-  },
-  {
-    "id": 2,
-    "name": "Admin User",
-    "email": "admin@bytecourses.org",
-    "password": "admin",
-    "role": "admin"
-  }
+    {
+        "id": 1,
+        "name": "Guest User",
+        "email": "user@bytecourses.org",
+        "password": "user",
+        "role": "user"
+    },
+    {
+        "id": 2,
+        "name": "Admin User",
+        "email": "admin@bytecourses.org",
+        "password": "admin",
+        "role": "admin"
+    }
 ]

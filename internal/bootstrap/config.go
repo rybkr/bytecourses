@@ -21,5 +21,6 @@ type Config struct {
 	SeedUsers     string
 	SeedProposals string
 	SeedCourses   string
+	SeedContent   string
 	BaseURL       string
 }

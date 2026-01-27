@@ -1,54 +1,54 @@
 [
-  {
-    "id": 1,
-    "title": "Practical Distributed Systems in Go",
-    "summary": "This course explores how to design and reason about distributed systems using Go, with an emphasis on tradeoffs, failure modes, and operational simplicity rather than academic formalisms.",
-    "qualifications": "I have designed and operated distributed Go services involving queues, background workers, retries, idempotency, and partial failure handling in production environments.",
-    "target_audience": "Intermediate Go developers who want to understand how real distributed systems behave and how to build resilient services.",
-    "learning_objectives": "- Understand common distributed systems failure modes\n- Design idempotent APIs and background jobs\n- Apply retries, backoff, and timeouts correctly\n- Reason about consistency and tradeoffs",
-    "outline": "1. What makes systems distributed\n2. Failure modes and fallacies\n3. Timeouts, retries, and idempotency\n4. Background workers and queues\n5. Consistency models in practice\n6. Observability and debugging",
-    "assumed_prerequisites": "- Solid Go fundamentals\n- Basic HTTP and concurrency knowledge",
-    "status": "draft",
-    "author_id": 1
-  },
-  {
-    "id": 2,
-    "title": "Building Secure APIs in Go",
-    "summary": "Students will learn how to design and implement secure HTTP APIs in Go, covering authentication, authorization, input validation, and common attack vectors.",
-    "qualifications": "I have implemented authentication and authorization systems for production Go APIs, including token-based auth, session security, and password handling.",
-    "target_audience": "Backend developers who want to build APIs that are secure by default.",
-    "learning_objectives": "- Implement secure authentication flows\n- Apply authorization patterns correctly\n- Prevent common web vulnerabilities\n- Validate and sanitize input safely",
-    "outline": "1. Threat modeling basics\n2. Authentication strategies\n3. Authorization patterns\n4. Input validation and encoding\n5. Common attacks and defenses\n6. Security testing and reviews",
-    "assumed_prerequisites": "- Go web development experience\n- Basic understanding of HTTP",
-    "author_id": 1,
-    "status": "submitted"
-  },
-  {
-    "id": 3,
-    "title": "Designing and Shipping a Go Web App",
-    "summary": "In this course, students will build a real-world web application in Go from scratch, focusing on clean architecture, persistence boundaries, authentication, and deployment.",
-    "qualifications": "I built and deployed ByteCourses from scratch, including authentication, persistence, user workflows, and deployment to production infrastructure.",
-    "target_audience": "Intermediate developers who already know basic Go and want to learn how to design, structure, and ship a maintainable backend service.",
-    "learning_objectives": "- Implement authentication, authorization, and session management\n- Design clear domain, handler, service, and persistence boundaries in Go\n- Write effective tests\n- Deploy a production Go service",
-    "outline": "1. Project goals and architectural boundaries\n2. Domain modeling\n3. HTTP handlers and middleware\n4. Persistence\n5. Authentication\n6. Testing\n7. Migrations\n8. Deployment",
-    "assumed_prerequisites": "- Comfortable with Go syntax\n- Basic understanding of HTTP and REST APIs",
-    "author_id": 1,
-    "review_notes": "Looks good!",
-    "reviewer_id": 2,
-    "status": "approved"
-  },
-  {
-    "id": 4,
-    "title": "Testing Go Applications End to End",
-    "summary": "This course focuses on building confidence in Go systems through effective testing strategies across unit, integration, and end-to-end layers.",
-    "qualifications": "I have written and maintained extensive automated test suites for Go services, including database-backed integration tests and full API-level tests.",
-    "target_audience": "Go developers who want to improve test quality and reduce production regressions.",
-    "learning_objectives": "- Structure code for testability\n- Write meaningful unit and integration tests\n- Manage test data\n- Balance test speed and coverage",
-    "outline": "1. Testing philosophy\n2. Unit testing\n3. Integration testing\n4. End-to-end tests\n5. Test data\n6. CI considerations",
-    "assumed_prerequisites": "- Comfortable writing Go code\n- Familiarity with Go’s testing tools",
-    "author_id": 1,
-    "review_notes": "It seems that there should be more prerequisites than you have listed here.",
-    "reviewer_id": 2,
-    "status": "changes_requested"
-  }
+    {
+        "id": 1,
+        "title": "Practical Distributed Systems in Go",
+        "summary": "This course explores how to design and reason about distributed systems using Go, with an emphasis on tradeoffs, failure modes, and operational simplicity rather than academic formalisms.",
+        "qualifications": "I have designed and operated distributed Go services involving queues, background workers, retries, idempotency, and partial failure handling in production environments.",
+        "target_audience": "Intermediate Go developers who want to understand how real distributed systems behave and how to build resilient services.",
+        "learning_objectives": "- Understand common distributed systems failure modes\n- Design idempotent APIs and background jobs\n- Apply retries, backoff, and timeouts correctly\n- Reason about consistency and tradeoffs",
+        "outline": "1. What makes systems distributed\n2. Failure modes and fallacies\n3. Timeouts, retries, and idempotency\n4. Background workers and queues\n5. Consistency models in practice\n6. Observability and debugging",
+        "assumed_prerequisites": "- Solid Go fundamentals\n- Basic HTTP and concurrency knowledge",
+        "status": "draft",
+        "author_id": 1
+    },
+    {
+        "id": 2,
+        "title": "Building Secure APIs in Go",
+        "summary": "Students will learn how to design and implement secure HTTP APIs in Go, covering authentication, authorization, input validation, and common attack vectors.",
+        "qualifications": "I have implemented authentication and authorization systems for production Go APIs, including token-based auth, session security, and password handling.",
+        "target_audience": "Backend developers who want to build APIs that are secure by default.",
+        "learning_objectives": "- Implement secure authentication flows\n- Apply authorization patterns correctly\n- Prevent common web vulnerabilities\n- Validate and sanitize input safely",
+        "outline": "1. Threat modeling basics\n2. Authentication strategies\n3. Authorization patterns\n4. Input validation and encoding\n5. Common attacks and defenses\n6. Security testing and reviews",
+        "assumed_prerequisites": "- Go web development experience\n- Basic understanding of HTTP",
+        "author_id": 1,
+        "status": "submitted"
+    },
+    {
+        "id": 3,
+        "title": "Designing and Shipping a Go Web App",
+        "summary": "In this course, students will build a real-world web application in Go from scratch, focusing on clean architecture, persistence boundaries, authentication, and deployment.",
+        "qualifications": "I built and deployed ByteCourses from scratch, including authentication, persistence, user workflows, and deployment to production infrastructure.",
+        "target_audience": "Intermediate developers who already know basic Go and want to learn how to design, structure, and ship a maintainable backend service.",
+        "learning_objectives": "- Implement authentication, authorization, and session management\n- Design clear domain, handler, service, and persistence boundaries in Go\n- Write effective tests\n- Deploy a production Go service",
+        "outline": "1. Project goals and architectural boundaries\n2. Domain modeling\n3. HTTP handlers and middleware\n4. Persistence\n5. Authentication\n6. Testing\n7. Migrations\n8. Deployment",
+        "assumed_prerequisites": "- Comfortable with Go syntax\n- Basic understanding of HTTP and REST APIs",
+        "author_id": 1,
+        "review_notes": "Looks good!",
+        "reviewer_id": 2,
+        "status": "approved"
+    },
+    {
+        "id": 4,
+        "title": "Testing Go Applications End to End",
+        "summary": "This course focuses on building confidence in Go systems through effective testing strategies across unit, integration, and end-to-end layers.",
+        "qualifications": "I have written and maintained extensive automated test suites for Go services, including database-backed integration tests and full API-level tests.",
+        "target_audience": "Go developers who want to improve test quality and reduce production regressions.",
+        "learning_objectives": "- Structure code for testability\n- Write meaningful unit and integration tests\n- Manage test data\n- Balance test speed and coverage",
+        "outline": "1. Testing philosophy\n2. Unit testing\n3. Integration testing\n4. End-to-end tests\n5. Test data\n6. CI considerations",
+        "assumed_prerequisites": "- Comfortable writing Go code\n- Familiarity with Go’s testing tools",
+        "author_id": 1,
+        "review_notes": "It seems that there should be more prerequisites than you have listed here.",
+        "reviewer_id": 2,
+        "status": "changes_requested"
+    }
 ]

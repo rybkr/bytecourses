@@ -24,6 +24,7 @@ func main() {
 	seedUsers := flag.String("seed-users", "", "path to JSON file containing users to seed")
 	seedProposals := flag.String("seed-proposals", "", "path to JSON file containing proposals to seed")
 	seedCourses := flag.String("seed-courses", "", "path to JSON file containing courses to seed")
+	seedContent := flag.String("seed-content", "", "path to JSON file containing modules and content to seed")
 	flag.Parse()
 
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
@@ -61,6 +62,7 @@ func main() {
 		SeedUsers:     *seedUsers,
 		SeedProposals: *seedProposals,
 		SeedCourses:   *seedCourses,
+		SeedContent:   *seedContent,
 		BaseURL:       os.Getenv("BASE_URL"),
 	}
 

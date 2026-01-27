@@ -1,0 +1,84 @@
+{
+  "modules": [
+    {
+      "id": 1,
+      "course_id": 1,
+      "title": "Getting Started with Go",
+      "description": "Introduction to Go programming basics",
+      "order": 1,
+      "status": "published"
+    },
+    {
+      "id": 2,
+      "course_id": 1,
+      "title": "Go Data Structures",
+      "description": "Working with arrays, slices, maps, and structs",
+      "order": 2,
+      "status": "published"
+    },
+    {
+      "id": 3,
+      "course_id": 1,
+      "title": "Concurrency in Go",
+      "description": "Understanding goroutines and channels",
+      "order": 3,
+      "status": "published"
+    }
+  ],
+  "readings": [
+    {
+      "id": 1,
+      "module_id": 1,
+      "title": "What is Go?",
+      "order": 1,
+      "format": "markdown",
+      "content": "# What is Go?\n\nGo (also known as Golang) is a statically typed, compiled programming language designed at Google by Robert Griesemer, Rob Pike, and Ken Thompson.\n\n## Key Features\n\n- **Simple syntax**: Easy to read and write\n- **Fast compilation**: Compiles quickly to machine code\n- **Concurrent**: Built-in support for concurrent programming\n- **Garbage collected**: Automatic memory management\n\n## Why Learn Go?\n\nGo is perfect for building:\n- Web servers and APIs\n- Command-line tools\n- Cloud services\n- Distributed systems",
+      "status": "published"
+    },
+    {
+      "id": 2,
+      "module_id": 1,
+      "title": "Installing Go",
+      "order": 2,
+      "format": "markdown",
+      "content": "# Installing Go\n\n## Download\n\nVisit [golang.org](https://golang.org/dl/) to download the latest version of Go for your operating system.\n\n## Verify Installation\n\nAfter installation, verify Go is installed correctly:\n\n```bash\ngo version\n```\n\nYou should see output like:\n```\ngo version go1.21.0 darwin/amd64\n```\n\n## Setting Up Your Workspace\n\nGo uses a workspace structure. Set the `GOPATH` environment variable to your workspace directory.",
+      "status": "published"
+    },
+    {
+      "id": 3,
+      "module_id": 2,
+      "title": "Arrays and Slices",
+      "order": 1,
+      "format": "markdown",
+      "content": "# Arrays and Slices\n\n## Arrays\n\nArrays in Go have a fixed size:\n\n```go\nvar arr [5]int\narr[0] = 1\n```\n\n## Slices\n\nSlices are more flexible and commonly used:\n\n```go\nvar slice []int\nslice = append(slice, 1, 2, 3)\n```\n\nSlices are references to underlying arrays, making them efficient for passing around.",
+      "status": "published"
+    },
+    {
+      "id": 4,
+      "module_id": 2,
+      "title": "Maps",
+      "order": 2,
+      "format": "markdown",
+      "content": "# Maps\n\nMaps are Go's built-in associative data type (like dictionaries in Python or hashes in Ruby).\n\n## Creating Maps\n\n```go\n// Using make\nm := make(map[string]int)\n\n// Using literal syntax\nm := map[string]int{\n    \"apple\":  5,\n    \"banana\": 3,\n}\n```\n\n## Accessing Values\n\n```go\nvalue := m[\"apple\"]\nvalue, ok := m[\"apple\"]  // ok is true if key exists\n```",
+      "status": "published"
+    },
+    {
+      "id": 5,
+      "module_id": 3,
+      "title": "Goroutines",
+      "order": 1,
+      "format": "markdown",
+      "content": "# Goroutines\n\nGoroutines are lightweight threads managed by the Go runtime.\n\n## Starting a Goroutine\n\nUse the `go` keyword to start a new goroutine:\n\n```go\nfunc sayHello() {\n    fmt.Println(\"Hello\")\n}\n\ngo sayHello()\n```\n\n## Anonymous Functions\n\nYou can also use anonymous functions:\n\n```go\ngo func() {\n    fmt.Println(\"Hello from goroutine\")\n}()\n```",
+      "status": "published"
+    },
+    {
+      "id": 6,
+      "module_id": 3,
+      "title": "Channels",
+      "order": 2,
+      "format": "markdown",
+      "content": "# Channels\n\nChannels are the pipes that connect concurrent goroutines.\n\n## Creating Channels\n\n```go\nch := make(chan int)\n```\n\n## Sending and Receiving\n\n```go\n// Send\nch <- 42\n\n// Receive\nvalue := <-ch\n```\n\n## Buffered Channels\n\n```go\nch := make(chan int, 2)  // Buffer size of 2\nch <- 1\nch <- 2\n```",
+      "status": "published"
+    }
+  ]
+}

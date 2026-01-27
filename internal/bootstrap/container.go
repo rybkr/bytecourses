@@ -94,6 +94,11 @@ func NewContainer(ctx context.Context, cfg Config) (*Container, error) {
 			return nil, fmt.Errorf("seeding courses: %w", err)
 		}
 	}
+	if cfg.SeedContent != "" {
+		if err := c.seedContent(ctx, cfg.SeedContent); err != nil {
+			return nil, fmt.Errorf("seeding content: %w", err)
+		}
+	}
 
 	return &c, nil
 }
@@ -455,6 +460,160 @@ func (c *Container) seedCourses(ctx context.Context, path string) error {
 
 		if err := c.CourseRepo.Create(ctx, course); err != nil {
 			return fmt.Errorf("creating course %q: %w", sc.Title, err)
+		}
+	}
+
+	return nil
+}
+
+type seedModule struct {
+	ID          int64               `json:"id"`
+	CourseID    int64               `json:"course_id"`
+	Title       string              `json:"title"`
+	Description string              `json:"description"`
+	Order       int                 `json:"order"`
+	Status      domain.ModuleStatus `json:"status"`
+}
+
+type seedReading struct {
+	ID       int64                `json:"id"`
+	ModuleID int64                `json:"module_id"`
+	Title    string               `json:"title"`
+	Order    int                  `json:"order"`
+	Format   domain.ReadingFormat `json:"format"`
+	Content  *string              `json:"content,omitempty"`
+	Status   domain.ContentStatus `json:"status"`
+}
+
+type seedContentData struct {
+	Modules  []seedModule  `json:"modules"`
+	Readings []seedReading `json:"readings"`
+}
+
+func (c *Container) seedContent(ctx context.Context, path string) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("reading file: %w", err)
+	}
+
+	var seedData seedContentData
+	if err := json.Unmarshal(data, &seedData); err != nil {
+		return fmt.Errorf("parsing JSON: %w", err)
+	}
+
+	// Map from seed module ID to actual created module ID
+	// This handles the case where repositories auto-generate IDs
+	moduleIDMap := make(map[int64]int64)
+
+	// First, seed modules
+	for _, sm := range seedData.Modules {
+		// Verify course exists
+		if _, ok := c.CourseRepo.GetByID(ctx, sm.CourseID); !ok {
+			return fmt.Errorf("course %d not found for module %q", sm.CourseID, sm.Title)
+		}
+
+		// Check if module already exists by listing modules for the course
+		// and matching by title and order (since IDs may be auto-generated)
+		existingModules, err := c.ModuleRepo.ListByCourseID(ctx, sm.CourseID)
+		if err != nil {
+			return fmt.Errorf("listing modules for course %d: %w", sm.CourseID, err)
+		}
+
+		var existingModule *domain.Module
+		for i := range existingModules {
+			if existingModules[i].Title == sm.Title && existingModules[i].Order == sm.Order {
+				existingModule = &existingModules[i]
+				break
+			}
+		}
+
+		if existingModule != nil {
+			// Module already exists, use its ID for mapping
+			if sm.ID > 0 {
+				moduleIDMap[sm.ID] = existingModule.ID
+			}
+			continue
+		}
+
+		status := sm.Status
+		if status == "" {
+			status = domain.ModuleStatusDraft
+		}
+
+		module := &domain.Module{
+			CourseID:    sm.CourseID,
+			Title:       sm.Title,
+			Description: sm.Description,
+			Order:       sm.Order,
+			Status:      status,
+		}
+
+		if err := c.ModuleRepo.Create(ctx, module); err != nil {
+			return fmt.Errorf("creating module %q: %w", sm.Title, err)
+		}
+
+		// Map seed ID to actual ID
+		if sm.ID > 0 {
+			moduleIDMap[sm.ID] = module.ID
+		}
+	}
+
+	// Then, seed readings
+	for _, sr := range seedData.Readings {
+		// Resolve actual module ID from mapping
+		actualModuleID := sr.ModuleID
+		if mappedID, ok := moduleIDMap[sr.ModuleID]; ok {
+			actualModuleID = mappedID
+		}
+
+		// Verify module exists
+		if _, ok := c.ModuleRepo.GetByID(ctx, actualModuleID); !ok {
+			return fmt.Errorf("module %d not found for reading %q", sr.ModuleID, sr.Title)
+		}
+
+		// Check if reading already exists by listing readings for the module
+		// and matching by title and order
+		existingReadings, err := c.ReadingRepo.ListByModuleID(ctx, actualModuleID)
+		if err != nil {
+			return fmt.Errorf("listing readings for module %d: %w", actualModuleID, err)
+		}
+
+		var existingReading *domain.Reading
+		for i := range existingReadings {
+			if existingReadings[i].Title == sr.Title && existingReadings[i].Order == sr.Order {
+				existingReading = &existingReadings[i]
+				break
+			}
+		}
+
+		if existingReading != nil {
+			// Reading already exists, skip it
+			continue
+		}
+
+		status := sr.Status
+		if status == "" {
+			status = domain.ContentStatusDraft
+		}
+
+		format := sr.Format
+		if format == "" {
+			format = domain.ReadingFormatMarkdown
+		}
+
+		reading := &domain.Reading{
+			BaseContentItem: domain.BaseContentItem{
+				ModuleID: actualModuleID,
+				Title:    sr.Title,
+				Order:    sr.Order,
+				Status:   status,
+			},
+			Format:  format,
+			Content: sr.Content,
+		}
+
+		if err := c.ReadingRepo.Create(ctx, reading); err != nil {
+			return fmt.Errorf("creating reading %q: %w", sr.Title, err)
 		}
 	}
 

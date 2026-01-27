@@ -24,7 +24,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	proposalHandler := handlers.NewProposalHandler(c.ProposalService, c.CourseService)
 	courseHandler := handlers.NewCourseHandler(c.CourseService)
 	moduleHandler := handlers.NewModuleHandler(c.ModuleService)
-	contentHandler := handlers.NewContentHandler(c.ContentService)
+	contentHandler := handlers.NewContentHandler(c.ContentService, c.EnrollmentService, c.CourseService)
 	enrollmentHandler := handlers.NewEnrollmentHandler(c.EnrollmentService)
 
 	requireUser := middleware.RequireUser(c.SessionStore, c.UserRepo)
@@ -101,8 +101,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 	staticFS, _ := fs.Sub(webFS, "static")
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
 
-	uploadsDir := "./uploads"
-	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadsDir))))
+	r.With(requireUser).Get("/files/{fileId}", contentHandler.Download)
 
 	r.Group(func(r chi.Router) {
 		r.Use(optionalUser)

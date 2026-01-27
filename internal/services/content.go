@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"sort"
 
@@ -693,5 +694,46 @@ func (s *ContentService) Get(ctx context.Context, query *GetContentQuery) (domai
 }
 
 func (s *ContentService) GetFileURL(file *domain.File) string {
-	return s.FileStorage.GetPath(file.StoragePath)
+	return fmt.Sprintf("/files/%d", file.ID)
+}
+
+func (s *ContentService) GetFileContent(ctx context.Context, file *domain.File) (io.ReadCloser, error) {
+	return s.FileStorage.Read(ctx, file.StoragePath)
+}
+
+type GetFileForDownloadQuery struct {
+	FileID          int64
+	UserID          int64
+	UserRole        domain.SystemRole
+	EnrolledLearner bool
+}
+
+func (s *ContentService) GetFileForDownload(ctx context.Context, query *GetFileForDownloadQuery) (*domain.File, error) {
+	file, ok := s.Files.GetByID(ctx, query.FileID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	module, ok := s.Modules.GetByID(ctx, file.ModuleID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	course, ok := s.Courses.GetByID(ctx, module.CourseID)
+	if !ok {
+		return nil, errors.ErrNotFound
+	}
+
+	if query.UserRole == domain.SystemRoleAdmin {
+	} else if course.InstructorID == query.UserID {
+	} else if query.EnrolledLearner {
+	} else {
+		return nil, errors.ErrForbidden
+	}
+
+	if query.EnrolledLearner && file.Status != domain.ContentStatusPublished {
+		return nil, errors.ErrNotFound
+	}
+
+	return file, nil
 }

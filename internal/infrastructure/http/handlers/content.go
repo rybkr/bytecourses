@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -17,12 +18,16 @@ import (
 )
 
 type ContentHandler struct {
-	Service *services.ContentService
+	Service           *services.ContentService
+	EnrollmentService *services.EnrollmentService
+	CourseService     *services.CourseService
 }
 
-func NewContentHandler(contentService *services.ContentService) *ContentHandler {
+func NewContentHandler(contentService *services.ContentService, enrollmentService *services.EnrollmentService, courseService *services.CourseService) *ContentHandler {
 	return &ContentHandler{
-		Service: contentService,
+		Service:           contentService,
+		EnrollmentService: enrollmentService,
+		CourseService:     courseService,
 	}
 }
 
@@ -405,4 +410,76 @@ func (h *ContentHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusOK, content)
+}
+
+func (h *ContentHandler) Download(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, r, errors.ErrInvalidCredentials)
+		return
+	}
+
+	fileID, err := strconv.ParseInt(chi.URLParam(r, "fileId"), 10, 64)
+	if err != nil {
+		handleError(w, r, errors.ErrInvalidInput)
+		return
+	}
+
+	file, err := h.Service.GetFileForDownload(r.Context(), &services.GetFileForDownloadQuery{
+		FileID:          fileID,
+		UserID:          user.ID,
+		UserRole:        user.Role,
+		EnrolledLearner: false,
+	})
+	if err == errors.ErrForbidden {
+		file, err = h.Service.GetFileForDownload(r.Context(), &services.GetFileForDownloadQuery{
+			FileID:          fileID,
+			UserID:          user.ID,
+			UserRole:        user.Role,
+			EnrolledLearner: true,
+		})
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+		module, _ := h.Service.Modules.GetByID(r.Context(), file.ModuleID)
+		if module == nil {
+			handleError(w, r, errors.ErrNotFound)
+			return
+		}
+		course, err := h.CourseService.Get(r.Context(), &services.GetCourseQuery{
+			CourseID: module.CourseID,
+			UserID:   user.ID,
+			UserRole: user.Role,
+		})
+		if err != nil {
+			handleError(w, r, err)
+			return
+		}
+		enrolled, err := h.EnrollmentService.IsEnrolled(r.Context(), &services.IsEnrolledQuery{
+			CourseID: course.ID,
+			UserID:   user.ID,
+		})
+		if err != nil || !enrolled {
+			handleError(w, r, errors.ErrForbidden)
+			return
+		}
+	}
+	if err != nil {
+		handleError(w, r, err)
+		return
+	}
+
+	fileContent, err := h.Service.GetFileContent(r.Context(), file)
+	if err != nil {
+		handleError(w, r, err)
+		return
+	}
+	defer fileContent.Close()
+
+	w.Header().Set("Content-Type", file.MimeType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, file.FileName))
+	w.Header().Set("Content-Length", strconv.FormatInt(file.FileSize, 10))
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, fileContent)
 }

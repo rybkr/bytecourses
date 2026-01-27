@@ -12,6 +12,7 @@ type FileStorage interface {
 	Save(ctx context.Context, filename string, content io.Reader) (storagePath string, err error)
 	Delete(ctx context.Context, storagePath string) error
 	GetPath(storagePath string) string
+	Read(ctx context.Context, storagePath string) (io.ReadCloser, error)
 }
 
 type LocalFileStorage struct {
@@ -58,4 +59,13 @@ func (s *LocalFileStorage) Delete(ctx context.Context, storagePath string) error
 
 func (s *LocalFileStorage) GetPath(storagePath string) string {
 	return s.urlBase + "/" + storagePath
+}
+
+func (s *LocalFileStorage) Read(ctx context.Context, storagePath string) (io.ReadCloser, error) {
+	fullPath := filepath.Join(s.baseDir, storagePath)
+	file, err := os.Open(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open file: %w", err)
+	}
+	return file, nil
 }

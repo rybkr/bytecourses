@@ -10,6 +10,7 @@ type ContentItem interface {
 
 var (
 	_ ContentItem = (*Reading)(nil)
+	_ ContentItem = (*File)(nil)
 )
 
 type ContentStatus string
@@ -23,6 +24,7 @@ type ContentType string
 
 const (
 	ContentTypeReading ContentType = "reading"
+	ContentTypeFile    ContentType = "file"
 )
 
 type BaseContentItem struct {
@@ -51,4 +53,16 @@ type Reading struct {
 
 func (r *Reading) Type() ContentType {
 	return ContentTypeReading
+}
+
+type File struct {
+	BaseContentItem
+	FileName    string `json:"file_name"`
+	FileSize    int64  `json:"file_size"`
+	MimeType    string `json:"mime_type"`
+	StoragePath string `json:"storage_path"`
+}
+
+func (f *File) Type() ContentType {
+	return ContentTypeFile
 }

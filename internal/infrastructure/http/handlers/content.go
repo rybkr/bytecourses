@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 
@@ -74,6 +77,76 @@ func (h *ContentHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	writeJSON(w, http.StatusCreated, content)
+}
+
+const maxUploadSize = 50 << 20 // 50 MB
+
+func (h *ContentHandler) Upload(w http.ResponseWriter, r *http.Request) {
+	user, ok := middleware.UserFromContext(r.Context())
+	if !ok {
+		handleError(w, r, errors.ErrInvalidCredentials)
+		return
+	}
+
+	_, err := strconv.ParseInt(chi.URLParam(r, "courseId"), 10, 64)
+	if err != nil {
+		handleError(w, r, errors.ErrInvalidInput)
+		return
+	}
+
+	moduleID, err := strconv.ParseInt(chi.URLParam(r, "moduleId"), 10, 64)
+	if err != nil {
+		handleError(w, r, errors.ErrInvalidInput)
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadSize)
+	if err := r.ParseMultipartForm(maxUploadSize); err != nil {
+		http.Error(w, "file too large", http.StatusBadRequest)
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		handleError(w, r, errors.ErrInvalidInput)
+		return
+	}
+	defer file.Close()
+
+	title := strings.TrimSpace(r.FormValue("title"))
+	if title == "" {
+		title = header.Filename
+	}
+
+	order := 0
+	if orderStr := r.FormValue("order"); orderStr != "" {
+		order, _ = strconv.Atoi(orderStr)
+	}
+
+	ext := filepath.Ext(header.Filename)
+	storageName := fmt.Sprintf("%d/%d_%d%s", moduleID, time.Now().UnixNano(), user.ID, ext)
+
+	mimeType := header.Header.Get("Content-Type")
+	if mimeType == "" {
+		mimeType = "application/octet-stream"
+	}
+
+	fileContent, err := h.Service.CreateFile(r.Context(), &services.CreateFileCommand{
+		ModuleID: moduleID,
+		Title:    title,
+		Order:    order,
+		FileName: storageName,
+		FileSize: header.Size,
+		MimeType: mimeType,
+		UserID:   user.ID,
+		Content:  file,
+	})
+	if err != nil {
+		handleError(w, r, err)
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, fileContent)
 }
 
 type UpdateContentRequest struct {

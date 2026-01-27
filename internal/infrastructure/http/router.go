@@ -86,6 +86,7 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 				r.Route("/{moduleId}/content", func(r chi.Router) {
 					r.Use(requireUser)
 					r.Post("/", contentHandler.Create)
+					r.Post("/upload", contentHandler.Upload)
 					r.Get("/", contentHandler.List)
 					r.Get("/{contentId}", contentHandler.Get)
 					r.Patch("/{contentId}", contentHandler.Update)
@@ -99,6 +100,9 @@ func NewRouter(c *bootstrap.Container, webFS embed.FS) http.Handler {
 
 	staticFS, _ := fs.Sub(webFS, "static")
 	r.Handle("/static/*", http.StripPrefix("/static/", http.FileServer(http.FS(staticFS))))
+
+	uploadsDir := "./uploads"
+	r.Handle("/uploads/*", http.StripPrefix("/uploads/", http.FileServer(http.Dir(uploadsDir))))
 
 	r.Group(func(r chi.Router) {
 		r.Use(optionalUser)

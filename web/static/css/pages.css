@@ -2425,6 +2425,116 @@
     color: var(--danger-color);
 }
 
+/* File uploader */
+.file-uploader {
+    border: 1px solid var(--border-color);
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.file-drop-zone {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    padding: 3rem;
+    background-color: var(--bg-secondary);
+    border: 2px dashed var(--border-color);
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.file-drop-zone:hover,
+.file-drop-zone.drag-over {
+    border-color: var(--primary-color);
+    background-color: rgba(var(--primary-color-rgb), 0.05);
+}
+
+.file-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.file-drop-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    text-align: center;
+}
+
+.file-drop-icon {
+    color: var(--text-muted);
+}
+
+.file-drop-zone:hover .file-drop-icon,
+.file-drop-zone.drag-over .file-drop-icon {
+    color: var(--primary-color);
+}
+
+.file-drop-text {
+    font-size: 1.125rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.file-drop-hint {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.file-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+    background-color: var(--bg-color);
+    border-top: 1px solid var(--border-light);
+}
+
+.file-preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.file-preview-name {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.file-preview-size {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+}
+
+.file-preview-remove {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    color: var(--danger-color);
+    background: transparent;
+    border: 1px solid var(--danger-color);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.file-preview-remove:hover {
+    background-color: var(--danger-color);
+    color: white;
+}
+
 @media (max-width: 900px) {
     .content-new-container {
         padding: 1.5rem 1rem;

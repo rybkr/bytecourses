@@ -969,6 +969,17 @@ type ReadingPageData struct {
 	ActiveNavItem string
 }
 
+type FilePageData struct {
+	User          *domain.User
+	Course        *domain.Course
+	Module        *domain.Module
+	File          *domain.File
+	FileURL       string
+	IsInstructor  bool
+	IsEnrolled    bool
+	ActiveNavItem string
+}
+
 type ContentNewPageData struct {
 	User          *domain.User
 	Course        *domain.Course

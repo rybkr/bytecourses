@@ -49,6 +49,12 @@ type ReadingRepository interface {
 	DeleteByID(ctx context.Context, id int64) error
 }
 
+type FileRepository interface {
+	Repository[domain.File]
+	ListByModuleID(ctx context.Context, moduleID int64) ([]domain.File, error)
+	DeleteByID(ctx context.Context, id int64) error
+}
+
 type EnrollmentRepository interface {
 	Create(ctx context.Context, enrollment *domain.Enrollment) error
 	GetByUserAndCourse(ctx context.Context, userID, courseID int64) (*domain.Enrollment, bool)

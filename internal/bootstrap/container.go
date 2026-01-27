@@ -18,6 +18,7 @@ import (
 	"bytecourses/internal/infrastructure/persistence"
 	"bytecourses/internal/infrastructure/persistence/memory"
 	"bytecourses/internal/infrastructure/persistence/postgres"
+	"bytecourses/internal/infrastructure/storage"
 	"bytecourses/internal/pkg/events"
 	"bytecourses/internal/services"
 )
@@ -34,8 +35,10 @@ type Container struct {
 	CourseRepo        persistence.CourseRepository
 	ModuleRepo        persistence.ModuleRepository
 	ReadingRepo       persistence.ReadingRepository
+	FileRepo          persistence.FileRepository
 	PasswordResetRepo persistence.PasswordResetRepository
 	EnrollmentRepo    persistence.EnrollmentRepository
+	FileStorage       storage.FileStorage
 
 	AuthService       *services.AuthService
 	ProposalService   *services.ProposalService
@@ -127,6 +130,16 @@ func (c *Container) setupEmailSender(cfg Config) error {
 }
 
 func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
+	uploadDir := os.Getenv("UPLOAD_DIR")
+	if uploadDir == "" {
+		uploadDir = "./uploads"
+	}
+	fileStorage, err := storage.NewLocalFileStorage(uploadDir, "/uploads")
+	if err != nil {
+		return fmt.Errorf("creating file storage: %w", err)
+	}
+	c.FileStorage = fileStorage
+
 	switch cfg.Storage {
 	case StorageMemory:
 		c.UserRepo = memory.NewUserRepository()
@@ -134,6 +147,7 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.CourseRepo = memory.NewCourseRepository()
 		c.ModuleRepo = memory.NewModuleRepository()
 		c.ReadingRepo = memory.NewReadingRepository()
+		c.FileRepo = memory.NewFileRepository()
 		c.PasswordResetRepo = memory.NewPasswordResetRepository()
 		c.EnrollmentRepo = memory.NewEnrollmentRepository()
 
@@ -154,6 +168,7 @@ func (c *Container) setupPersistence(ctx context.Context, cfg Config) error {
 		c.CourseRepo = postgres.NewCourseRepository(db)
 		c.ModuleRepo = postgres.NewModuleRepository(db)
 		c.ReadingRepo = postgres.NewReadingRepository(db)
+		c.FileRepo = postgres.NewFileRepository(db)
 		c.PasswordResetRepo = postgres.NewPasswordResetRepository(db)
 		c.EnrollmentRepo = postgres.NewEnrollmentRepository(db)
 		c.onClose = db.Close
@@ -193,9 +208,11 @@ func (c *Container) wireServices() {
 
 	c.ContentService = services.NewContentService(
 		c.ReadingRepo,
+		c.FileRepo,
 		c.ModuleRepo,
 		c.CourseRepo,
 		c.EventBus,
+		c.FileStorage,
 	)
 
 	c.EnrollmentService = services.NewEnrollmentService(
@@ -501,19 +518,12 @@ func (c *Container) seedContent(ctx context.Context, path string) error {
 		return fmt.Errorf("parsing JSON: %w", err)
 	}
 
-	// Map from seed module ID to actual created module ID
-	// This handles the case where repositories auto-generate IDs
 	moduleIDMap := make(map[int64]int64)
-
-	// First, seed modules
 	for _, sm := range seedData.Modules {
-		// Verify course exists
 		if _, ok := c.CourseRepo.GetByID(ctx, sm.CourseID); !ok {
 			return fmt.Errorf("course %d not found for module %q", sm.CourseID, sm.Title)
 		}
 
-		// Check if module already exists by listing modules for the course
-		// and matching by title and order (since IDs may be auto-generated)
 		existingModules, err := c.ModuleRepo.ListByCourseID(ctx, sm.CourseID)
 		if err != nil {
 			return fmt.Errorf("listing modules for course %d: %w", sm.CourseID, err)
@@ -528,7 +538,6 @@ func (c *Container) seedContent(ctx context.Context, path string) error {
 		}
 
 		if existingModule != nil {
-			// Module already exists, use its ID for mapping
 			if sm.ID > 0 {
 				moduleIDMap[sm.ID] = existingModule.ID
 			}
@@ -552,27 +561,21 @@ func (c *Container) seedContent(ctx context.Context, path string) error {
 			return fmt.Errorf("creating module %q: %w", sm.Title, err)
 		}
 
-		// Map seed ID to actual ID
 		if sm.ID > 0 {
 			moduleIDMap[sm.ID] = module.ID
 		}
 	}
 
-	// Then, seed readings
 	for _, sr := range seedData.Readings {
-		// Resolve actual module ID from mapping
 		actualModuleID := sr.ModuleID
 		if mappedID, ok := moduleIDMap[sr.ModuleID]; ok {
 			actualModuleID = mappedID
 		}
 
-		// Verify module exists
 		if _, ok := c.ModuleRepo.GetByID(ctx, actualModuleID); !ok {
 			return fmt.Errorf("module %d not found for reading %q", sr.ModuleID, sr.Title)
 		}
 
-		// Check if reading already exists by listing readings for the module
-		// and matching by title and order
 		existingReadings, err := c.ReadingRepo.ListByModuleID(ctx, actualModuleID)
 		if err != nil {
 			return fmt.Errorf("listing readings for module %d: %w", actualModuleID, err)
@@ -587,7 +590,6 @@ func (c *Container) seedContent(ctx context.Context, path string) error {
 		}
 
 		if existingReading != nil {
-			// Reading already exists, skip it
 			continue
 		}
 

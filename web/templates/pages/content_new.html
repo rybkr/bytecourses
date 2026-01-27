@@ -21,6 +21,7 @@
             <label for="content-type">Content type</label>
             <select id="content-type">
                 <option value="reading">Reading</option>
+                <option value="file">File Upload</option>
             </select>
         </div>
 
@@ -36,7 +37,7 @@
             </div>
         </div>
 
-        <div class="lecture-editor" id="lecture-editor">
+        <div id="reading-editor" class="lecture-editor">
             <div class="lecture-editor-pane-header">
                 <span id="editor-format-label">Markdown</span>
                 <select id="content-format" class="format-selector">
@@ -46,6 +47,30 @@
                 </select>
             </div>
             <div class="unified-editor-area"></div>
+        </div>
+
+        <div id="file-uploader" class="file-uploader hidden">
+            <div class="file-drop-zone" id="file-drop-zone">
+                <input type="file" id="file-input" class="file-input">
+                <div class="file-drop-content">
+                    <div class="file-drop-icon">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
+                    <p class="file-drop-text">Drop file here or click to browse</p>
+                    <p class="file-drop-hint">Maximum file size: 50 MB</p>
+                </div>
+            </div>
+            <div id="file-preview" class="file-preview hidden">
+                <div class="file-preview-info">
+                    <span class="file-preview-name" id="file-preview-name"></span>
+                    <span class="file-preview-size" id="file-preview-size"></span>
+                </div>
+                <button type="button" class="file-preview-remove" id="file-remove-btn">Remove</button>
+            </div>
         </div>
     </div>
 </div>

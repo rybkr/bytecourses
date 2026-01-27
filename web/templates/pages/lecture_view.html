@@ -1,27 +1,26 @@
-{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define
-"content"}}
+{{template "layout" .}} {{define "title"}}{{.Reading.Title}} - {{.Course.Title}} - ByteCourses{{end}} {{define "content"}}
 {{template "course-navbar" .}}
 
 <div class="lecture-view-container">
     <div class="lecture-view-header">
-        <div class="lecture-view-breadcrumb">
+        <nav class="lecture-view-breadcrumb" aria-label="Breadcrumb">
             <a href="/courses/{{.Course.ID}}/modules">{{.Course.Title}}</a>
-            <span> / </span>
+            <span class="breadcrumb-sep" aria-hidden="true">/</span>
             <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
-            <span> / </span>
+            <span class="breadcrumb-sep" aria-hidden="true">/</span>
             <span>{{.Reading.Title}}</span>
-        </div>
-        <h1 class="lecture-view-title">{{.Reading.Title}}</h1>
-        <div class="lecture-view-meta">
+        </nav>
+        <div class="lecture-view-title-row">
+            <h1 class="lecture-view-title">{{.Reading.Title}}</h1>
             {{if .IsInstructor}}
-            <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
-            {{if eq .Reading.Status "draft"}}
-            <button type="button" id="publish-btn" class="btn btn-small btn-success">Publish</button>
-            {{else}}
-            <button type="button" id="unpublish-btn" class="btn btn-small btn-secondary">Unpublish</button>
-            {{end}}
-            <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}/edit"
-                class="btn btn-small btn-secondary">Edit</a>
+            <div class="lecture-view-meta">
+                <span class="content-status-badge content-status-{{.Reading.Status}}">{{.Reading.Status}}</span>
+                {{if eq .Reading.Status "draft"}}
+                <button type="button" id="publish-btn" class="btn btn-sm btn-success">Publish</button>
+                {{else}}
+                <button type="button" id="unpublish-btn" class="btn btn-sm btn-outline">Unpublish</button>
+                {{end}}
+            </div>
             {{end}}
         </div>
     </div>
@@ -42,21 +41,20 @@
         {{end}}
     </div>
 
-    <div class="lecture-navigation">
-        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">← Back to Module</a>
-        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline">Back to Content</a>
+    <nav class="course-page-actions" aria-label="Content navigation">
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline course-page-actions-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to module
+        </a>
+        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline">Content</a>
         {{if .IsInstructor}}
-        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-secondary">Edit Course</a>
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}/edit" class="btn btn-primary">Edit reading</a>
         {{end}}
-    </div>
+    </nav>
 </div>
 
 <script>
-    window.LECTURE_VIEW_DATA = {
-        courseId: {{.Course.ID }},
-    moduleId: { {.Module.ID } },
-    readingId: { {.Reading.ID } }
-    };
+    window.LECTURE_VIEW_DATA = { courseId: {{.Course.ID}}, moduleId: {{.Module.ID}}, readingId: {{.Reading.ID}} };
 </script>
 {{end}}
 

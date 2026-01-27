@@ -1,9 +1,14 @@
 {{template "layout" .}} {{define "title"}}Edit: {{.Reading.Title}} - ByteCourses{{end}} {{define "content"}}
+{{template "course-navbar" .}}
+
 <div class="lecture-edit-container">
-    <div class="page-header">
-        <a href="/courses/{{.Course.ID}}/edit" class="btn btn-outline">← Back to Course Edit</a>
-        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}" class="btn btn-secondary">View</a>
-    </div>
+    <nav class="course-page-actions course-page-actions-top" aria-label="Edit navigation">
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline course-page-actions-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to module
+        </a>
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}" class="btn btn-outline">View</a>
+    </nav>
 
     <div id="lecture-error" class="error-message hidden"></div>
 

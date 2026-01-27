@@ -89,7 +89,8 @@
     box-shadow: none !important;
 }
 
-.btn-sm {
+.btn-sm,
+.btn-small {
     padding: 0.5rem 1rem;
     font-size: 0.8125rem;
 }

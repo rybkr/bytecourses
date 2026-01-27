@@ -4,11 +4,11 @@
 
 <div class="module-view-container">
     <div class="module-view-header">
-        <div class="module-view-breadcrumb">
+        <nav class="module-view-breadcrumb" aria-label="Breadcrumb">
             <a href="/courses/{{.Course.ID}}/modules">{{.Course.Title}}</a>
-            <span class="breadcrumb-separator">/</span>
+            <span class="breadcrumb-sep" aria-hidden="true">/</span>
             <span>{{.Module.Title}}</span>
-        </div>
+        </nav>
         <div class="module-view-title-row">
             <h1>{{.Module.Title}}</h1>
             {{if .IsInstructor}}
@@ -134,15 +134,12 @@
         {{end}}
     </div>
 
-    <div class="module-view-footer">
-        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="15 18 9 12 15 6"></polyline>
-            </svg>
-            Back to Content
+    <nav class="course-page-actions" aria-label="Module navigation">
+        <a href="/courses/{{.Course.ID}}/modules" class="btn btn-outline course-page-actions-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to content
         </a>
-    </div>
+    </nav>
 </div>
 {{end}} {{define "scripts"}}
 <script type="module" src="/static/js/pages/module_view.js"></script>

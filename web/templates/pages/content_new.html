@@ -3,12 +3,19 @@
 {{template "course-navbar" .}}
 
 <div class="content-new-container">
+    <nav class="course-page-actions course-page-actions-top" aria-label="Navigation">
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline course-page-actions-back">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Back to module
+        </a>
+    </nav>
+
     <div class="content-new-header-section">
         <div class="content-new-breadcrumb">
             <a href="/courses/{{.Course.ID}}/modules">Content</a>
-            <span> / </span>
+            <span class="breadcrumb-sep" aria-hidden="true">/</span>
             <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}">{{.Module.Title}}</a>
-            <span> / </span>
+            <span class="breadcrumb-sep" aria-hidden="true">/</span>
             <span>New Content</span>
         </div>
         <h1 class="content-new-title">New Content</h1>
@@ -32,7 +39,6 @@
                 <span id="title-error" class="field-error hidden" role="alert"></span>
             </div>
             <div class="content-new-form-header-right">
-                <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline">Cancel</a>
                 <button type="button" id="save-btn" class="btn btn-primary">Create</button>
             </div>
         </div>

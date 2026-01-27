@@ -2331,8 +2331,46 @@
     gap: 0.5rem;
 }
 
-.lecture-editor-pane-header > span:first-child {
+.lecture-editor-pane-header>span:first-child {
     font-weight: 500;
+}
+
+.editor-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.format-selector {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8125rem;
+    font-family: inherit;
+    color: var(--text-color);
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.format-selector:hover {
+    border-color: var(--primary-light);
+    background: var(--bg-secondary);
+}
+
+.format-selector:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.lecture-editor.editor-full-width .lecture-editor-pane:first-child {
+    flex: 1 1 100%;
+}
+
+.lecture-editor.editor-full-width #preview-pane,
+.lecture-editor.editor-full-width #editor-resizer {
+    display: none !important;
 }
 
 /* Toggle buttons for mobile */

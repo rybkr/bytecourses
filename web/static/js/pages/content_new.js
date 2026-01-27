@@ -111,6 +111,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         function setEditorMode(mode) {
             if (!editorContainer) return;
+            if (currentFormat !== "markdown") return;
 
             editorContainer.classList.remove("mode-markdown", "mode-preview", "mode-split");
 
@@ -142,7 +143,16 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const savedMode = getEditorMode();
-        setEditorMode(savedMode);
+        if (currentFormat === "markdown") {
+            setEditorMode(savedMode);
+        } else {
+            const previewPane = document.getElementById("preview-pane");
+            const togglePreviewBtn = document.getElementById("toggle-preview-btn");
+            const toggleMarkdownBtn = document.getElementById("toggle-markdown-btn");
+            if (previewPane) previewPane.style.display = "none";
+            if (togglePreviewBtn) togglePreviewBtn.style.display = "none";
+            if (toggleMarkdownBtn) toggleMarkdownBtn.style.display = "none";
+        }
 
         if (togglePreviewBtn) {
             togglePreviewBtn.addEventListener("click", () => {
@@ -170,6 +180,21 @@ document.addEventListener("DOMContentLoaded", () => {
             formatSelect.addEventListener("change", (e) => {
                 const newFormat = e.target.value;
                 unifiedEditor.setFormat(newFormat);
+                currentFormat = newFormat;
+                const previewPane = document.getElementById("preview-pane");
+                const togglePreviewBtn = document.getElementById("toggle-preview-btn");
+                const toggleMarkdownBtn = document.getElementById("toggle-markdown-btn");
+
+                if (newFormat === "markdown") {
+                    if (previewPane) previewPane.style.display = "";
+                    if (togglePreviewBtn) togglePreviewBtn.style.display = "";
+                    if (toggleMarkdownBtn) toggleMarkdownBtn.style.display = "";
+                } else {
+                    if (previewPane) previewPane.style.display = "none";
+                    if (togglePreviewBtn) togglePreviewBtn.style.display = "none";
+                    if (toggleMarkdownBtn) toggleMarkdownBtn.style.display = "none";
+                    setEditorMode("markdown");
+                }
             });
         }
 

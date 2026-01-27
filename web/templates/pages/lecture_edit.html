@@ -25,22 +25,20 @@
         </div>
     </div>
 
-    <div class="lecture-edit-format-row">
-        <label for="lecture-format">Format</label>
-        <select id="lecture-format" class="format-selector">
-            <option value="markdown" {{if eq .Reading.Format "markdown" }}selected{{end}}>Markdown</option>
-            <option value="plain" {{if eq .Reading.Format "plain" }}selected{{end}}>Plain Text</option>
-            <option value="html" {{if eq .Reading.Format "html" }}selected{{end}}>Rich Text</option>
-        </select>
-    </div>
-
     <div class="lecture-editor" id="lecture-editor">
         <div class="lecture-editor-pane">
             <div class="lecture-editor-pane-header">
-                <span id="editor-format-label">
-                    {{if eq .Reading.Format "markdown"}}Markdown{{else if eq .Reading.Format "plain"}}Plain
-                    Text{{else}}Rich Text{{end}}
-                </span>
+                <div class="editor-header-left">
+                    <span id="editor-format-label">
+                        {{if eq .Reading.Format "markdown"}}Markdown{{else if eq .Reading.Format "plain"}}Plain
+                        Text{{else}}Rich Text{{end}}
+                    </span>
+                    <select id="lecture-format" class="format-selector">
+                        <option value="markdown" {{if eq .Reading.Format "markdown" }}selected{{end}}>Markdown</option>
+                        <option value="plain" {{if eq .Reading.Format "plain" }}selected{{end}}>Plain Text</option>
+                        <option value="html" {{if eq .Reading.Format "html" }}selected{{end}}>Rich Text</option>
+                    </select>
+                </div>
                 <button type="button" class="editor-toggle-btn mobile-only" id="toggle-preview-btn"
                     aria-label="Switch to preview">
                     Preview
@@ -49,7 +47,7 @@
             <div class="unified-editor-area"></div>
         </div>
         <div class="lecture-editor-resizer" id="editor-resizer"></div>
-        <div class="lecture-editor-pane">
+        <div class="lecture-editor-pane" id="preview-pane">
             <div class="lecture-editor-pane-header">
                 <span>Preview</span>
                 <button type="button" class="editor-toggle-btn mobile-only" id="toggle-markdown-btn"
@@ -71,10 +69,10 @@
 <script>
     window.LECTURE_DATA = {
         courseId: {{.Course.ID }},
-    moduleId: { {.Module.ID } },
-    readingId: { {.Reading.ID } },
-    order: { {.Reading.Order } },
-    status: "{{.Reading.Status}}",
+        moduleId: {{.Module.ID }},
+        readingId: {{.Reading.ID }},
+        order: {{.Reading.Order }},
+        status: "{{.Reading.Status}}",
         format: "{{.Reading.Format}}",
             initialContent: { { if .Reading.Content} } { {printf "%q".Reading.Content } } { {else } } ""{ { end } }
     };

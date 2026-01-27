@@ -211,11 +211,33 @@ export function createUnifiedEditor(container, options = {}) {
             formatSelect.value = newFormat;
         }
 
+        updatePreviewVisibility(newFormat);
+
         currentEditor = createEditor(newFormat);
         currentEditor.setValue(convertedContent);
 
         if (onFormatChange) {
             onFormatChange(newFormat, convertedContent);
+        }
+    }
+
+    function updatePreviewVisibility(format) {
+        const previewPane = editorContainer ? editorContainer.querySelector("#preview-pane") : null;
+        const resizer = editorContainer ? editorContainer.querySelector("#editor-resizer") : null;
+        const editorPane = editorContainer ? editorContainer.querySelector(".lecture-editor-pane:first-child") : null;
+
+        if (!editorContainer) return;
+
+        if (format === "markdown") {
+            if (previewPane) previewPane.style.display = "";
+            if (resizer) resizer.style.display = "";
+            if (editorPane) editorPane.style.flex = "";
+            editorContainer.classList.remove("editor-full-width");
+        } else {
+            if (previewPane) previewPane.style.display = "none";
+            if (resizer) resizer.style.display = "none";
+            if (editorPane) editorPane.style.flex = "1 1 100%";
+            editorContainer.classList.add("editor-full-width");
         }
     }
 
@@ -227,6 +249,7 @@ export function createUnifiedEditor(container, options = {}) {
         });
     }
 
+    updatePreviewVisibility(currentFormat);
     currentEditor = createEditor(currentFormat);
 
     return {

@@ -37,19 +37,17 @@
             </div>
         </div>
 
-        <div class="content-new-format-row">
-            <label for="content-format">Format</label>
-            <select id="content-format" class="format-selector">
-                <option value="markdown">Markdown</option>
-                <option value="plain">Plain Text</option>
-                <option value="html">Rich Text</option>
-            </select>
-        </div>
-
         <div class="lecture-editor" id="lecture-editor">
             <div class="lecture-editor-pane">
                 <div class="lecture-editor-pane-header">
-                    <span id="editor-format-label">Markdown</span>
+                    <div class="editor-header-left">
+                        <span id="editor-format-label">Markdown</span>
+                        <select id="content-format" class="format-selector">
+                            <option value="markdown">Markdown</option>
+                            <option value="plain">Plain Text</option>
+                            <option value="html">Rich Text</option>
+                        </select>
+                    </div>
                     <button type="button" class="editor-toggle-btn mobile-only" id="toggle-preview-btn"
                         aria-label="Switch to preview">
                         Preview
@@ -58,7 +56,7 @@
                 <div class="unified-editor-area"></div>
             </div>
             <div class="lecture-editor-resizer" id="editor-resizer"></div>
-            <div class="lecture-editor-pane">
+            <div class="lecture-editor-pane" id="preview-pane">
                 <div class="lecture-editor-pane-header">
                     <span>Preview</span>
                     <button type="button" class="editor-toggle-btn mobile-only" id="toggle-markdown-btn"

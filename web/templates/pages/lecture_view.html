@@ -27,14 +27,14 @@
     </div>
 
     <div class="lecture-view-content">
-        {{if .Reading.Content}}
-        {{if eq .Reading.Format "markdown"}}
-        <div class="proposal-content-value">{{markdown .Reading.Content}}</div>
-        {{else if eq .Reading.Format "html"}}
-        <div class="proposal-content-value">{{sanitizeHTML .Reading.Content}}</div>
+        {{with deref .Reading.Content}}
+        {{if eq $.Reading.Format "markdown"}}
+        <div class="proposal-content-value">{{markdown .}}</div>
+        {{else if eq $.Reading.Format "html"}}
+        <div class="proposal-content-value">{{sanitizeHTML .}}</div>
         {{else}}
         <div class="proposal-content-value">
-            <pre style="white-space: pre-wrap;">{{.Reading.Content}}</pre>
+            <pre style="white-space: pre-wrap;">{{.}}</pre>
         </div>
         {{end}}
         {{else}}

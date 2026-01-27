@@ -1,7 +1,5 @@
-import { createMarkdownEditor, setupScrollSync, addCustomShortcut } from "./markdown-editor.js";
+import { createMarkdownEditor } from "./markdown-editor.js";
 import { convertContent } from "./format-converter.js";
-import { $ } from "./dom.js";
-import { updateMarkdownPreview } from "./markdown.js";
 
 export function createUnifiedEditor(container, options = {}) {
     const {
@@ -10,13 +8,12 @@ export function createUnifiedEditor(container, options = {}) {
         placeholder = "Write your content here...",
         onFormatChange = null,
         onUpdate = null,
-        previewElement = null,
-        editorContainer = null,
     } = options;
 
     let currentFormat = initialFormat;
     let currentEditor = null;
     let currentContent = initialValue;
+
     const formatSelect = container.querySelector(".format-selector");
     const editorArea = container.querySelector(".unified-editor-area");
 
@@ -33,74 +30,59 @@ export function createUnifiedEditor(container, options = {}) {
 
         const editor = createMarkdownEditor(textarea, {
             initialValue: currentContent,
-            placeholder: placeholder,
+            placeholder,
             lineNumbers: true,
-            customPreviewElement: previewElement,
-            editorContainer: editorContainer,
             onUpdate: (content) => {
                 currentContent = content;
                 if (onUpdate) onUpdate(content);
-                if (previewElement) {
-                    updateMarkdownPreview(content, previewElement, {
-                        wrapperClass: "proposal-content-value",
-                    });
-                }
             },
         });
-
-        if (previewElement && editorContainer) {
-            setupScrollSync(editor.editor, previewElement);
-        }
 
         return {
             getValue: () => editor.getValue(),
             setValue: (value) => editor.setValue(value),
             focus: () => editor.focus(),
-            destroy: () => {
-                editorArea.innerHTML = "";
-            },
+            destroy: () => { editorArea.innerHTML = ""; },
         };
     }
 
     function createPlainTextEditorInstance() {
-        const textarea = document.createElement("textarea");
-        textarea.className = "plain-text-editor-textarea";
-        textarea.placeholder = placeholder;
-        textarea.style.width = "100%";
-        textarea.style.minHeight = "400px";
-        textarea.style.fontFamily = "monospace";
-        textarea.style.fontSize = "14px";
-        textarea.style.padding = "12px";
-        textarea.style.border = "1px solid #ddd";
-        textarea.style.borderRadius = "4px";
-        textarea.value = currentContent;
         editorArea.innerHTML = "";
-        editorArea.appendChild(textarea);
 
         if (typeof CodeMirror !== "undefined") {
-            const cm = CodeMirror.fromTextArea(textarea, {
+            const wrapper = document.createElement("div");
+            wrapper.className = "plain-text-editor-wrapper";
+            editorArea.appendChild(wrapper);
+
+            const cm = CodeMirror(wrapper, {
+                value: currentContent,
                 lineNumbers: true,
                 mode: "text/plain",
                 theme: "default",
                 indentUnit: 4,
                 lineWrapping: true,
             });
-            cm.setValue(currentContent);
+
             cm.on("change", () => {
                 currentContent = cm.getValue();
                 if (onUpdate) onUpdate(currentContent);
             });
 
+            setTimeout(() => cm.refresh(), 10);
+
             return {
                 getValue: () => cm.getValue(),
-                setValue: (value) => cm.setValue(value),
+                setValue: (value) => { cm.setValue(value); currentContent = value; },
                 focus: () => cm.focus(),
-                destroy: () => {
-                    cm.toTextArea();
-                    editorArea.innerHTML = "";
-                },
+                destroy: () => { editorArea.innerHTML = ""; },
             };
         }
+
+        const textarea = document.createElement("textarea");
+        textarea.className = "plain-text-editor-textarea";
+        textarea.placeholder = placeholder;
+        textarea.value = currentContent;
+        editorArea.appendChild(textarea);
 
         textarea.addEventListener("input", () => {
             currentContent = textarea.value;
@@ -109,30 +91,25 @@ export function createUnifiedEditor(container, options = {}) {
 
         return {
             getValue: () => textarea.value,
-            setValue: (value) => {
-                textarea.value = value;
-                currentContent = value;
-            },
+            setValue: (value) => { textarea.value = value; currentContent = value; },
             focus: () => textarea.focus(),
-            destroy: () => {
-                editorArea.innerHTML = "";
-            },
+            destroy: () => { editorArea.innerHTML = ""; },
         };
     }
 
     function createRichTextEditorInstance() {
         if (typeof Quill === "undefined") {
-            throw new Error("Quill is not loaded. Make sure quill.min.js is included.");
+            throw new Error("Quill is not loaded");
         }
 
         editorArea.innerHTML = "";
         const editorDiv = document.createElement("div");
-        editorDiv.style.minHeight = "400px";
+        editorDiv.className = "rich-text-editor";
         editorArea.appendChild(editorDiv);
 
         const quill = new Quill(editorDiv, {
             theme: "snow",
-            placeholder: placeholder,
+            placeholder,
             modules: {
                 toolbar: [
                     [{ header: [1, 2, 3, false] }],
@@ -144,16 +121,15 @@ export function createUnifiedEditor(container, options = {}) {
             },
         });
 
-        let sanitizedContent = currentContent || "";
-        if (typeof DOMPurify !== "undefined" && sanitizedContent) {
-            sanitizedContent = DOMPurify.sanitize(sanitizedContent);
+        let sanitized = currentContent || "";
+        if (typeof DOMPurify !== "undefined" && sanitized) {
+            sanitized = DOMPurify.sanitize(sanitized);
         }
-        quill.root.innerHTML = sanitizedContent;
+        quill.root.innerHTML = sanitized;
+
         quill.on("text-change", () => {
             let html = quill.root.innerHTML;
-            if (typeof DOMPurify !== "undefined") {
-                html = DOMPurify.sanitize(html);
-            }
+            if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html);
             currentContent = html;
             if (onUpdate) onUpdate(html);
         });
@@ -161,36 +137,26 @@ export function createUnifiedEditor(container, options = {}) {
         return {
             getValue: () => {
                 let html = quill.root.innerHTML;
-                if (typeof DOMPurify !== "undefined") {
-                    html = DOMPurify.sanitize(html);
-                }
+                if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html);
                 return html;
             },
             setValue: (value) => {
-                let sanitizedValue = value || "";
-                if (typeof DOMPurify !== "undefined" && sanitizedValue) {
-                    sanitizedValue = DOMPurify.sanitize(sanitizedValue);
-                }
-                quill.root.innerHTML = sanitizedValue;
-                currentContent = sanitizedValue;
+                let s = value || "";
+                if (typeof DOMPurify !== "undefined" && s) s = DOMPurify.sanitize(s);
+                quill.root.innerHTML = s;
+                currentContent = s;
             },
             focus: () => quill.focus(),
-            destroy: () => {
-                editorArea.innerHTML = "";
-            },
+            destroy: () => { editorArea.innerHTML = ""; },
         };
     }
 
     function createEditor(format) {
         switch (format) {
-            case "markdown":
-                return createMarkdownEditorInstance();
-            case "plain":
-                return createPlainTextEditorInstance();
-            case "html":
-                return createRichTextEditorInstance();
-            default:
-                throw new Error(`Unknown format: ${format}`);
+            case "markdown": return createMarkdownEditorInstance();
+            case "plain": return createPlainTextEditorInstance();
+            case "html": return createRichTextEditorInstance();
+            default: throw new Error(`Unknown format: ${format}`);
         }
     }
 
@@ -200,79 +166,35 @@ export function createUnifiedEditor(container, options = {}) {
         const oldContent = currentEditor ? currentEditor.getValue() : currentContent;
         const convertedContent = await convertContent(oldContent, currentFormat, newFormat);
 
-        if (currentEditor) {
-            currentEditor.destroy();
-        }
+        if (currentEditor) currentEditor.destroy();
 
         currentFormat = newFormat;
         currentContent = convertedContent;
 
-        if (formatSelect) {
-            formatSelect.value = newFormat;
-        }
-
-        updatePreviewVisibility(newFormat);
+        if (formatSelect) formatSelect.value = newFormat;
 
         currentEditor = createEditor(newFormat);
         currentEditor.setValue(convertedContent);
 
-        if (onFormatChange) {
-            onFormatChange(newFormat, convertedContent);
-        }
-    }
-
-    function updatePreviewVisibility(format) {
-        const previewPane = editorContainer ? editorContainer.querySelector("#preview-pane") : null;
-        const resizer = editorContainer ? editorContainer.querySelector("#editor-resizer") : null;
-        const editorPane = editorContainer ? editorContainer.querySelector(".lecture-editor-pane:first-child") : null;
-
-        if (!editorContainer) return;
-
-        if (format === "markdown") {
-            if (previewPane) previewPane.style.display = "";
-            if (resizer) resizer.style.display = "";
-            if (editorPane) editorPane.style.flex = "";
-            editorContainer.classList.remove("editor-full-width");
-        } else {
-            if (previewPane) previewPane.style.display = "none";
-            if (resizer) resizer.style.display = "none";
-            if (editorPane) editorPane.style.flex = "1 1 100%";
-            editorContainer.classList.add("editor-full-width");
-        }
+        if (onFormatChange) onFormatChange(newFormat, convertedContent);
     }
 
     if (formatSelect) {
         formatSelect.value = currentFormat;
-        formatSelect.addEventListener("change", async (e) => {
-            const newFormat = e.target.value;
-            await switchFormat(newFormat);
-        });
+        formatSelect.addEventListener("change", (e) => switchFormat(e.target.value));
     }
 
-    updatePreviewVisibility(currentFormat);
     currentEditor = createEditor(currentFormat);
 
     return {
-        getValue: () => (currentEditor ? currentEditor.getValue() : currentContent),
+        getValue: () => currentEditor ? currentEditor.getValue() : currentContent,
         setValue: (value) => {
             currentContent = value;
-            if (currentEditor) {
-                currentEditor.setValue(value);
-            }
+            if (currentEditor) currentEditor.setValue(value);
         },
         getFormat: () => currentFormat,
-        setFormat: async (format) => {
-            await switchFormat(format);
-        },
-        focus: () => {
-            if (currentEditor) {
-                currentEditor.focus();
-            }
-        },
-        destroy: () => {
-            if (currentEditor) {
-                currentEditor.destroy();
-            }
-        },
+        setFormat: (format) => switchFormat(format),
+        focus: () => currentEditor?.focus(),
+        destroy: () => currentEditor?.destroy(),
     };
 }

@@ -95,6 +95,12 @@ func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalServ
 			return a + b
 		},
 		"sanitizeHTML": sanitizeHTML,
+		"deref": func(s *string) string {
+			if s == nil {
+				return ""
+			}
+			return *s
+		},
 	}
 
 	h := &PageHandler{

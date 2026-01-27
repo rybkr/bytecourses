@@ -1,4 +1,4 @@
-import api from "../core/api.js";
+import api, { getCSRFToken } from "../core/api.js";
 import { $ } from "../core/dom.js";
 import { showError, hideError } from "../core/utils.js";
 import { createUnifiedEditor } from "../core/unified-editor.js";
@@ -131,8 +131,15 @@ document.addEventListener("DOMContentLoaded", () => {
         formData.append("title", title);
         formData.append("order", order.toString());
 
+        const headers = {};
+        const csrfToken = getCSRFToken();
+        if (csrfToken) {
+            headers["X-CSRF-Token"] = csrfToken;
+        }
+
         const response = await fetch(`/api/courses/${courseId}/modules/${moduleId}/content/upload`, {
             method: "POST",
+            headers: headers,
             body: formData,
             credentials: "include",
         });
@@ -241,8 +248,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (navigatingAfterCreate) return;
         const currentBody = unifiedEditor ? unifiedEditor.getValue() : "";
         const hasChanges = titleInput.value.trim() !== initialTitle ||
-                          currentBody !== initialBody ||
-                          selectedFile !== null;
+            currentBody !== initialBody ||
+            selectedFile !== null;
         if (hasChanges) {
             e.preventDefault();
             e.returnValue = "";

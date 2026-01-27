@@ -6,12 +6,12 @@ function handleResponse(response, path) {
         if (authEndpoints.includes(path)) {
             return response;
         }
-        
+
         const currentPath = window.location.pathname;
         if (currentPath === '/login' || currentPath === '/register') {
             return response;
         }
-        
+
         const next = encodeURIComponent(
             window.location.pathname + window.location.search,
         );
@@ -43,7 +43,7 @@ async function handleError(response) {
     throw new Error(message);
 }
 
-function getCSRFToken() {
+export function getCSRFToken() {
     const name = "csrf-token=";
     const decodedCookie = decodeURIComponent(document.cookie);
     const cookieArray = decodedCookie.split(";");

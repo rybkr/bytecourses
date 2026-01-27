@@ -783,12 +783,29 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 		UserRole:        user.Role,
 		EnrolledLearner: !isInstructor && isEnrolled,
 	})
-	var readings []domain.Reading
-	if err == nil {
+	contentItems := make([]ContentItemView, 0)
+	if err == nil && items != nil {
 		for _, item := range items {
+			var view ContentItemView
 			if reading, ok := item.(*domain.Reading); ok {
-				readings = append(readings, *reading)
+				view = ContentItemView{
+					ID:     reading.ID,
+					Title:  reading.Title,
+					Order:  reading.Order,
+					Status: reading.Status,
+					Type:   "reading",
+				}
+			} else if file, ok := item.(*domain.File); ok {
+				view = ContentItemView{
+					ID:      file.ID,
+					Title:   file.Title,
+					Order:   file.Order,
+					Status:  file.Status,
+					Type:    "file",
+					FileURL: h.contentService.GetFileURL(file),
+				}
 			}
+			contentItems = append(contentItems, view)
 		}
 	}
 
@@ -799,7 +816,7 @@ func (h *PageHandler) ModuleView(w http.ResponseWriter, r *http.Request) {
 		Instructor:    instructor,
 		IsInstructor:  isInstructor,
 		IsEnrolled:    isEnrolled || isInstructor,
-		Readings:      readings,
+		Items:         contentItems,
 		ActiveNavItem: "content",
 	}
 
@@ -948,6 +965,15 @@ func (h *PageHandler) ProposalEdit(w http.ResponseWriter, r *http.Request) {
 	buf.WriteTo(w)
 }
 
+type ContentItemView struct {
+	ID      int64
+	Title   string
+	Order   int
+	Status  domain.ContentStatus
+	Type    string
+	FileURL string
+}
+
 type ModuleViewPageData struct {
 	User          *domain.User
 	Course        *domain.Course
@@ -955,7 +981,7 @@ type ModuleViewPageData struct {
 	Instructor    *domain.User
 	IsInstructor  bool
 	IsEnrolled    bool
-	Readings      []domain.Reading
+	Items         []ContentItemView
 	ActiveNavItem string
 }
 

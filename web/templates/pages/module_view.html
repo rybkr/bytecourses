@@ -33,17 +33,18 @@
     </div>
 
     <div class="module-view-content">
-        {{if .Readings}}
+        {{if .Items}}
         <div class="module-view-readings">
-            {{range $index, $reading := .Readings}}
+            {{range $index, $item := .Items}}
+            {{if eq $item.Type "reading"}}
             <div class="module-reading-card" data-course-id="{{$.Course.ID}}" data-module-id="{{$.Module.ID}}"
-                data-reading-id="{{$reading.ID}}" data-status="{{$reading.Status}}">
-                <a href="/courses/{{$.Course.ID}}/modules/{{$.Module.ID}}/content/{{$reading.ID}}"
+                data-reading-id="{{$item.ID}}" data-status="{{$item.Status}}">
+                <a href="/courses/{{$.Course.ID}}/modules/{{$.Module.ID}}/content/{{$item.ID}}"
                     class="reading-card-link">
                     <div class="reading-card-number">{{add $index 1}}</div>
                     <div class="reading-card-icon">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                             <polyline points="14 2 14 8 20 8"></polyline>
                             <line x1="16" y1="13" x2="8" y2="13"></line>
@@ -51,27 +52,67 @@
                         </svg>
                     </div>
                     <div class="reading-card-content">
-                        <h3>{{$reading.Title}}</h3>
+                        <h3>{{$item.Title}}</h3>
                         <span class="reading-card-type">Reading</span>
                     </div>
                     <div class="reading-card-arrow">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </div>
                 </a>
                 {{if $.IsInstructor}}
                 <div class="reading-card-actions">
-                    <span class="content-status-badge content-status-{{$reading.Status}}">{{$reading.Status}}</span>
-                    {{if eq $reading.Status "draft"}}
-                    <button type="button" class="btn btn-small btn-success module-card-publish-btn">Publish</button>
+                    <span class="content-status-badge content-status-{{$item.Status}}">{{$item.Status}}</span>
+                    {{if eq $item.Status "draft"}}
+                    <button type="button" class="btn btn-small btn-success module-card-publish-btn"
+                        data-type="reading">Publish</button>
                     {{else}}
-                    <button type="button" class="btn btn-small btn-secondary module-card-unpublish-btn">Unpublish</button>
+                    <button type="button" class="btn btn-small btn-secondary module-card-unpublish-btn"
+                        data-type="reading">Unpublish</button>
                     {{end}}
                 </div>
                 {{end}}
             </div>
+            {{else if eq $item.Type "file"}}
+            <div class="module-reading-card" data-course-id="{{$.Course.ID}}" data-module-id="{{$.Module.ID}}"
+                data-file-id="{{$item.ID}}" data-status="{{$item.Status}}">
+                <a href="{{$item.FileURL}}" target="_blank" rel="noopener noreferrer" class="reading-card-link">
+                    <div class="reading-card-number">{{add $index 1}}</div>
+                    <div class="reading-card-icon">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
+                    </div>
+                    <div class="reading-card-content">
+                        <h3>{{$item.Title}}</h3>
+                        <span class="reading-card-type">File</span>
+                    </div>
+                    <div class="reading-card-arrow">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
+                    </div>
+                </a>
+                {{if $.IsInstructor}}
+                <div class="reading-card-actions">
+                    <span class="content-status-badge content-status-{{$item.Status}}">{{$item.Status}}</span>
+                    {{if eq $item.Status "draft"}}
+                    <button type="button" class="btn btn-small btn-success module-card-publish-btn"
+                        data-type="file">Publish</button>
+                    {{else}}
+                    <button type="button" class="btn btn-small btn-secondary module-card-unpublish-btn"
+                        data-type="file">Unpublish</button>
+                    {{end}}
+                </div>
+                {{end}}
+            </div>
+            {{end}}
             {{end}}
         </div>
         {{else}}

@@ -35,15 +35,17 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!card) return;
         const cid = card.dataset.courseId;
         const mid = card.dataset.moduleId;
-        const rid = card.dataset.readingId;
+        const rid = card.dataset.readingId || card.dataset.fileId;
+        const contentType = pub?.dataset.type || unpub?.dataset.type || "reading";
         if (!cid || !mid || !rid) return;
 
         const base = `/api/courses/${cid}/modules/${mid}/content/${rid}`;
+        const typeParam = contentType === "file" ? "?type=file" : "";
         if (pub) {
             e.preventDefault();
             e.stopPropagation();
             try {
-                await api.post(`${base}/actions/publish`);
+                await api.post(`${base}/actions/publish${typeParam}`);
                 window.location.reload();
             } catch (err) {
                 showErrorToast(err.message || "Failed to publish");
@@ -54,7 +56,7 @@ document.addEventListener("DOMContentLoaded", () => {
             e.preventDefault();
             e.stopPropagation();
             try {
-                await api.post(`${base}/actions/unpublish`);
+                await api.post(`${base}/actions/unpublish${typeParam}`);
                 window.location.reload();
             } catch (err) {
                 showErrorToast(err.message || "Failed to unpublish");

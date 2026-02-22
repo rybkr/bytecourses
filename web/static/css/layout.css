@@ -1,10 +1,10 @@
 .navbar {
-    background: rgba(255, 255, 255, 0.85);
+    background: rgba(255, 255, 253, 0.92);
     backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
     border-bottom: 1px solid var(--border-light);
     padding: 1rem 0;
-    box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 0 0 rgba(26, 28, 30, 0.04);
     position: sticky;
     top: 0;
     z-index: 100;
@@ -66,7 +66,7 @@
     bottom: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(26, 28, 30, 0.4);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     opacity: 0;
@@ -92,7 +92,7 @@
     width: min(85vw, 320px);
     background: var(--bg-color);
     border-radius: 1rem 0 0 1rem;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.2);
+    box-shadow: -4px 0 20px rgba(26, 28, 30, 0.15);
     transform: translateX(100%);
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     z-index: 1000;
@@ -139,7 +139,7 @@
 }
 
 .mobile-menu-logout:hover {
-    background-color: rgba(212, 122, 122, 0.12);
+    background-color: rgba(192, 57, 43, 0.08);
     color: var(--danger-color);
 }
 
@@ -150,11 +150,12 @@
 }
 
 .nav-brand a {
+    font-family: "DM Serif Display", Georgia, serif;
     font-size: 1.5rem;
-    font-weight: 700;
+    font-weight: 400;
     color: var(--primary-color);
     text-decoration: none;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
     transition: all 0.2s ease;
     position: relative;
     display: inline-block;
@@ -184,6 +185,7 @@
     color: var(--text-color);
     text-decoration: none;
     transition: color 0.2s;
+    font-weight: 500;
 }
 
 .nav-links a:hover {
@@ -219,7 +221,7 @@
     background-color: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);
+    box-shadow: 0 4px 12px rgba(26, 107, 90, 0.2);
 }
 
 .user-menu-btn:active {
@@ -254,8 +256,8 @@
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     box-shadow:
-        0 10px 25px -5px rgba(0, 0, 0, 0.1),
-        0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        0 10px 25px -5px rgba(26, 28, 30, 0.1),
+        0 8px 10px -6px rgba(26, 28, 30, 0.04);
     min-width: 240px;
     max-width: 280px;
     opacity: 0;
@@ -297,7 +299,7 @@
     text-transform: capitalize;
     display: inline-block;
     padding: 0.25rem 0.5rem;
-    background: var(--bg-secondary);
+    background: var(--bg-tertiary);
     border-radius: 0.25rem;
 }
 
@@ -361,7 +363,7 @@
 }
 
 .user-dropdown-logout:hover {
-    background-color: rgba(212, 122, 122, 0.12);
+    background-color: rgba(192, 57, 43, 0.08);
     color: var(--danger-color);
 }
 
@@ -394,8 +396,8 @@
     border: 1px solid var(--border-color);
     border-radius: 0.75rem;
     box-shadow:
-        0 10px 25px -5px rgba(0, 0, 0, 0.1),
-        0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        0 10px 25px -5px rgba(26, 28, 30, 0.1),
+        0 8px 10px -6px rgba(26, 28, 30, 0.04);
     min-width: 180px;
     opacity: 0;
     visibility: hidden;
@@ -436,16 +438,11 @@
 }
 
 .footer {
-    background: linear-gradient(
-        180deg,
-        var(--bg-color) 0%,
-        var(--bg-secondary) 100%
-    );
+    background: var(--bg-color);
     border-top: 1px solid var(--border-light);
     padding: 2.5rem 0;
     margin-top: 4rem;
     text-align: center;
     color: var(--text-secondary);
     font-size: 0.875rem;
-    box-shadow: 0 -4px 6px -1px rgba(0, 0, 0, 0.05);
 }

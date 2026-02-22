@@ -4,17 +4,22 @@
 <div class="lecture-edit-container">
     <nav class="course-page-actions course-page-actions-top" aria-label="Edit navigation">
         <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}" class="btn btn-outline course-page-actions-back">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
             Back to module
         </a>
-        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}" class="btn btn-outline">View</a>
+        <a href="/courses/{{.Course.ID}}/modules/{{.Module.ID}}/content/{{.Reading.ID}}"
+            class="btn btn-outline">View</a>
     </nav>
 
     <div id="lecture-error" class="error-message hidden"></div>
 
     <div class="lecture-edit-header">
         <div class="lecture-edit-header-left">
-            <input type="text" id="lecture-title" class="lecture-title-input" value="{{.Reading.Title}}" placeholder="Reading title...">
+            <input type="text" id="lecture-title" class="lecture-title-input" value="{{.Reading.Title}}"
+                placeholder="Reading title...">
         </div>
         <div class="lecture-edit-header-right">
             <span id="save-status" class="save-status"></span>
@@ -30,11 +35,12 @@
 
     <div class="lecture-editor" id="lecture-editor">
         <div class="lecture-editor-pane-header">
-            <span id="editor-format-label">{{if eq .Reading.Format "markdown"}}Markdown{{else if eq .Reading.Format "plain"}}Plain Text{{else}}Rich Text{{end}}</span>
+            <span id="editor-format-label">{{if eq .Reading.Format "markdown"}}Markdown{{else if eq .Reading.Format
+                "plain"}}Plain Text{{else}}Rich Text{{end}}</span>
             <select id="lecture-format" class="format-selector">
-                <option value="markdown" {{if eq .Reading.Format "markdown"}}selected{{end}}>Markdown</option>
-                <option value="plain" {{if eq .Reading.Format "plain"}}selected{{end}}>Plain Text</option>
-                <option value="html" {{if eq .Reading.Format "html"}}selected{{end}}>Rich Text</option>
+                <option value="markdown" {{if eq .Reading.Format "markdown" }}selected{{end}}>Markdown</option>
+                <option value="plain" {{if eq .Reading.Format "plain" }}selected{{end}}>Plain Text</option>
+                <option value="html" {{if eq .Reading.Format "html" }}selected{{end}}>Rich Text</option>
             </select>
         </div>
         <div class="unified-editor-area"></div>
@@ -47,12 +53,13 @@
         moduleId: {{.Module.ID}},
         readingId: {{.Reading.ID}},
         order: {{.Reading.Order}},
-        status: "{{.Reading.Status}}",
-        format: "{{.Reading.Format}}",
-        initialContent: {{printf "%q" (deref .Reading.Content)}}
+        status: {{json .Reading.Status}},
+        format: {{json .Reading.Format}},
+        initialContent: {{if .Reading.Content}}{{json (deref .Reading.Content)}}{{else}}""{{end}}
     };
 </script>
 {{end}}
+
 
 {{define "scripts"}}
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/easymde/dist/easymde.min.css">

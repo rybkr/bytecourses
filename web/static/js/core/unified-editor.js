@@ -1,5 +1,6 @@
 import { createMarkdownEditor } from "./markdown-editor.js";
 import { convertContent } from "./format-converter.js";
+import { SANITIZE_CONFIG } from "./utils.js";
 
 export function createUnifiedEditor(container, options = {}) {
     const {
@@ -8,6 +9,7 @@ export function createUnifiedEditor(container, options = {}) {
         placeholder = "Write your content here...",
         onFormatChange = null,
         onUpdate = null,
+        extractVideoEmbedCode = null,
     } = options;
 
     let currentFormat = initialFormat;
@@ -32,6 +34,7 @@ export function createUnifiedEditor(container, options = {}) {
             initialValue: currentContent,
             placeholder,
             lineNumbers: true,
+            extractVideoEmbedCode,
             onUpdate: (content) => {
                 currentContent = content;
                 if (onUpdate) onUpdate(content);
@@ -123,13 +126,13 @@ export function createUnifiedEditor(container, options = {}) {
 
         let sanitized = currentContent || "";
         if (typeof DOMPurify !== "undefined" && sanitized) {
-            sanitized = DOMPurify.sanitize(sanitized);
+            sanitized = DOMPurify.sanitize(sanitized, SANITIZE_CONFIG);
         }
         quill.root.innerHTML = sanitized;
 
         quill.on("text-change", () => {
             let html = quill.root.innerHTML;
-            if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html);
+            if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html, SANITIZE_CONFIG);
             currentContent = html;
             if (onUpdate) onUpdate(html);
         });
@@ -137,12 +140,12 @@ export function createUnifiedEditor(container, options = {}) {
         return {
             getValue: () => {
                 let html = quill.root.innerHTML;
-                if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html);
+                if (typeof DOMPurify !== "undefined") html = DOMPurify.sanitize(html, SANITIZE_CONFIG);
                 return html;
             },
             setValue: (value) => {
                 let s = value || "";
-                if (typeof DOMPurify !== "undefined" && s) s = DOMPurify.sanitize(s);
+                if (typeof DOMPurify !== "undefined" && s) s = DOMPurify.sanitize(s, SANITIZE_CONFIG);
                 quill.root.innerHTML = s;
                 currentContent = s;
             },

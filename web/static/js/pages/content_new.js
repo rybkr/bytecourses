@@ -1,6 +1,6 @@
 import api, { getCSRFToken } from "../core/api.js";
 import { $ } from "../core/dom.js";
-import { showError, hideError } from "../core/utils.js";
+import { showError, hideError, extractVideoEmbedCode, SANITIZE_CONFIG } from "../core/utils.js";
 import { createUnifiedEditor } from "../core/unified-editor.js";
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50 MB
@@ -37,6 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
             initialValue: "",
             initialFormat: "markdown",
             placeholder: "Write your content here...",
+            extractVideoEmbedCode,
             onFormatChange: (newFormat) => {
                 const names = { markdown: "Markdown", plain: "Plain Text", html: "Rich Text" };
                 if (formatLabel) formatLabel.textContent = names[newFormat] || newFormat;
@@ -105,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         let sanitizedContent = content;
         if (format === "html" && typeof DOMPurify !== "undefined") {
-            sanitizedContent = DOMPurify.sanitize(content);
+            sanitizedContent = DOMPurify.sanitize(content, SANITIZE_CONFIG);
         }
 
         await api.post(`/api/courses/${courseId}/modules/${moduleId}/content`, {

@@ -1,5 +1,5 @@
 import api from "../core/api.js";
-import { debounce, showError, hideError } from "../core/utils.js";
+import { debounce, showError, hideError, extractVideoEmbedCode, SANITIZE_CONFIG } from "../core/utils.js";
 import { $ } from "../core/dom.js";
 import { createUnifiedEditor } from "../core/unified-editor.js";
 
@@ -53,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         try {
             let content = currentContent;
             if (currentFormat === "html" && typeof DOMPurify !== "undefined") {
-                content = DOMPurify.sanitize(content);
+                content = DOMPurify.sanitize(content, SANITIZE_CONFIG);
             }
 
             await api.patch(apiUrl, {
@@ -83,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
             initialValue: initialContent || "",
             initialFormat: initialFormat || "markdown",
             placeholder: "Write your content here...",
+            extractVideoEmbedCode,
             onFormatChange: (newFormat) => {
                 const names = { markdown: "Markdown", plain: "Plain Text", html: "Rich Text" };
                 if (formatLabel) formatLabel.textContent = names[newFormat] || newFormat;

@@ -951,6 +951,36 @@
     font-style: italic;
 }
 
+.proposal-content-value iframe {
+    max-width: 100%;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 0.5rem;
+    margin: 1.5rem 0;
+    display: block;
+}
+
+.proposal-content-value .video-container {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%;
+    height: 0;
+    overflow: hidden;
+    margin: 1.5rem 0;
+    border-radius: 0.5rem;
+}
+
+.proposal-content-value .video-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
 .proposal-dates-footer {
     display: flex;
     justify-content: center;

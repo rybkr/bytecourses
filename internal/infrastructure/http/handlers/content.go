@@ -47,7 +47,7 @@ func (r *CreateContentRequest) ToCommand(moduleID, userID int64) *services.Creat
 		Title:    strings.TrimSpace(r.Title),
 		Order:    r.Order,
 		Format:   strings.TrimSpace(r.Format),
-		Content:  strings.TrimSpace(r.Content),
+		Content:  r.Content, // Don't trim content to preserve formatting
 		UserID:   userID,
 	}
 }
@@ -257,7 +257,7 @@ func (r *UpdateContentRequest) ToCommand(contentID, userID int64) *services.Upda
 		Title:     strings.TrimSpace(r.Title),
 		Order:     r.Order,
 		Format:    strings.TrimSpace(r.Format),
-		Content:   strings.TrimSpace(r.Content),
+		Content:   r.Content, // Don't trim content to preserve formatting
 		UserID:    userID,
 	}
 }

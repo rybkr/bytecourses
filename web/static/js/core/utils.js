@@ -100,3 +100,41 @@ export async function deleteProposal(proposalId, status, options = {}) {
         return false;
     }
 }
+
+export const SANITIZE_CONFIG = {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'u', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'ul', 'ol', 'li', 'blockquote', 'code', 'pre', 'a', 'img', 'iframe'],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'loading', 'class'],
+    ALLOWED_URI_REGEXP: /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+};
+
+export function extractVideoEmbedCode(url) {
+    if (!url || typeof url !== "string") {
+        return null;
+    }
+
+    const trimmedUrl = url.trim();
+    let videoId = null;
+    let embedUrl = null;
+
+    if (trimmedUrl.includes("youtube.com/watch") || trimmedUrl.includes("youtu.be/")) {
+        const youtubeRegex = /(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const match = trimmedUrl.match(youtubeRegex);
+        if (match && match[1]) {
+            videoId = match[1];
+            embedUrl = `https://www.youtube.com/embed/${videoId}`;
+        }
+    } else if (trimmedUrl.includes("vimeo.com/")) {
+        const vimeoRegex = /vimeo\.com\/(\d+)/;
+        const match = trimmedUrl.match(vimeoRegex);
+        if (match && match[1]) {
+            videoId = match[1];
+            embedUrl = `https://player.vimeo.com/video/${videoId}`;
+        }
+    }
+
+    if (!embedUrl) {
+        return null;
+    }
+
+    return `<iframe src="${embedUrl}" width="560" height="315" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+}

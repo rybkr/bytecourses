@@ -3,15 +3,20 @@ package handlers
 import (
 	"bytes"
 	"embed"
+	"encoding/json"
 	"html/template"
 	"io/fs"
 	"log"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/microcosm-cc/bluemonday"
 	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/renderer/html"
 
 	"bytecourses/internal/domain"
 	"bytecourses/internal/infrastructure/http/middleware"
@@ -101,6 +106,13 @@ func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalServ
 			}
 			return *s
 		},
+		"json": func(v interface{}) (string, error) {
+			b, err := json.Marshal(v)
+			if err != nil {
+				return "", err
+			}
+			return string(b), nil
+		},
 	}
 
 	h := &PageHandler{
@@ -171,19 +183,46 @@ func NewPageHandler(templatesFS embed.FS, proposalService *services.ProposalServ
 	return h
 }
 
+var videoURLRegex = regexp.MustCompile(`^https://(www\.)?(youtube\.com|youtu\.be|player\.vimeo\.com|vimeo\.com)`)
+
+var htmlSanitizer = func() *bluemonday.Policy {
+	p := bluemonday.UGCPolicy()
+	p.AllowAttrs("width", "height", "frameborder", "allow", "allowfullscreen", "loading").OnElements("iframe")
+	p.AllowURLSchemes("https")
+	p.RequireParseableURLs(true)
+	p.AllowAttrs("src").Matching(videoURLRegex).OnElements("iframe")
+	return p
+}()
+
+func sanitizeMarkdownHTML(html string) string {
+	if html == "" {
+		return ""
+	}
+	return htmlSanitizer.Sanitize(html)
+}
+
+var markdownRenderer = goldmark.New(
+	goldmark.WithExtensions(extension.GFM),
+	goldmark.WithRendererOptions(
+		html.WithUnsafe(),
+	),
+)
+
 func renderMarkdown(s string) template.HTML {
 	var buf bytes.Buffer
-	if err := goldmark.Convert([]byte(s), &buf); err != nil {
+	if err := markdownRenderer.Convert([]byte(s), &buf); err != nil {
 		return template.HTML(template.HTMLEscapeString(s))
 	}
-	return template.HTML(buf.String())
+	sanitized := sanitizeMarkdownHTML(buf.String())
+	return template.HTML(sanitized)
 }
 
 func sanitizeHTML(s string) template.HTML {
 	if s == "" {
 		return template.HTML("")
 	}
-	return template.HTML(s)
+	sanitized := htmlSanitizer.Sanitize(s)
+	return template.HTML(sanitized)
 }
 
 func (h *PageHandler) render(w http.ResponseWriter, r *http.Request, name string, data any) {
